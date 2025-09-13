@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class HomeController {
     @GetMapping("/")
     public String index(Model model) {
-        model.addAttribute("msg", "RMS up");
+        model.addAttribute("msg", "Welcome to the Residential Maintenance Management System.");
         return "index"; // looks for templates/index.html
     }
 }
