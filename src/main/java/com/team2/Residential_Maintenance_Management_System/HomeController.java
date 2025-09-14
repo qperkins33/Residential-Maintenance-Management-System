@@ -9,6 +9,6 @@ public class HomeController {
     @GetMapping("/")
     public String index(Model model) {
         model.addAttribute("msg", "Welcome to the Residential Maintenance Management System.");
-        return "index"; // looks for templates/index.html
+        return "index"; // looks for views/index.html
     }
 }
