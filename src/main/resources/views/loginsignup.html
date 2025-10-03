@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / Sign Up - Residential Maintenance Management System</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2b5876, #4e4376);
+            color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            padding: 3rem 2.5rem;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 0.75rem;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        p {
+            margin: 0 0 2.5rem;
+            color: rgba(245, 245, 245, 0.85);
+            line-height: 1.5;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 0.85rem 1rem;
+            border-radius: 999px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .button.primary {
+            background: #00c6ff;
+            color: #0f172a;
+        }
+
+        .button.secondary {
+            background: transparent;
+            color: #f5f5f5;
+            border: 2px solid rgba(245, 245, 245, 0.8);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .button.primary:hover {
+            background: #7cf3ff;
+        }
+
+        .button.secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Welcome Back!</h1>
+        <p>Select an option below to log in to your account or create a new one. You will be redirected to the dashboard placeholder for now.</p>
+        <div class="actions">
+            <a class="button primary" href="/dashboard">Log In</a>
+            <a class="button secondary" href="/dashboard">Sign Up</a>
+        </div>
+    </div>
+</body>
+</html>
