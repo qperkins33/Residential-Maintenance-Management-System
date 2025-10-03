@@ -12,4 +12,4 @@ public class ResidentialMaintenanceManagementSystemApplication {
 
 }
 
-//In a browser, open http://localhost:8080
+// In a browser, open http://localhost:8080
