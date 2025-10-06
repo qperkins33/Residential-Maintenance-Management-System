@@ -24,4 +24,11 @@ public class HomeController {
         // Returning "dashboard" loads dashboard.html when the route is hit.
         return "dashboard";
     }
+
+//    EXAMPLE CODE
+//    @GetMapping("/")
+//    public String index(Model model) {
+//        model.addAttribute("msg", "Welcome to the Residential Maintenance Management System.");
+//        return "index"; // looks for views/index.html
+//    }
 }
