@@ -9,3 +9,9 @@ Problem Description:
 This system eliminates the need for calls, voicemails, emails, and texts, reducing delays in resolving maintenance issues. Apartment maintenance is a daily challenge for property managers and owners, particularly in residential complexes. The system helps prevent missed or overlooked requests, improving efficiency and the quality of life for both tenants and property managers. It can also be applied to rental properties, Airbnbs, hotels, and businesses with multiple sites to manage incoming maintenance requests more effectively.
 
 <img width="1267" height="682" alt="Screenshot 2025-09-13 at 5 23 49 PM" src="https://github.com/user-attachments/assets/b5f83d5d-8524-4e31-bc7b-53367cd30016" />
+
+## Local Development Database
+- The application is preconfigured to use a file-based H2 database stored at `./data/rmmsdb` for local development.
+- Schema definition lives in `src/main/resources/schema.sql`, currently exposing a simple `users` table to support upcoming authentication features.
+- `src/main/resources/data.sql` seeds the database with a placeholder property manager account so that future login work has concrete data to target.
+- Launching the Spring Boot application will automatically create or update the database file using these scripts.
