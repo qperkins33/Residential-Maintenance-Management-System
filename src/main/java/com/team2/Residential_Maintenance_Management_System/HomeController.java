@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class HomeController {
 
     /*
-     * Spring discovers this controller via the @Controller stereotype and use
+     * Spring discovers this controller via the @Controller stereotype and uses
      * the @GetMapping annotations to map incoming HTTP GET requests to the
      * methods below. Each method returns the logical view name; the configured
      * view resolver turns that into the corresponding HTML template under
