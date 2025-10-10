@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.maintenance</groupId>
-    <artifactId>residential-maintenance-management</artifactId>
+    <artifactId>Residential-Maintenance-Management</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
