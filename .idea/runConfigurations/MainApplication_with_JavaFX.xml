@@ -3,7 +3,7 @@
     <option name="MAIN_CLASS_NAME" value="com.maintenance.MainApplication" />
     <module name="Residential-Maintenance-Management-System" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-    <option name="VM_PARAMETERS" value="--module-path $MAVEN_REPOSITORY$/org/openjfx/javafx-base/21.0.1/javafx-base-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-base/21.0.1/javafx-base-21.0.1-mac.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/21.0.1/javafx-controls-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/21.0.1/javafx-controls-21.0.1-mac.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/21.0.1/javafx-fxml-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/21.0.1/javafx-fxml-21.0.1-mac.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/21.0.1/javafx-graphics-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/21.0.1/javafx-graphics-21.0.1-mac.jar --add-modules javafx.controls,javafx.fxml" />
+    <option name="VM_PARAMETERS" value="--module-path $MAVEN_REPOSITORY$/org/openjfx/javafx-base/21.0.1:$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/21.0.1:$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/21.0.1:$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/21.0.1 --add-modules javafx.controls,javafx.fxml" />
     <shortenClasspath name="NONE" />
     <method v="2">
       <option name="Make" enabled="true" />
