@@ -16,12 +16,12 @@ public class ViewFactory {
             AnchorPane root = new AnchorPane();
             controller.createLoginUI(root);
 
-            Scene scene = new Scene(root, 500, 400);
+            Scene scene = new Scene(root, 1200, 700);
             scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
 
             stage.setTitle("Residential Maintenance System - Login");
             stage.setScene(scene);
-            stage.setResizable(false);
+            stage.setMaximized(true);
             stage.show();
         } catch (Exception e) {
             e.printStackTrace();
