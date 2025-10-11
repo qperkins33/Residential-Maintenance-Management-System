@@ -2,6 +2,7 @@ package com.maintenance.service;
 
 import com.maintenance.dao.UserDAO;
 import com.maintenance.models.User;
+import com.maintenance.models.UserRegistrationData;
 
 public class AuthenticationService {
     private static AuthenticationService instance;
@@ -43,5 +44,13 @@ public class AuthenticationService {
     public String getUserType() {
         if (currentUser == null) return null;
         return currentUser.getClass().getSimpleName();
+    }
+
+    public boolean isUsernameTaken(String username) {
+        return userDAO.isUsernameTaken(username);
+    }
+
+    public boolean registerUser(UserRegistrationData registrationData) {
+        return userDAO.registerUser(registrationData);
     }
 }
