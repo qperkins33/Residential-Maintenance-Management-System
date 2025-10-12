@@ -2,8 +2,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="RMM JavaFX" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="com.maintenance.MainApplication" />
-    <module name="Residential-Maintenance-Management" />
-    <option name="VM_PARAMETERS" value="--add-modules=javafx.controls,javafx.fxml --module-path $MAVEN_REPOSITORY$/org/openjfx/javafx-base/21.0.1/javafx-base-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/21.0.1/javafx-graphics-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/21.0.1/javafx-controls-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/21.0.1/javafx-fxml-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-base/21.0.1/javafx-base-21.0.1-mac.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/21.0.1/javafx-graphics-21.0.1-mac.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/21.0.1/javafx-controls-21.0.1-mac.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/21.0.1/javafx-fxml-21.0.1-mac.jar " />
+    <module name="residential-maintenance-system" />
+    <option name="VM_PARAMETERS" value="--add-modules javafx.controls,javafx.fxml --module-path C:\Users\Anteneh\Downloads\openjfx-17.0.16_windows-x64_bin-sdk\javafx-sdk-17.0.16\lib" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
