@@ -6,17 +6,17 @@ import com.maintenance.service.AuthenticationService;
 import com.maintenance.ui.views.ViewFactory;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 
-
-
+import java.net.URL;
 
 public class LoginController {
     private final ViewFactory viewFactory;
@@ -50,18 +50,18 @@ public class LoginController {
 
 
         // Load the apartment icon image
-        Image appIcon = new Image(getClass().getResource("/images/apartment.png").toExternalForm());
-        ImageView appIconView = new ImageView(appIcon);
-        appIconView.setFitWidth(30);
-        appIconView.setFitHeight(30);
-
+        Image appIcon = loadImage("/images/apartment.png");
+        ImageView appIconView = createImageView(appIcon, 30, 30);
 
         // Title
-        Label titleLabel = new Label("Maintenance System", appIconView);
+        Label titleLabel = new Label("Maintenance System");
+        if (appIconView != null) {
+            titleLabel.setGraphic(appIconView);
+            titleLabel.setContentDisplay(ContentDisplay.LEFT);
+            titleLabel.setGraphicTextGap(10);
+        }
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
         titleLabel.setTextFill(Color.web("#667eea"));
-        titleLabel.setContentDisplay(ContentDisplay.LEFT);
-        titleLabel.setGraphicTextGap(10);
         Label subtitleLabel = new Label("Sign in to continue");
         subtitleLabel.setFont(Font.font("Arial", 14));
         subtitleLabel.setTextFill(Color.GRAY);
@@ -101,35 +101,42 @@ public class LoginController {
 
 
         // Load eye icons
-        Image eyeOpen = new Image(getClass().getResource("/images/eye-open.png").toExternalForm());
-        Image eyeClosed = new Image(getClass().getResource("/images/eye-closed.png").toExternalForm());
+        Image eyeOpen = loadImage("/images/eye-open.png");
+        Image eyeClosed = loadImage("/images/eye-closed.png");
 
+        Node toggleControl;
+        ImageView eyeIconView = createImageView(eyeClosed, 20, 20);
+        if (eyeIconView != null && eyeOpen != null && eyeClosed != null) {
+            eyeIconView.setCursor(javafx.scene.Cursor.HAND);
+            toggleControl = eyeIconView;
+        } else {
+            Label toggleLabel = new Label("Show");
+            toggleLabel.setTextFill(Color.web("#667eea"));
+            toggleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            toggleLabel.setCursor(javafx.scene.Cursor.HAND);
+            toggleControl = toggleLabel;
+        }
 
-        ImageView eyeIconView = new ImageView(eyeClosed);
-        eyeIconView.setFitWidth(20);
-        eyeIconView.setFitHeight(20);
-        eyeIconView.setPreserveRatio(true);
-        eyeIconView.setCursor(javafx.scene.Cursor.HAND);
-
+        Node finalToggleControl = toggleControl;
 
         // Toggle between hidden/visible password
-        eyeIconView.setOnMouseClicked(e -> {
+        toggleControl.setOnMouseClicked(e -> {
             boolean isVisible = visiblePasswordField.isVisible();
             visiblePasswordField.setVisible(!isVisible);
             visiblePasswordField.setManaged(!isVisible);
             passwordField.setVisible(isVisible);
             passwordField.setManaged(isVisible);
 
-
-            // Swap the eye icons
-            eyeIconView.setImage(isVisible ? eyeClosed : eyeOpen);
+            if (finalToggleControl instanceof ImageView iconView && eyeOpen != null && eyeClosed != null) {
+                iconView.setImage(isVisible ? eyeClosed : eyeOpen);
+            } else if (finalToggleControl instanceof Label toggleLabel) {
+                toggleLabel.setText(isVisible ? "Show" : "Hide");
+            }
         });
 
-
-        // Container to hold password field and eye icon
+        // Container to hold password field and toggle control
         StackPane passwordFieldContainer = new StackPane();
         passwordFieldContainer.setAlignment(Pos.CENTER_RIGHT);
-
 
         // StackPane with both visible and hidden fields
         StackPane passwordStack = new StackPane(passwordField, visiblePasswordField);
@@ -137,8 +144,8 @@ public class LoginController {
         HBox.setHgrow(passwordStack, Priority.ALWAYS);
         passwordField.setPadding(new Insets(10, 35, 10, 10));
         visiblePasswordField.setPadding(new Insets(10, 35, 10, 10));
-        StackPane.setMargin(eyeIconView, new Insets(0, 10, 0, 0));
-        passwordFieldContainer.getChildren().addAll(passwordStack, eyeIconView);
+        StackPane.setMargin(finalToggleControl, new Insets(0, 10, 0, 0));
+        passwordFieldContainer.getChildren().addAll(passwordStack, finalToggleControl);
 
 
         // Error label
@@ -215,7 +222,7 @@ public class LoginController {
 
         // Group inputs
         VBox userBox = new VBox(5, usernameLabel, usernameField);
-        VBox passBox = new VBox(5, passwordLabel, passwordField);
+        VBox passBox = new VBox(5, passwordLabel, passwordFieldContainer);
         userBox.setMaxWidth(Double.MAX_VALUE);
         passBox.setMaxWidth(Double.MAX_VALUE);
 
@@ -235,5 +242,30 @@ public class LoginController {
         AnchorPane.setRightAnchor(outer, 0.0);
 
         root.getChildren().add(outer);
+    }
+
+    private Image loadImage(String path) {
+        try {
+            URL resource = getClass().getResource(path);
+            if (resource == null) {
+                System.err.println("Missing resource: " + path);
+                return null;
+            }
+            return new Image(resource.toExternalForm());
+        } catch (Exception e) {
+            System.err.println("Failed to load image " + path + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    private ImageView createImageView(Image image, double width, double height) {
+        if (image == null) {
+            return null;
+        }
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(width);
+        imageView.setFitHeight(height);
+        imageView.setPreserveRatio(true);
+        return imageView;
     }
 }

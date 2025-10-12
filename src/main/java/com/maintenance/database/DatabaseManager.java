@@ -3,9 +3,10 @@ package com.maintenance.database;
 import java.sql.*;
 
 public class DatabaseManager {
+    private static final String CONNECTION_STRING = "jdbc:h2:file:./data/maintenance_db;AUTO_SERVER=TRUE;LOCK_TIMEOUT=10000";
+
     private static DatabaseManager instance;
     private Connection connection;
-    private final String connectionString = "jdbc:h2:./data/maintenance_db";
     private boolean isConnected;
 
     private DatabaseManager() {
@@ -19,10 +20,15 @@ public class DatabaseManager {
         return instance;
     }
 
-    public boolean connect() {
+    public synchronized boolean connect() {
         try {
             Class.forName("org.h2.Driver");
-            connection = DriverManager.getConnection(connectionString, "sa", "");
+            if (connection != null && !connection.isClosed()) {
+                isConnected = true;
+                return true;
+            }
+
+            connection = DriverManager.getConnection(CONNECTION_STRING, "sa", "");
             isConnected = true;
             System.out.println("✓ Database connected successfully");
             return true;
@@ -95,6 +101,12 @@ public class DatabaseManager {
 
     public ResultSet executeQuery(String query) {
         try {
+            if (connection == null || connection.isClosed()) {
+                if (!connect()) {
+                    throw new SQLException("Unable to establish a database connection");
+                }
+            }
+
             Statement stmt = connection.createStatement();
             return stmt.executeQuery(query);
         } catch (SQLException e) {

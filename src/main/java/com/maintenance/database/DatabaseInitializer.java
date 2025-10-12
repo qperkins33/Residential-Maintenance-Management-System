@@ -9,6 +9,19 @@ public class DatabaseInitializer {
         DatabaseManager dbManager = DatabaseManager.getInstance();
         Connection conn = dbManager.getConnection();
 
+        try {
+            if (conn == null || conn.isClosed()) {
+                if (!dbManager.connect()) {
+                    throw new IllegalStateException("Unable to connect to the database");
+                }
+                conn = dbManager.getConnection();
+            }
+        } catch (Exception e) {
+            System.err.println("Error initializing database: " + e.getMessage());
+            e.printStackTrace();
+            return;
+        }
+
         try (Statement stmt = conn.createStatement()) {
 
             // Create Users table
