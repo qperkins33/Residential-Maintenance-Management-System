@@ -11,6 +11,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 public class LoginController {
     private final ViewFactory viewFactory;
@@ -40,10 +42,18 @@ public class LoginController {
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 5);"
         );
 
+        //Load apartment icon image
+        Image appIcon = new Image(getClass().getResource("/images/apartment.png").toExternalForm());
+        ImageView appIconView = new ImageView(appIcon);
+        appIconView.setFitWidth(30);
+        appIconView.setFitHeight(30);
+
         // Title
-        Label titleLabel = new Label("Maintenance System");
+        Label titleLabel = new Label("Maintenance System", appIconView);
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
         titleLabel.setTextFill(Color.web("#667eea"));
+        titleLabel.setContentDisplay(ContentDisplay.LEFT);
+        titleLabel.setGraphicTextGap(10);
 
         Label subtitleLabel = new Label("Sign in to continue");
         subtitleLabel.setFont(Font.font("Arial", 14));
@@ -64,6 +74,57 @@ public class LoginController {
         passwordField.setPromptText("Enter password");
         passwordField.setMaxWidth(Double.MAX_VALUE);
         passwordField.setStyle("-fx-padding: 10; -fx-background-radius: 5; -fx-border-color: #ddd; -fx-border-radius: 5;");
+
+        // Visible password field
+        TextField visiblePasswordField = new TextField();
+        visiblePasswordField.setPromptText("Enter password");
+        visiblePasswordField.setStyle("-fx-padding: 10; -fx-background-radius: 5; -fx-border-color: #ddd; -fx-border-radius: 5;");
+        visiblePasswordField.setManaged(false);
+        visiblePasswordField.setVisible(false);
+
+        // Keep text synced between both fields
+        visiblePasswordField.textProperty().bindBidirectional(passwordField.textProperty());
+
+
+        // Load eye icons
+        Image eyeOpen = new Image(getClass().getResource("/images/eye-open.png").toExternalForm());
+        Image eyeClosed = new Image(getClass().getResource("/images/eye-closed.png").toExternalForm());
+
+
+        ImageView eyeIconView = new ImageView(eyeClosed);
+        eyeIconView.setFitWidth(20);
+        eyeIconView.setFitHeight(20);
+        eyeIconView.setPreserveRatio(true);
+        eyeIconView.setCursor(javafx.scene.Cursor.HAND);
+
+
+        // Toggle between hidden/visible password
+        eyeIconView.setOnMouseClicked(e -> {
+            boolean isVisible = visiblePasswordField.isVisible();
+            visiblePasswordField.setVisible(!isVisible);
+            visiblePasswordField.setManaged(!isVisible);
+            passwordField.setVisible(isVisible);
+            passwordField.setManaged(isVisible);
+
+
+            // Swap the eye icons
+            eyeIconView.setImage(isVisible ? eyeClosed : eyeOpen);
+        });
+
+        // Container to hold password field and eye icon
+        StackPane passwordFieldContainer = new StackPane();
+        passwordFieldContainer.setAlignment(Pos.CENTER_RIGHT);
+
+
+        // StackPane with both visible and hidden fields
+        StackPane passwordStack = new StackPane(passwordField, visiblePasswordField);
+        passwordStack.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(passwordStack, Priority.ALWAYS);
+        passwordField.setPadding(new Insets(10, 35, 10, 10));
+        visiblePasswordField.setPadding(new Insets(10, 35, 10, 10));
+        StackPane.setMargin(eyeIconView, new Insets(0, 10, 0, 0));
+        passwordFieldContainer.getChildren().addAll(passwordStack, eyeIconView);
+
 
         // Error label
         Label errorLabel = new Label();
@@ -131,7 +192,7 @@ public class LoginController {
 
         // Group inputs
         VBox userBox = new VBox(5, usernameLabel, usernameField);
-        VBox passBox = new VBox(5, passwordLabel, passwordField);
+        VBox passBox = new VBox(5, passwordLabel, passwordFieldContainer);
         userBox.setMaxWidth(Double.MAX_VALUE);
         passBox.setMaxWidth(Double.MAX_VALUE);
 
