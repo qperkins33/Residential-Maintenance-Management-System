@@ -7,6 +7,7 @@ public enum RequestStatus {
     IN_PROGRESS("In Progress", "#FF9800", "⚙️"),
     ON_HOLD("On Hold", "#9E9E9E", "⏸️"),
     COMPLETED("Completed", "#4CAF50", "✅"),
+    REOPENED("Reopened", "#FF7043", "🔁"),
     CLOSED("Closed", "#607D8B", "🔒"),
     CANCELLED("Cancelled", "#F44336", "❌");
 
@@ -34,7 +35,7 @@ public enum RequestStatus {
 
     public boolean isActive() {
         return this == SUBMITTED || this == ACKNOWLEDGED ||
-                this == ASSIGNED || this == IN_PROGRESS;
+                this == ASSIGNED || this == IN_PROGRESS || this == REOPENED;
     }
 
     public boolean isTerminal() {
