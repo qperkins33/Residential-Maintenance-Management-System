@@ -3,15 +3,18 @@ package com.maintenance.ui.controllers;
 import com.maintenance.dao.MaintenanceRequestDAO;
 import com.maintenance.enums.CategoryType;
 import com.maintenance.enums.PriorityLevel;
+import com.maintenance.enums.RequestStatus;
 import com.maintenance.models.MaintenanceRequest;
 import com.maintenance.models.Tenant;
 import com.maintenance.service.AuthenticationService;
 import com.maintenance.service.TicketingSystem;
 import com.maintenance.ui.views.ViewFactory;
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
@@ -19,6 +22,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class TenantDashboardController {
@@ -247,7 +251,40 @@ public class TenantDashboardController {
         );
         dateCol.setPrefWidth(100);
 
-        requestTable.getColumns().addAll(idCol, categoryCol, descCol, priorityCol, statusCol, dateCol);
+        TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
+        actionCol.setPrefWidth(120);
+        actionCol.setCellFactory(col -> new TableCell<>() {
+            private final Button editButton = createEditButton();
+
+            private Button createEditButton() {
+                Button button = new Button("Edit");
+                button.setStyle("-fx-background-color: #4caf50; -fx-text-fill: white; " +
+                        "-fx-padding: 6 14; -fx-background-radius: 5; -fx-cursor: hand;");
+                button.setOnAction(event -> {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    if (request != null) {
+                        showEditRequestDialog(request);
+                    }
+                });
+                return button;
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    editButton.setDisable(!canTenantEdit(request));
+                    setGraphic(editButton);
+                    setAlignment(Pos.CENTER);
+                }
+            }
+        });
+        actionCol.setSortable(false);
+
+        requestTable.getColumns().addAll(idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol);
 
         loadRequests();
 
@@ -260,6 +297,135 @@ public class TenantDashboardController {
         ObservableList<MaintenanceRequest> requests =
                 FXCollections.observableArrayList(requestDAO.getRequestsByTenant(tenant.getUserId()));
         requestTable.setItems(requests);
+    }
+
+    private void showEditRequestDialog(MaintenanceRequest request) {
+        Dialog<MaintenanceRequest> dialog = new Dialog<>();
+        dialog.setTitle("Edit Maintenance Request");
+        dialog.setHeaderText("Update your ticket details");
+
+        ButtonType saveButtonType = new ButtonType("Save Changes", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+
+        ComboBox<CategoryType> categoryBox = new ComboBox<>();
+        categoryBox.getItems().addAll(CategoryType.values());
+        categoryBox.setValue(request.getCategory());
+
+        TextArea descArea = new TextArea();
+        descArea.setPromptText("Describe the issue...");
+        descArea.setPrefRowCount(4);
+        descArea.setText(request.getDescription());
+
+        ComboBox<PriorityLevel> priorityBox = new ComboBox<>();
+        priorityBox.getItems().addAll(PriorityLevel.values());
+        priorityBox.setValue(request.getPriority());
+
+        Button defaultPriorityBtn = new Button("Use Default Priority");
+        defaultPriorityBtn.setOnAction(e -> {
+            CategoryType selectedCategory = categoryBox.getValue();
+            if (selectedCategory != null) {
+                priorityBox.setValue(getDefaultPriorityForCategory(selectedCategory));
+            }
+        });
+
+        categoryBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                priorityBox.setValue(getDefaultPriorityForCategory(newVal));
+            }
+        });
+
+        ComboBox<RequestStatus> statusBox = new ComboBox<>();
+        statusBox.getItems().addAll(RequestStatus.values());
+        statusBox.setValue(request.getStatus());
+
+        grid.add(new Label("Category:"), 0, 0);
+        grid.add(categoryBox, 1, 0);
+        grid.add(new Label("Description:"), 0, 1);
+        grid.add(descArea, 1, 1);
+        grid.add(new Label("Priority:"), 0, 2);
+        HBox priorityContainer = new HBox(10, priorityBox, defaultPriorityBtn);
+        grid.add(priorityContainer, 1, 2);
+        grid.add(new Label("Status:"), 0, 3);
+        grid.add(statusBox, 1, 3);
+
+        Node saveButton = dialog.getDialogPane().lookupButton(saveButtonType);
+        saveButton.disableProperty().bind(Bindings.createBooleanBinding(
+                () -> categoryBox.getValue() == null ||
+                        priorityBox.getValue() == null ||
+                        statusBox.getValue() == null ||
+                        descArea.getText().trim().isEmpty(),
+                categoryBox.valueProperty(),
+                priorityBox.valueProperty(),
+                statusBox.valueProperty(),
+                descArea.textProperty()
+        ));
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == saveButtonType) {
+                request.setCategory(categoryBox.getValue());
+                request.setDescription(descArea.getText().trim());
+                request.setPriority(priorityBox.getValue());
+                RequestStatus newStatus = statusBox.getValue();
+                request.setStatus(newStatus);
+                request.setLastUpdated(LocalDateTime.now());
+
+                if (newStatus == RequestStatus.COMPLETED && request.getCompletionDate() == null) {
+                    request.setCompletionDate(LocalDateTime.now());
+                } else if (newStatus != RequestStatus.COMPLETED) {
+                    request.setCompletionDate(null);
+                }
+                return request;
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(updatedRequest -> {
+            if (requestDAO.updateRequest(updatedRequest)) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Request Updated");
+                alert.setHeaderText("Changes Saved");
+                alert.setContentText("Your maintenance request has been updated successfully.");
+                alert.showAndWait();
+                loadRequests();
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Update Failed");
+                alert.setHeaderText("Unable to Save Changes");
+                alert.setContentText("Please try again later or contact support.");
+                alert.showAndWait();
+            }
+        });
+    }
+
+    private PriorityLevel getDefaultPriorityForCategory(CategoryType category) {
+        switch (category) {
+            case EMERGENCY:
+                return PriorityLevel.EMERGENCY;
+            case ELECTRICAL:
+            case SAFETY_SECURITY:
+                return PriorityLevel.URGENT;
+            case PLUMBING:
+            case HVAC:
+                return PriorityLevel.HIGH;
+            case APPLIANCE:
+                return PriorityLevel.MEDIUM;
+            default:
+                return PriorityLevel.LOW;
+        }
+    }
+
+    private boolean canTenantEdit(MaintenanceRequest request) {
+        if (request == null || request.getStatus() == null) {
+            return false;
+        }
+        return request.getStatus() != RequestStatus.CANCELLED && request.getStatus() != RequestStatus.CLOSED;
     }
 
     private void showNewRequestDialog() {
