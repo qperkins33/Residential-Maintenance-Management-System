@@ -257,9 +257,8 @@ public class TenantDashboardController {
             private final Button editButton = new Button("Edit");
 
             {
-                editButton.setStyle("-fx-background-color: #757575; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; " +
-                        "-fx-font-size: 11;");
+                editButton.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
                 editButton.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     showEditRequestDialog(request);

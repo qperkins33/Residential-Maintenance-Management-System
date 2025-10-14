@@ -188,6 +188,7 @@ public class ManagerDashboardController {
 
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
+        requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
@@ -219,16 +220,19 @@ public class ManagerDashboardController {
                         cellData.getValue().getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))
                 )
         );
-        dateCol.setPrefWidth(100);
+        dateCol.setPrefWidth(120);
+        dateCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(150);
+        actionCol.setPrefWidth(200);
+        actionCol.setStyle("-fx-alignment: CENTER;");
+
         actionCol.setCellFactory(param -> new TableCell<>() {
             private final Button assignBtn = new Button("Assign");
 
             {
                 assignBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                        "-fx-padding: 5 15; -fx-background-radius: 3;");
+                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
                 assignBtn.setOnAction(event -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     showAssignDialog(request);

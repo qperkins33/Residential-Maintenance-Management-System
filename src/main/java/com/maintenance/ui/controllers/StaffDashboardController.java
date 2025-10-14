@@ -416,15 +416,12 @@ public class StaffDashboardController {
             private final HBox buttonBox = new HBox(5);
 
             {
-                startBtn.setStyle("-fx-background-color: #2196f3; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; " +
-                        "-fx-font-size: 11;");
-                completeBtn.setStyle("-fx-background-color: #4caf50; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; " +
-                        "-fx-font-size: 11;");
-                viewBtn.setStyle("-fx-background-color: #757575; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; " +
-                        "-fx-font-size: 11;");
+                startBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
+                completeBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
+                viewBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
 
                 startBtn.setOnAction(event -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
