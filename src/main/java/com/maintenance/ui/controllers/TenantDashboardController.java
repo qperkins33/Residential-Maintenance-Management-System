@@ -3,6 +3,7 @@ package com.maintenance.ui.controllers;
 import com.maintenance.dao.MaintenanceRequestDAO;
 import com.maintenance.enums.CategoryType;
 import com.maintenance.enums.PriorityLevel;
+import com.maintenance.enums.RequestStatus;
 import com.maintenance.models.MaintenanceRequest;
 import com.maintenance.models.Tenant;
 import com.maintenance.service.AuthenticationService;
@@ -19,6 +20,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class TenantDashboardController {
@@ -162,12 +164,16 @@ public class TenantDashboardController {
         var requests = requestDAO.getRequestsByTenant(tenant.getUserId());
 
         long pending = requests.stream()
-                .filter(r -> r.getStatus().name().contains("SUBMITTED") ||
-                        r.getStatus().name().contains("IN_PROGRESS"))
+                .filter(r -> r.getStatus() == RequestStatus.SUBMITTED ||
+                        r.getStatus() == RequestStatus.ACKNOWLEDGED ||
+                        r.getStatus() == RequestStatus.ASSIGNED ||
+                        r.getStatus() == RequestStatus.IN_PROGRESS ||
+                        r.getStatus() == RequestStatus.REOPENED)
                 .count();
 
         long completed = requests.stream()
-                .filter(r -> r.getStatus().name().contains("COMPLETED"))
+                .filter(r -> r.getStatus() == RequestStatus.COMPLETED ||
+                        r.getStatus() == RequestStatus.CLOSED)
                 .count();
 
         VBox totalCard = createStatCard("Total Requests", String.valueOf(requests.size()), "#667eea");
@@ -247,7 +253,41 @@ public class TenantDashboardController {
         );
         dateCol.setPrefWidth(100);
 
-        requestTable.getColumns().addAll(idCol, categoryCol, descCol, priorityCol, statusCol, dateCol);
+        TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
+        actionCol.setPrefWidth(100);
+        actionCol.setCellFactory(col -> new TableCell<>() {
+            private final Button editButton = new Button("Edit");
+
+            {
+                styleEditButton();
+                editButton.setOnAction(e -> {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    showEditRequestDialog(request);
+                });
+            }
+
+            private void styleEditButton() {
+                editButton.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                        "-fx-padding: 6 12; -fx-background-radius: 5; -fx-cursor: hand;");
+                editButton.setTextFill(Color.WHITE);
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    editButton.setDisable(!canTenantEdit(request));
+                    styleEditButton();
+                    setAlignment(Pos.CENTER);
+                    setGraphic(editButton);
+                }
+            }
+        });
+
+        requestTable.getColumns().addAll(idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol);
 
         loadRequests();
 
@@ -260,6 +300,18 @@ public class TenantDashboardController {
         ObservableList<MaintenanceRequest> requests =
                 FXCollections.observableArrayList(requestDAO.getRequestsByTenant(tenant.getUserId()));
         requestTable.setItems(requests);
+    }
+
+    private boolean canTenantEdit(MaintenanceRequest request) {
+        RequestStatus status = request.getStatus();
+        return status == RequestStatus.SUBMITTED ||
+                status == RequestStatus.ACKNOWLEDGED ||
+                status == RequestStatus.ASSIGNED ||
+                status == RequestStatus.IN_PROGRESS ||
+                status == RequestStatus.ON_HOLD ||
+                status == RequestStatus.REOPENED ||
+                status == RequestStatus.COMPLETED ||
+                status == RequestStatus.CLOSED;
     }
 
     private void showNewRequestDialog() {
@@ -317,5 +369,143 @@ public class TenantDashboardController {
             alert.showAndWait();
             loadRequests();
         });
+    }
+
+    private void showEditRequestDialog(MaintenanceRequest request) {
+        Dialog<MaintenanceRequest> dialog = new Dialog<>();
+        dialog.setTitle("Edit Maintenance Request");
+        dialog.setHeaderText("Update Request #" + request.getRequestId());
+
+        ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+
+        ComboBox<CategoryType> categoryBox = new ComboBox<>();
+        categoryBox.getItems().addAll(CategoryType.values());
+        categoryBox.setValue(request.getCategory());
+
+        TextArea descArea = new TextArea();
+        descArea.setPrefRowCount(4);
+        descArea.setText(request.getDescription());
+
+        PriorityLevel initialPriority = request.getPriority() != null ?
+                request.getPriority() : calculateDefaultPriority(request.getCategory());
+        Label priorityLabel = new Label(initialPriority != null ?
+                initialPriority.getDisplayName() : "-");
+
+        categoryBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                priorityLabel.setText(calculateDefaultPriority(newVal).getDisplayName());
+            } else {
+                priorityLabel.setText("-");
+            }
+        });
+
+        ComboBox<RequestStatus> statusBox = new ComboBox<>();
+        statusBox.setPrefWidth(200);
+
+        RequestStatus currentStatus = request.getStatus();
+        if (currentStatus == RequestStatus.CLOSED) {
+            statusBox.getItems().addAll(RequestStatus.CLOSED, RequestStatus.REOPENED);
+        } else if (currentStatus == RequestStatus.SUBMITTED) {
+            statusBox.getItems().addAll(RequestStatus.SUBMITTED, RequestStatus.CLOSED);
+        } else if (currentStatus == RequestStatus.REOPENED) {
+            statusBox.getItems().addAll(RequestStatus.REOPENED, RequestStatus.CLOSED);
+        } else if (currentStatus == RequestStatus.COMPLETED) {
+            statusBox.getItems().addAll(RequestStatus.COMPLETED, RequestStatus.REOPENED);
+        } else {
+            statusBox.getItems().add(currentStatus);
+            statusBox.setDisable(true);
+        }
+        statusBox.getSelectionModel().select(currentStatus);
+
+        grid.add(new Label("Category:"), 0, 0);
+        grid.add(categoryBox, 1, 0);
+        grid.add(new Label("Description:"), 0, 1);
+        grid.add(descArea, 1, 1);
+        grid.add(new Label("Default Priority:"), 0, 2);
+        grid.add(priorityLabel, 1, 2);
+        grid.add(new Label("Status:"), 0, 3);
+        grid.add(statusBox, 1, 3);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == saveButtonType) {
+                if (categoryBox.getValue() == null || descArea.getText().trim().isEmpty()) {
+                    Alert warning = new Alert(Alert.AlertType.WARNING);
+                    warning.setTitle("Missing Information");
+                    warning.setHeaderText(null);
+                    warning.setContentText("Please provide both a category and description.");
+                    warning.showAndWait();
+                    return null;
+                }
+
+                CategoryType selectedCategory = categoryBox.getValue();
+                PriorityLevel updatedPriority = calculateDefaultPriority(selectedCategory);
+                RequestStatus selectedStatus = statusBox.getSelectionModel().getSelectedItem();
+                if (selectedStatus == null) {
+                    selectedStatus = currentStatus;
+                }
+
+                request.setCategory(selectedCategory);
+                request.setDescription(descArea.getText().trim());
+                request.setPriority(updatedPriority);
+
+                if (selectedStatus == RequestStatus.REOPENED) {
+                    request.setCompletionDate(null);
+                    request.setResolutionNotes(null);
+                }
+                if (selectedStatus == RequestStatus.CLOSED && request.getCompletionDate() == null) {
+                    request.setCompletionDate(LocalDateTime.now());
+                }
+
+                request.setStatus(selectedStatus);
+                request.setLastUpdated(LocalDateTime.now());
+                return request;
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(updated -> {
+            if (requestDAO.updateRequest(updated)) {
+                Alert success = new Alert(Alert.AlertType.INFORMATION);
+                success.setTitle("Success");
+                success.setHeaderText("Request Updated");
+                success.setContentText("Your changes to request #" + updated.getRequestId() + " have been saved.");
+                success.showAndWait();
+                loadRequests();
+            } else {
+                Alert error = new Alert(Alert.AlertType.ERROR);
+                error.setTitle("Update Failed");
+                error.setHeaderText(null);
+                error.setContentText("Unable to update your request. Please try again later.");
+                error.showAndWait();
+            }
+        });
+    }
+
+    private PriorityLevel calculateDefaultPriority(CategoryType category) {
+        if (category == null) {
+            return PriorityLevel.LOW;
+        }
+        switch (category) {
+            case EMERGENCY:
+                return PriorityLevel.EMERGENCY;
+            case ELECTRICAL:
+            case SAFETY_SECURITY:
+                return PriorityLevel.URGENT;
+            case PLUMBING:
+            case HVAC:
+                return PriorityLevel.HIGH;
+            case APPLIANCE:
+                return PriorityLevel.MEDIUM;
+            default:
+                return PriorityLevel.LOW;
+        }
     }
 }
