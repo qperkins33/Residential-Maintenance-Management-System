@@ -70,8 +70,13 @@
     -fx-background-color: #f0f4ff;
 }
 
+
 .table-row-cell:selected {
     -fx-background-color: #e3ebff;
+}
+
+.table-row-cell:selected .text {
+    -fx-fill: #667eea;
 }
 
 /* TextField Styling */
