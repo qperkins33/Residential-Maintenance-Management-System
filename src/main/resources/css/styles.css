@@ -72,12 +72,12 @@
 
 
 .table-row-cell:selected {
-    -fx-background-color: #e3ebff;
+    -fx-background-color: #4858c9;
 }
-
+/*
 .table-row-cell:selected .text {
     -fx-fill: #667eea;
-}
+}*/
 
 /* TextField Styling */
 .text-field, .text-area {

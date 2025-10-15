@@ -7,7 +7,7 @@ import com.maintenance.enums.RequestStatus;
 import com.maintenance.models.MaintenanceRequest;
 import com.maintenance.models.Tenant;
 import com.maintenance.service.AuthenticationService;
-import com.maintenance.service.TicketingSystem;
+//import com.maintenance.service.TicketingSystem;
 import com.maintenance.ui.views.ViewFactory;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -25,14 +25,14 @@ import java.time.format.DateTimeFormatter;
 public class TenantDashboardController {
     private final ViewFactory viewFactory;
     private final AuthenticationService authService;
-    private final TicketingSystem ticketingSystem;
+//    private final TicketingSystem ticketingSystem;
     private final MaintenanceRequestDAO requestDAO;
     private TableView<MaintenanceRequest> requestTable;
 
     public TenantDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
         this.authService = AuthenticationService.getInstance();
-        this.ticketingSystem = new TicketingSystem();
+//        this.ticketingSystem = new TicketingSystem();
         this.requestDAO = new MaintenanceRequestDAO();
     }
 
@@ -219,7 +219,7 @@ public class TenantDashboardController {
 
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
-        requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("Request ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
@@ -247,11 +247,11 @@ public class TenantDashboardController {
                         cellData.getValue().getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))
                 )
         );
-        dateCol.setPrefWidth(120);
+        dateCol.setPrefWidth(200);
         dateCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(200);
+        actionCol.setPrefWidth(120);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
             private final Button editButton = new Button("Edit");
@@ -272,7 +272,10 @@ public class TenantDashboardController {
             }
         });
 
-        requestTable.getColumns().addAll(idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol);
+        // OLD Version
+//        requestTable.getColumns().addAll(idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol);
+        requestTable.getColumns().setAll(java.util.Arrays.asList(
+                idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol));
 
         loadRequests();
 
@@ -348,7 +351,7 @@ public class TenantDashboardController {
     private void showEditRequestDialog(MaintenanceRequest request) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Edit Maintenance Request");
-        dialog.setHeaderText("Update your request");
+        dialog.setHeaderText("Update your request [NOT FUNCTIONAL YET]");
 
         ButtonType saveBtnType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);

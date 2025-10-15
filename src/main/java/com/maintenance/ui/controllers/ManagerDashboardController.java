@@ -188,7 +188,7 @@ public class ManagerDashboardController {
 
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
-        requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
@@ -217,14 +217,14 @@ public class ManagerDashboardController {
         TableColumn<MaintenanceRequest, String> dateCol = new TableColumn<>("Date");
         dateCol.setCellValueFactory(cellData ->
                 new javafx.beans.property.SimpleStringProperty(
-                        cellData.getValue().getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))
+                        cellData.getValue().getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"))
                 )
         );
-        dateCol.setPrefWidth(120);
+        dateCol.setPrefWidth(200);
         dateCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(200);
+        actionCol.setPrefWidth(120);
         actionCol.setStyle("-fx-alignment: CENTER;");
 
         actionCol.setCellFactory(param -> new TableCell<>() {
@@ -250,8 +250,13 @@ public class ManagerDashboardController {
             }
         });
 
-        requestTable.getColumns().addAll(idCol, aptCol, categoryCol, descCol,
-                priorityCol, statusCol, dateCol, actionCol);
+        // Old Version
+//        requestTable.getColumns().addAll(idCol, aptCol, categoryCol, descCol,
+//                priorityCol, statusCol, dateCol, actionCol);
+
+        requestTable.getColumns().setAll(java.util.Arrays.asList(
+                idCol, aptCol, categoryCol, descCol,
+                priorityCol, statusCol, dateCol, actionCol));
 
         loadRequests();
 
