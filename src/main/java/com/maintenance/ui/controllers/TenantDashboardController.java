@@ -352,7 +352,7 @@ public class TenantDashboardController {
     private void showEditRequestDialog(MaintenanceRequest request) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Edit Maintenance Request");
-        dialog.setHeaderText("Update your request [NOT FUNCTIONAL YET]");
+        dialog.setHeaderText("Update your request");
 
         ButtonType saveBtnType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);
@@ -373,9 +373,29 @@ public class TenantDashboardController {
         priorityBox.getItems().addAll(PriorityLevel.values());
         priorityBox.setValue(request.getPriority());
 
-        ComboBox<RequestStatus> statusBox = new ComboBox<>();
-        statusBox.getItems().addAll(RequestStatus.values());
-        statusBox.setValue(request.getStatus());
+        // Create action buttons for status control
+        HBox statusButtons = new HBox(10);
+        statusButtons.setAlignment(Pos.CENTER_LEFT);
+
+        if (request.getStatus() == RequestStatus.COMPLETED || request.getStatus() == RequestStatus.CANCELLED) {
+            Button reopenBtn = new Button("Reopen Request");
+            reopenBtn.setStyle("-fx-background-color: #4caf50; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
+            reopenBtn.setOnAction(e -> {
+                request.setStatus(RequestStatus.REOPENED); // TODO: implement database interaction because currently it only temp stores
+                requestTable.refresh();
+                new Alert(Alert.AlertType.INFORMATION, "Request reopened.").showAndWait();
+            });
+            statusButtons.getChildren().add(reopenBtn);
+        } else if (request.getStatus() != RequestStatus.CANCELLED) {
+            Button cancelBtn = new Button("Cancel Request");
+            cancelBtn.setStyle("-fx-background-color: #e53935; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
+            cancelBtn.setOnAction(e -> {
+                request.setStatus(RequestStatus.CANCELLED); // TODO: implement database interaction because currently it only temp stores
+                requestTable.refresh();
+                new Alert(Alert.AlertType.INFORMATION, "Request cancelled.").showAndWait();
+            });
+            statusButtons.getChildren().add(cancelBtn);
+        }
 
         grid.add(new Label("Category:"), 0, 0);
         grid.add(categoryBox, 1, 0);
@@ -384,18 +404,19 @@ public class TenantDashboardController {
         grid.add(new Label("Priority:"), 0, 2);
         grid.add(priorityBox, 1, 2);
         grid.add(new Label("Status:"), 0, 3);
-        grid.add(statusBox, 1, 3);
+        grid.add(statusButtons, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
 
-        dialog.setResultConverter(btn -> null); // placeholder, apply after close
+        dialog.setResultConverter(btn -> null);
 
         dialog.showAndWait().ifPresent(ignored -> {
             if (categoryBox.getValue() == null || priorityBox.getValue() == null || descArea.getText().isBlank()) {
                 new Alert(Alert.AlertType.WARNING, "All fields are required.").showAndWait();
                 return;
             }
-            // Apply in-memory updates
+
+            // Apply updates
             request.setCategory(categoryBox.getValue());
             request.setDescription(descArea.getText().trim());
             request.setPriority(priorityBox.getValue());

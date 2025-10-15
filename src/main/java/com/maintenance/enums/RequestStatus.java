@@ -5,6 +5,7 @@ public enum RequestStatus {
     ACKNOWLEDGED("Acknowledged", "#03A9F4", "👀"),
     ASSIGNED("Assigned", "#00BCD4", "👷"),
     IN_PROGRESS("In Progress", "#FF9800", "⚙️"),
+    REOPENED("Reopened", "#FF9800", "⚙️"),
     ON_HOLD("On Hold", "#9E9E9E", "⏸️"),
     COMPLETED("Completed", "#4CAF50", "✅"),
     CLOSED("Closed", "#607D8B", "🔒"),
