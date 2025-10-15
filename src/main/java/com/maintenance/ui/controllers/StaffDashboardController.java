@@ -103,6 +103,7 @@ public class StaffDashboardController {
         Button assignedBtn = createSidebarButton("📋 Assigned Tasks", false);
         Button historyBtn = createSidebarButton("📜 History", false);
         Button profileBtn = createSidebarButton("👤 Profile", false);
+        Button settingsBtn = createSidebarButton("⚙️ Settings", false);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -111,7 +112,7 @@ public class StaffDashboardController {
         VBox availabilityBox = createAvailabilityToggle();
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn, assignedBtn, historyBtn,
-                profileBtn, spacer, availabilityBox);
+                profileBtn, settingsBtn, spacer, availabilityBox);
         return sidebar;
     }
 
