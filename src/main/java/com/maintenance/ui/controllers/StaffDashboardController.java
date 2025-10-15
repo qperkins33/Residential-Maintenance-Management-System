@@ -316,7 +316,7 @@ public class StaffDashboardController {
 
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
-        requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("Request ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
@@ -342,7 +342,7 @@ public class StaffDashboardController {
         priorityCol.setCellValueFactory(new PropertyValueFactory<>("priority"));
         priorityCol.setPrefWidth(100);
         priorityCol.setStyle("-fx-alignment: CENTER;");
-        priorityCol.setCellFactory(column -> new TableCell<MaintenanceRequest, PriorityLevel>() {
+        priorityCol.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(PriorityLevel item, boolean empty) {
                 super.updateItem(item, empty);
@@ -370,7 +370,7 @@ public class StaffDashboardController {
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
         statusCol.setPrefWidth(120);
         statusCol.setStyle("-fx-alignment: CENTER;");
-        statusCol.setCellFactory(column -> new TableCell<MaintenanceRequest, RequestStatus>() {
+        statusCol.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(RequestStatus item, boolean empty) {
                 super.updateItem(item, empty);
@@ -403,11 +403,11 @@ public class StaffDashboardController {
                                 DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"))
                 )
         );
-        dateCol.setPrefWidth(120);
+        dateCol.setPrefWidth(200);
         dateCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(200);
+        actionCol.setPrefWidth(120);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
             private final Button startBtn = new Button("Start");
@@ -416,15 +416,12 @@ public class StaffDashboardController {
             private final HBox buttonBox = new HBox(5);
 
             {
-                startBtn.setStyle("-fx-background-color: #2196f3; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; " +
-                        "-fx-font-size: 11;");
-                completeBtn.setStyle("-fx-background-color: #4caf50; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; " +
-                        "-fx-font-size: 11;");
-                viewBtn.setStyle("-fx-background-color: #757575; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; " +
-                        "-fx-font-size: 11;");
+                startBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
+                completeBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
+                viewBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
 
                 startBtn.setOnAction(event -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
@@ -468,8 +465,13 @@ public class StaffDashboardController {
             }
         });
 
-        requestTable.getColumns().addAll(idCol, aptCol, categoryCol, descCol,
-                priorityCol, statusCol, dateCol, actionCol);
+        // Old version
+//        requestTable.getColumns().addAll(idCol, aptCol, categoryCol, descCol,
+//                priorityCol, statusCol, dateCol, actionCol);
+
+        requestTable.getColumns().setAll(java.util.Arrays.asList(
+                idCol, aptCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol
+        ));
 
         loadRequests();
 

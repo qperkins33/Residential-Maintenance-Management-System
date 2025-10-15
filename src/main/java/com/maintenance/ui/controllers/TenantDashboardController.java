@@ -3,10 +3,11 @@ package com.maintenance.ui.controllers;
 import com.maintenance.dao.MaintenanceRequestDAO;
 import com.maintenance.enums.CategoryType;
 import com.maintenance.enums.PriorityLevel;
+import com.maintenance.enums.RequestStatus;
 import com.maintenance.models.MaintenanceRequest;
 import com.maintenance.models.Tenant;
 import com.maintenance.service.AuthenticationService;
-import com.maintenance.service.TicketingSystem;
+//import com.maintenance.service.TicketingSystem;
 import com.maintenance.ui.views.ViewFactory;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -24,14 +25,14 @@ import java.time.format.DateTimeFormatter;
 public class TenantDashboardController {
     private final ViewFactory viewFactory;
     private final AuthenticationService authService;
-    private final TicketingSystem ticketingSystem;
+//    private final TicketingSystem ticketingSystem;
     private final MaintenanceRequestDAO requestDAO;
     private TableView<MaintenanceRequest> requestTable;
 
     public TenantDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
         this.authService = AuthenticationService.getInstance();
-        this.ticketingSystem = new TicketingSystem();
+//        this.ticketingSystem = new TicketingSystem();
         this.requestDAO = new MaintenanceRequestDAO();
     }
 
@@ -218,6 +219,7 @@ public class TenantDashboardController {
 
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
+        requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("Request ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
@@ -245,9 +247,35 @@ public class TenantDashboardController {
                         cellData.getValue().getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))
                 )
         );
-        dateCol.setPrefWidth(100);
+        dateCol.setPrefWidth(200);
+        dateCol.setStyle("-fx-alignment: CENTER;");
 
-        requestTable.getColumns().addAll(idCol, categoryCol, descCol, priorityCol, statusCol, dateCol);
+        TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
+        actionCol.setPrefWidth(120);
+        actionCol.setStyle("-fx-alignment: CENTER;");
+        actionCol.setCellFactory(param -> new TableCell<>() {
+            private final Button editButton = new Button("Edit");
+
+            {
+                editButton.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
+                editButton.setOnAction(e -> {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    showEditRequestDialog(request);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : editButton);
+            }
+        });
+
+        // OLD Version
+//        requestTable.getColumns().addAll(idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol);
+        requestTable.getColumns().setAll(java.util.Arrays.asList(
+                idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol));
 
         loadRequests();
 
@@ -318,4 +346,62 @@ public class TenantDashboardController {
             loadRequests();
         });
     }
+
+    // Placeholder
+    private void showEditRequestDialog(MaintenanceRequest request) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Edit Maintenance Request");
+        dialog.setHeaderText("Update your request [NOT FUNCTIONAL YET]");
+
+        ButtonType saveBtnType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+
+        ComboBox<CategoryType> categoryBox = new ComboBox<>();
+        categoryBox.getItems().addAll(CategoryType.values());
+        categoryBox.setValue(request.getCategory());
+
+        TextArea descArea = new TextArea(request.getDescription());
+        descArea.setPrefRowCount(5);
+
+        ComboBox<PriorityLevel> priorityBox = new ComboBox<>();
+        priorityBox.getItems().addAll(PriorityLevel.values());
+        priorityBox.setValue(request.getPriority());
+
+        ComboBox<RequestStatus> statusBox = new ComboBox<>();
+        statusBox.getItems().addAll(RequestStatus.values());
+        statusBox.setValue(request.getStatus());
+
+        grid.add(new Label("Category:"), 0, 0);
+        grid.add(categoryBox, 1, 0);
+        grid.add(new Label("Description:"), 0, 1);
+        grid.add(descArea, 1, 1);
+        grid.add(new Label("Priority:"), 0, 2);
+        grid.add(priorityBox, 1, 2);
+        grid.add(new Label("Status:"), 0, 3);
+        grid.add(statusBox, 1, 3);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(btn -> null); // placeholder, apply after close
+
+        dialog.showAndWait().ifPresent(ignored -> {
+            if (categoryBox.getValue() == null || priorityBox.getValue() == null || descArea.getText().isBlank()) {
+                new Alert(Alert.AlertType.WARNING, "All fields are required.").showAndWait();
+                return;
+            }
+            // Apply in-memory updates
+            request.setCategory(categoryBox.getValue());
+            request.setDescription(descArea.getText().trim());
+            request.setPriority(priorityBox.getValue());
+
+            requestTable.refresh();
+            new Alert(Alert.AlertType.INFORMATION, "Changes applied (not saved to DB yet).").showAndWait();
+        });
+    }
+
 }
