@@ -190,7 +190,7 @@ public class ManagerDashboardController {
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
         requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
-        TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("ID");
+        TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("Request ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
         idCol.setPrefWidth(100);
 
@@ -214,7 +214,7 @@ public class ManagerDashboardController {
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
         statusCol.setPrefWidth(120);
 
-        TableColumn<MaintenanceRequest, String> dateCol = new TableColumn<>("Date");
+        TableColumn<MaintenanceRequest, String> dateCol = new TableColumn<>("Submitted");
         dateCol.setCellValueFactory(cellData ->
                 new javafx.beans.property.SimpleStringProperty(
                         cellData.getValue().getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"))
