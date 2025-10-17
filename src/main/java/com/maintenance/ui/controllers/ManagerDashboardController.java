@@ -224,7 +224,7 @@ public class ManagerDashboardController {
         dateCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(100);
+        actionCol.setPrefWidth(120);
         actionCol.setStyle("-fx-alignment: CENTER;");
 
         actionCol.setCellFactory(param -> new TableCell<>() {

@@ -408,7 +408,7 @@ public class StaffDashboardController {
         dateCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(100);
+        actionCol.setPrefWidth(140);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
             private final Button startBtn = new Button("Start");
