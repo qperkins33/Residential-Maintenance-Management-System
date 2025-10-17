@@ -167,7 +167,8 @@ public class TenantDashboardController {
 
         long pending = requests.stream()
                 .filter(r -> r.getStatus().name().contains("SUBMITTED") ||
-                        r.getStatus().name().contains("IN_PROGRESS"))
+                        r.getStatus().name().contains("IN_PROGRESS") ||
+                        r.getStatus().name().contains("REOPENED"))
                 .count();
 
         long completed = requests.stream()
