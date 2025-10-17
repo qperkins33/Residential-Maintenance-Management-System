@@ -377,24 +377,17 @@ public class TenantDashboardController {
         HBox statusButtons = new HBox(10);
         statusButtons.setAlignment(Pos.CENTER_LEFT);
 
-        Label statusLabel = new Label("Current status: " + request.getStatus());
         final RequestStatus[] selectedStatus = {request.getStatus()};
 
         if (request.getStatus() == RequestStatus.COMPLETED || request.getStatus() == RequestStatus.CANCELLED) {
             Button reopenBtn = new Button("Reopen Request");
             reopenBtn.setStyle("-fx-background-color: #4caf50; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
-            reopenBtn.setOnAction(e -> {
-                selectedStatus[0] = RequestStatus.REOPENED;
-                statusLabel.setText("Current status: " + selectedStatus[0]);
-            });
+            reopenBtn.setOnAction(e -> selectedStatus[0] = RequestStatus.REOPENED);
             statusButtons.getChildren().add(reopenBtn);
         } else if (request.getStatus() != RequestStatus.CANCELLED) {
             Button cancelBtn = new Button("Cancel Request");
             cancelBtn.setStyle("-fx-background-color: #e53935; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
-            cancelBtn.setOnAction(e -> {
-                selectedStatus[0] = RequestStatus.CANCELLED;
-                statusLabel.setText("Current status: " + selectedStatus[0]);
-            });
+            cancelBtn.setOnAction(e -> selectedStatus[0] = RequestStatus.CANCELLED);
             statusButtons.getChildren().add(cancelBtn);
         }
 
@@ -405,8 +398,7 @@ public class TenantDashboardController {
         grid.add(new Label("Priority:"), 0, 2);
         grid.add(priorityBox, 1, 2);
         grid.add(new Label("Status:"), 0, 3);
-        VBox statusBox = new VBox(8, statusLabel, statusButtons);
-        grid.add(statusBox, 1, 3);
+        grid.add(statusButtons, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
 
