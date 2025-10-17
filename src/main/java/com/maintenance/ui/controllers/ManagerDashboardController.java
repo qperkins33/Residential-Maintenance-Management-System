@@ -220,11 +220,11 @@ public class ManagerDashboardController {
                         cellData.getValue().getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"))
                 )
         );
-        dateCol.setPrefWidth(200);
+        dateCol.setPrefWidth(150);
         dateCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(120);
+        actionCol.setPrefWidth(100);
         actionCol.setStyle("-fx-alignment: CENTER;");
 
         actionCol.setCellFactory(param -> new TableCell<>() {
