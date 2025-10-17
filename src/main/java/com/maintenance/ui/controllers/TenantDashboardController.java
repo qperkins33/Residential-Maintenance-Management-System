@@ -11,6 +11,7 @@ import com.maintenance.service.AuthenticationService;
 import com.maintenance.ui.views.ViewFactory;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -20,6 +21,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class TenantDashboardController {
@@ -245,10 +247,10 @@ public class TenantDashboardController {
         TableColumn<MaintenanceRequest, String> dateCol = new TableColumn<>("Submitted");
         dateCol.setCellValueFactory(cellData ->
                 new javafx.beans.property.SimpleStringProperty(
-                        cellData.getValue().getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))
+                        cellData.getValue().getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"))
                 )
         );
-        dateCol.setPrefWidth(200);
+        dateCol.setPrefWidth(150);
         dateCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
@@ -348,7 +350,6 @@ public class TenantDashboardController {
         });
     }
 
-    // Placeholder
     private void showEditRequestDialog(MaintenanceRequest request) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Edit Maintenance Request");
@@ -373,25 +374,24 @@ public class TenantDashboardController {
         priorityBox.getItems().addAll(PriorityLevel.values());
         priorityBox.setValue(request.getPriority());
 
-        // Create action buttons for status control
         HBox statusButtons = new HBox(10);
         statusButtons.setAlignment(Pos.CENTER_LEFT);
 
+        final RequestStatus[] selectedStatus = {request.getStatus()};
+
         if (request.getStatus() == RequestStatus.COMPLETED || request.getStatus() == RequestStatus.CANCELLED) {
             Button reopenBtn = new Button("Reopen Request");
-            reopenBtn.setStyle("-fx-background-color: #4caf50; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
+            cancelReopenButton(reopenBtn, "#4caf50", "#43a047", "#388e3c"); // green, hover, pressed
             reopenBtn.setOnAction(e -> {
-                request.setStatus(RequestStatus.REOPENED); // TODO: implement database interaction because currently it only temp stores
-                requestTable.refresh();
+                selectedStatus[0] = RequestStatus.REOPENED;
                 new Alert(Alert.AlertType.INFORMATION, "Request reopened.").showAndWait();
             });
             statusButtons.getChildren().add(reopenBtn);
         } else if (request.getStatus() != RequestStatus.CANCELLED) {
             Button cancelBtn = new Button("Cancel Request");
-            cancelBtn.setStyle("-fx-background-color: #e53935; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
+            cancelReopenButton(cancelBtn, "#e53935", "#d32f2f", "#c62828"); // red, hover, pressed
             cancelBtn.setOnAction(e -> {
-                request.setStatus(RequestStatus.CANCELLED); // TODO: implement database interaction because currently it only temp stores
-                requestTable.refresh();
+                selectedStatus[0] = RequestStatus.CANCELLED;
                 new Alert(Alert.AlertType.INFORMATION, "Request cancelled.").showAndWait();
             });
             statusButtons.getChildren().add(cancelBtn);
@@ -408,22 +408,42 @@ public class TenantDashboardController {
 
         dialog.getDialogPane().setContent(grid);
 
-        dialog.setResultConverter(btn -> null);
-
-        dialog.showAndWait().ifPresent(ignored -> {
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtnType);
+        boolean[] updated = {false};
+        saveButton.addEventFilter(ActionEvent.ACTION, event -> {
             if (categoryBox.getValue() == null || priorityBox.getValue() == null || descArea.getText().isBlank()) {
                 new Alert(Alert.AlertType.WARNING, "All fields are required.").showAndWait();
+                event.consume();
                 return;
             }
 
-            // Apply updates
             request.setCategory(categoryBox.getValue());
             request.setDescription(descArea.getText().trim());
             request.setPriority(priorityBox.getValue());
+            request.setStatus(selectedStatus[0]);
+            request.setLastUpdated(LocalDateTime.now());
 
-            requestTable.refresh();
-            new Alert(Alert.AlertType.INFORMATION, "Changes applied (not saved to DB yet).").showAndWait();
+            if (!requestDAO.updateRequest(request)) {
+                new Alert(Alert.AlertType.ERROR, "Unable to update request. Please try again.").showAndWait();
+                event.consume();
+            } else {
+                updated[0] = true;
+            }
         });
+
+        dialog.showAndWait();
+
+        if (updated[0]) {
+            loadRequests();
+            new Alert(Alert.AlertType.INFORMATION, "Request updated successfully.").showAndWait();
+        }
     }
 
+    private static void cancelReopenButton(Button b, String base, String hover, String pressed) {
+        b.setStyle("-fx-background-color: " + base + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
+        b.setOnMouseEntered(ev -> b.setStyle("-fx-background-color: " + hover + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+        b.setOnMouseExited(ev  -> b.setStyle("-fx-background-color: " + base  + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+        b.setOnMousePressed(ev -> b.setStyle("-fx-background-color: " + pressed + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+        b.setOnMouseReleased(ev-> b.setStyle("-fx-background-color: " + hover + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+    }
 }

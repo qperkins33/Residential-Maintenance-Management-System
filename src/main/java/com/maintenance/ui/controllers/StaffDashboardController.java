@@ -231,7 +231,8 @@ public class StaffDashboardController {
                 .count();
 
         long inProgress = myRequests.stream()
-                .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS)
+                .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS
+                        || r.getStatus() == RequestStatus.REOPENED)
                 .count();
 
         long completed = myRequests.stream()
@@ -386,6 +387,9 @@ public class StaffDashboardController {
                     } else if (item == RequestStatus.IN_PROGRESS) {
                         setStyle("-fx-background-color: #ff9800; -fx-text-fill: white; " +
                                 "-fx-background-radius: 3; -fx-padding: 5;");
+                    } else if (item == RequestStatus.REOPENED) {
+                        setStyle("-fx-background-color: #7e57c2; -fx-text-fill: white; " +
+                                "-fx-background-radius: 3; -fx-padding: 5;");
                     } else if (item == RequestStatus.ASSIGNED) {
                         setStyle("-fx-background-color: #2196f3; -fx-text-fill: white; " +
                                 "-fx-background-radius: 3; -fx-padding: 5;");
@@ -404,11 +408,11 @@ public class StaffDashboardController {
                                 DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"))
                 )
         );
-        dateCol.setPrefWidth(200);
+        dateCol.setPrefWidth(150);
         dateCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(120);
+        actionCol.setPrefWidth(180);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
             private final Button startBtn = new Button("Start");
@@ -453,7 +457,7 @@ public class StaffDashboardController {
 
                     if (request.getStatus() == RequestStatus.ASSIGNED) {
                         buttonBox.getChildren().addAll(startBtn, viewBtn);
-                    } else if (request.getStatus() == RequestStatus.IN_PROGRESS) {
+                    } else if (request.getStatus() == RequestStatus.IN_PROGRESS || request.getStatus() == RequestStatus.REOPENED) {
                         buttonBox.getChildren().addAll(completeBtn, viewBtn);
                     } else if (request.getStatus() == RequestStatus.COMPLETED) {
                         buttonBox.getChildren().add(viewBtn);
@@ -506,7 +510,7 @@ public class StaffDashboardController {
                 break;
             case "In Progress":
                 requests = requests.stream()
-                        .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS)
+                        .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS || r.getStatus() == RequestStatus.REOPENED)
                         .toList();
                 break;
             case "Urgent Only":
