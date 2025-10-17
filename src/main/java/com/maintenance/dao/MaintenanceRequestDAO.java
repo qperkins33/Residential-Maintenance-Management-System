@@ -39,20 +39,23 @@ public class MaintenanceRequestDAO {
     }
 
     public boolean updateRequest(MaintenanceRequest request) {
-        String sql = "UPDATE maintenance_requests SET status = ?, last_updated = ?, " +
-                "assigned_staff_id = ?, scheduled_date = ?, completion_date = ?, " +
+        String sql = "UPDATE maintenance_requests SET description = ?, category = ?, priority = ?, " +
+                "status = ?, last_updated = ?, assigned_staff_id = ?, scheduled_date = ?, completion_date = ?, " +
                 "resolution_notes = ? WHERE request_id = ?";
 
         try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
-            pstmt.setString(1, request.getStatus().name());
-            pstmt.setTimestamp(2, Timestamp.valueOf(request.getLastUpdated()));
-            pstmt.setString(3, request.getAssignedStaffId());
-            pstmt.setTimestamp(4, request.getScheduledDate() != null ?
+            pstmt.setString(1, request.getDescription());
+            pstmt.setString(2, request.getCategory().name());
+            pstmt.setString(3, request.getPriority().name());
+            pstmt.setString(4, request.getStatus().name());
+            pstmt.setTimestamp(5, Timestamp.valueOf(request.getLastUpdated()));
+            pstmt.setString(6, request.getAssignedStaffId());
+            pstmt.setTimestamp(7, request.getScheduledDate() != null ?
                     Timestamp.valueOf(request.getScheduledDate()) : null);
-            pstmt.setTimestamp(5, request.getCompletionDate() != null ?
+            pstmt.setTimestamp(8, request.getCompletionDate() != null ?
                     Timestamp.valueOf(request.getCompletionDate()) : null);
-            pstmt.setString(6, request.getResolutionNotes());
-            pstmt.setString(7, request.getRequestId());
+            pstmt.setString(9, request.getResolutionNotes());
+            pstmt.setString(10, request.getRequestId());
 
             pstmt.executeUpdate();
             return true;
