@@ -381,13 +381,19 @@ public class TenantDashboardController {
 
         if (request.getStatus() == RequestStatus.COMPLETED || request.getStatus() == RequestStatus.CANCELLED) {
             Button reopenBtn = new Button("Reopen Request");
-            reopenBtn.setStyle("-fx-background-color: #4caf50; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
-            reopenBtn.setOnAction(e -> selectedStatus[0] = RequestStatus.REOPENED);
+            cancelReopenButton(reopenBtn, "#4caf50", "#43a047", "#388e3c"); // green, hover, pressed
+            reopenBtn.setOnAction(e -> {
+                selectedStatus[0] = RequestStatus.REOPENED;
+                new Alert(Alert.AlertType.INFORMATION, "Request reopened.").showAndWait();
+            });
             statusButtons.getChildren().add(reopenBtn);
         } else if (request.getStatus() != RequestStatus.CANCELLED) {
             Button cancelBtn = new Button("Cancel Request");
-            cancelBtn.setStyle("-fx-background-color: #e53935; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
-            cancelBtn.setOnAction(e -> selectedStatus[0] = RequestStatus.CANCELLED);
+            cancelReopenButton(cancelBtn, "#e53935", "#d32f2f", "#c62828"); // red, hover, pressed
+            cancelBtn.setOnAction(e -> {
+                selectedStatus[0] = RequestStatus.CANCELLED;
+                new Alert(Alert.AlertType.INFORMATION, "Request cancelled.").showAndWait();
+            });
             statusButtons.getChildren().add(cancelBtn);
         }
 
@@ -433,4 +439,11 @@ public class TenantDashboardController {
         }
     }
 
+    private static void cancelReopenButton(Button b, String base, String hover, String pressed) {
+        b.setStyle("-fx-background-color: " + base + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
+        b.setOnMouseEntered(ev -> b.setStyle("-fx-background-color: " + hover + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+        b.setOnMouseExited(ev  -> b.setStyle("-fx-background-color: " + base  + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+        b.setOnMousePressed(ev -> b.setStyle("-fx-background-color: " + pressed + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+        b.setOnMouseReleased(ev-> b.setStyle("-fx-background-color: " + hover + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+    }
 }
