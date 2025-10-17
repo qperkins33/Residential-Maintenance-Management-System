@@ -167,18 +167,24 @@ public class TenantDashboardController {
 
         long pending = requests.stream()
                 .filter(r -> r.getStatus().name().contains("SUBMITTED") ||
-                        r.getStatus().name().contains("IN_PROGRESS"))
+                        r.getStatus().name().contains("IN_PROGRESS") ||
+                        r.getStatus().name().contains("REOPENED"))
                 .count();
 
         long completed = requests.stream()
                 .filter(r -> r.getStatus().name().contains("COMPLETED"))
                 .count();
 
+        long cancelled = requests.stream()
+                .filter(r -> r.getStatus().name().contains("CANCELLED"))
+                .count();
+
         VBox totalCard = createStatCard("Total Requests", String.valueOf(requests.size()), "#667eea");
         VBox pendingCard = createStatCard("Pending", String.valueOf(pending), "#ff9800");
         VBox completedCard = createStatCard("Completed", String.valueOf(completed), "#4caf50");
+        VBox cancelledCard = createStatCard("Cancelled", String.valueOf(cancelled), "#ff5252");
 
-        statsBox.getChildren().addAll(totalCard, pendingCard, completedCard);
+        statsBox.getChildren().addAll(totalCard, pendingCard, completedCard, cancelledCard);
         return statsBox;
     }
 
