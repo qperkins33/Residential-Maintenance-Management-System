@@ -140,7 +140,8 @@ public class ManagerDashboardController {
 
         long pending = allRequests.stream()
                 .filter(r -> r.getStatus() == RequestStatus.SUBMITTED ||
-                        r.getStatus() == RequestStatus.IN_PROGRESS)
+                        r.getStatus() == RequestStatus.IN_PROGRESS ||
+                        r.getStatus() == RequestStatus.REOPENED)
                 .count();
 
         long completed = allRequests.stream()
