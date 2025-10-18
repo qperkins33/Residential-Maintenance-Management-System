@@ -188,6 +188,7 @@ public class StaffDashboardController {
     private VBox createCenterContent() {
         VBox content = new VBox(20);
         content.setPadding(new Insets(30));
+        content.setFillWidth(true); // allow children to use full width
 
         // Welcome section
         VBox welcomeBox = createWelcomeSection();
@@ -197,6 +198,9 @@ public class StaffDashboardController {
 
         // Requests section
         VBox requestsSection = createRequestsSection();
+
+        // make the requests area take the leftover vertical space
+        VBox.setVgrow(requestsSection, Priority.ALWAYS);
 
         content.getChildren().addAll(welcomeBox, statsBox, requestsSection);
         return content;
@@ -298,6 +302,7 @@ public class StaffDashboardController {
 
     private VBox createRequestsSection() {
         VBox section = new VBox(15);
+        section.setFillWidth(true);
 
         HBox headerBox = new HBox(20);
         headerBox.setAlignment(Pos.CENTER_LEFT);
@@ -493,6 +498,9 @@ public class StaffDashboardController {
         emptyLabel.setFont(Font.font("Arial", 14));
         emptyLabel.setTextFill(Color.GRAY);
         requestTable.setPlaceholder(emptyLabel);
+
+        requestTable.setMaxHeight(Double.MAX_VALUE); // allow vertical growth
+        VBox.setVgrow(requestTable, Priority.ALWAYS); // already present is fine; keep it
 
         section.getChildren().addAll(headerBox, requestTable);
         VBox.setVgrow(requestTable, Priority.ALWAYS);
