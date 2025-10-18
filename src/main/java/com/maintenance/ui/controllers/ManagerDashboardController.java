@@ -45,6 +45,7 @@ public class ManagerDashboardController {
         mainLayout.setLeft(sidebar);
 
         VBox centerContent = createCenterContent();
+        VBox.setVgrow(centerContent, Priority.ALWAYS); // helps center fill vertically
         mainLayout.setCenter(centerContent);
 
         AnchorPane.setTopAnchor(mainLayout, 0.0);
@@ -125,9 +126,12 @@ public class ManagerDashboardController {
     private VBox createCenterContent() {
         VBox content = new VBox(20);
         content.setPadding(new Insets(30));
+        content.setFillWidth(true);
 
         HBox statsBox = createStatsCards();
         VBox requestsSection = createRequestsSection();
+
+        VBox.setVgrow(requestsSection, Priority.ALWAYS); // take remaining height
 
         content.getChildren().addAll(statsBox, requestsSection);
         return content;
@@ -188,6 +192,7 @@ public class ManagerDashboardController {
 
     private VBox createRequestsSection() {
         VBox section = new VBox(15);
+        section.setFillWidth(true);
 
         Label sectionTitle = new Label("All Maintenance Requests");
         sectionTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
@@ -195,6 +200,8 @@ public class ManagerDashboardController {
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
         requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        requestTable.setMaxHeight(Double.MAX_VALUE);      // allow vertical growth
+        VBox.setVgrow(requestTable, Priority.ALWAYS);     // fill leftover space
 
         TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("Request ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
@@ -267,6 +274,7 @@ public class ManagerDashboardController {
         loadRequests();
 
         section.getChildren().addAll(sectionTitle, requestTable);
+        VBox.setVgrow(requestTable, Priority.ALWAYS);
         return section;
     }
 
