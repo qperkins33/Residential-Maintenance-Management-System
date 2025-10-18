@@ -243,13 +243,17 @@ public class StaffDashboardController {
                 .filter(r -> r.getPriority() == PriorityLevel.URGENT ||
                         r.getPriority() == PriorityLevel.EMERGENCY)
                 .count();
+        long cancelled = myRequests.stream()
+                .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
+                .count();
 
         VBox assignedCard = createStatCard("Assigned Tasks", String.valueOf(assigned), "#667eea", "📋");
         VBox inProgressCard = createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "⚙️");
         VBox completedCard = createStatCard("Completed Today", String.valueOf(completed), "#4caf50", "✅");
         VBox urgentCard = createStatCard("Urgent", String.valueOf(urgent), "#f44336", "🚨");
+        VBox cancelledCard = createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
 
-        statsBox.getChildren().addAll(assignedCard, inProgressCard, completedCard, urgentCard);
+        statsBox.getChildren().addAll(assignedCard, inProgressCard, urgentCard, completedCard, cancelledCard);
         return statsBox;
     }
 
