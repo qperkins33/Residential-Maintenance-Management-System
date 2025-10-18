@@ -54,6 +54,7 @@ public class TenantDashboardController {
 
         // Center content
         VBox centerContent = createCenterContent();
+        VBox.setVgrow(centerContent, Priority.ALWAYS);
         mainLayout.setCenter(centerContent);
 
         AnchorPane.setTopAnchor(mainLayout, 0.0);
@@ -148,12 +149,16 @@ public class TenantDashboardController {
     private VBox createCenterContent() {
         VBox content = new VBox(20);
         content.setPadding(new Insets(30));
+        content.setFillWidth(true);
 
         // Stats cards
         HBox statsBox = createStatsCards();
 
         // Requests section
         VBox requestsSection = createRequestsSection();
+
+        // make the requests area take remaining vertical space
+        VBox.setVgrow(requestsSection, Priority.ALWAYS);
 
         content.getChildren().addAll(statsBox, requestsSection);
         return content;
@@ -209,6 +214,7 @@ public class TenantDashboardController {
 
     private VBox createRequestsSection() {
         VBox section = new VBox(15);
+        section.setFillWidth(true);
 
         HBox headerBox = new HBox(20);
         headerBox.setAlignment(Pos.CENTER_LEFT);
@@ -229,6 +235,8 @@ public class TenantDashboardController {
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
         requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        requestTable.setMaxHeight(Double.MAX_VALUE);              // allow vertical growth
+        VBox.setVgrow(requestTable, Priority.ALWAYS);             // take leftover space
 
         TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("Request ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
@@ -289,6 +297,7 @@ public class TenantDashboardController {
         loadRequests();
 
         section.getChildren().addAll(headerBox, requestTable);
+        VBox.setVgrow(requestTable, Priority.ALWAYS);
         return section;
     }
 
