@@ -388,10 +388,13 @@ public class StaffDashboardController {
                         setStyle("-fx-background-color: #ff9800; -fx-text-fill: white; " +
                                 "-fx-background-radius: 3; -fx-padding: 5;");
                     } else if (item == RequestStatus.REOPENED) {
-                        setStyle("-fx-background-color: #7e57c2; -fx-text-fill: white; " +
+                        setStyle("-fx-background-color: #FFB74D; -fx-text-fill: white; " +
                                 "-fx-background-radius: 3; -fx-padding: 5;");
                     } else if (item == RequestStatus.ASSIGNED) {
                         setStyle("-fx-background-color: #2196f3; -fx-text-fill: white; " +
+                                "-fx-background-radius: 3; -fx-padding: 5;");
+                    } else if (item == RequestStatus.CANCELLED) {
+                        setStyle("-fx-background-color: #F44336; -fx-text-fill: white; " +
                                 "-fx-background-radius: 3; -fx-padding: 5;");
                     } else {
                         setStyle("-fx-background-color: #9e9e9e; -fx-text-fill: white; " +
