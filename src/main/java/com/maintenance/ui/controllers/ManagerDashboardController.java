@@ -153,12 +153,17 @@ public class ManagerDashboardController {
                         r.getPriority().name().contains("EMERGENCY"))
                 .count();
 
+        long cancelled = allRequests.stream()
+                .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
+                .count();
+
         VBox totalCard = createStatCard("Total Requests", String.valueOf(allRequests.size()), "#667eea");
         VBox pendingCard = createStatCard("Pending", String.valueOf(pending), "#ff9800");
         VBox completedCard = createStatCard("Completed", String.valueOf(completed), "#4caf50");
         VBox urgentCard = createStatCard("Urgent", String.valueOf(urgent), "#f44336");
+        VBox cancelledCard = createStatCard("Cancelled", String.valueOf(cancelled), "#f44336");
 
-        statsBox.getChildren().addAll(totalCard, pendingCard, completedCard, urgentCard);
+        statsBox.getChildren().addAll(totalCard, pendingCard, urgentCard, completedCard, cancelledCard);
         return statsBox;
     }
 

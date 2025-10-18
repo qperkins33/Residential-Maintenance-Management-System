@@ -243,6 +243,7 @@ public class StaffDashboardController {
                 .filter(r -> r.getPriority() == PriorityLevel.URGENT ||
                         r.getPriority() == PriorityLevel.EMERGENCY)
                 .count();
+
         long cancelled = myRequests.stream()
                 .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
                 .count();
