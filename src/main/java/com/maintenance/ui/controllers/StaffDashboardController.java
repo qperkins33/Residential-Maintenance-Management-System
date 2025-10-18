@@ -244,12 +244,17 @@ public class StaffDashboardController {
                         r.getPriority() == PriorityLevel.EMERGENCY)
                 .count();
 
+        long cancelled = myRequests.stream()
+                .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
+                .count();
+
         VBox assignedCard = createStatCard("Assigned Tasks", String.valueOf(assigned), "#667eea", "📋");
         VBox inProgressCard = createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "⚙️");
         VBox completedCard = createStatCard("Completed Today", String.valueOf(completed), "#4caf50", "✅");
         VBox urgentCard = createStatCard("Urgent", String.valueOf(urgent), "#f44336", "🚨");
+        VBox cancelledCard = createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
 
-        statsBox.getChildren().addAll(assignedCard, inProgressCard, completedCard, urgentCard);
+        statsBox.getChildren().addAll(assignedCard, inProgressCard, urgentCard, completedCard, cancelledCard);
         return statsBox;
     }
 
@@ -388,10 +393,13 @@ public class StaffDashboardController {
                         setStyle("-fx-background-color: #ff9800; -fx-text-fill: white; " +
                                 "-fx-background-radius: 3; -fx-padding: 5;");
                     } else if (item == RequestStatus.REOPENED) {
-                        setStyle("-fx-background-color: #7e57c2; -fx-text-fill: white; " +
+                        setStyle("-fx-background-color: #FFB74D; -fx-text-fill: white; " +
                                 "-fx-background-radius: 3; -fx-padding: 5;");
                     } else if (item == RequestStatus.ASSIGNED) {
                         setStyle("-fx-background-color: #2196f3; -fx-text-fill: white; " +
+                                "-fx-background-radius: 3; -fx-padding: 5;");
+                    } else if (item == RequestStatus.CANCELLED) {
+                        setStyle("-fx-background-color: #F44336; -fx-text-fill: white; " +
                                 "-fx-background-radius: 3; -fx-padding: 5;");
                     } else {
                         setStyle("-fx-background-color: #9e9e9e; -fx-text-fill: white; " +
