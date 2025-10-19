@@ -13,7 +13,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
@@ -33,7 +32,7 @@ public class StaffDashboardController {
     }
 
     public void createDashboardUI(AnchorPane root) {
-        root.setStyle("-fx-background-color: #f5f7fa;");
+        root.getStyleClass().add("staff-dashboard-root");
 
         BorderPane mainLayout = new BorderPane();
         mainLayout.setPadding(new Insets(0));
@@ -62,11 +61,11 @@ public class StaffDashboardController {
         HBox topBar = new HBox(20);
         topBar.setPadding(new Insets(15, 30, 15, 30));
         topBar.setAlignment(Pos.CENTER_LEFT);
-        topBar.setStyle("-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;");
+        topBar.getStyleClass().add("top-bar");
 
         Label titleLabel = new Label("🔧 Staff Dashboard");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        titleLabel.setTextFill(Color.web("#667eea"));
+        titleLabel.getStyleClass().add("top-bar-title");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -74,10 +73,10 @@ public class StaffDashboardController {
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
         Label userLabel = new Label("👤 " + staff.getFullName() + " (Maintenance Staff)");
         userLabel.setFont(Font.font("Arial", 14));
+        userLabel.getStyleClass().add("top-bar-user");
 
         Button logoutButton = new Button("Logout");
-        logoutButton.setStyle("-fx-background-color: #ff5252; -fx-text-fill: white; " +
-                "-fx-padding: 8 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        logoutButton.getStyleClass().addAll("button", "button-danger");
         logoutButton.setOnAction(e -> {
             authService.logout();
             Stage stage = (Stage) logoutButton.getScene().getWindow();
@@ -92,12 +91,12 @@ public class StaffDashboardController {
     private VBox createSidebar() {
         VBox sidebar = new VBox(15);
         sidebar.setPadding(new Insets(20));
-        sidebar.setStyle("-fx-background-color: #2c3e50;");
         sidebar.setPrefWidth(250);
+        sidebar.getStyleClass().add("sidebar");
 
         Label menuLabel = new Label("MENU");
         menuLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        menuLabel.setTextFill(Color.web("#95a5a6"));
+        menuLabel.getStyleClass().add("sidebar-menu-label");
 
         Button dashboardBtn = createSidebarButton("📊 Dashboard", true);
         Button assignedBtn = createSidebarButton("📋 Assigned Tasks", false);
@@ -121,46 +120,29 @@ public class StaffDashboardController {
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setAlignment(Pos.CENTER_LEFT);
         btn.setFont(Font.font("Arial", 14));
-
+        btn.getStyleClass().add("sidebar-button");
         if (active) {
-            btn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                    "-fx-padding: 12 15; -fx-background-radius: 5;");
+            btn.getStyleClass().add("sidebar-button-active");
         } else {
-            btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #ecf0f1; " +
-                    "-fx-padding: 12 15; -fx-background-radius: 5;");
+            btn.getStyleClass().add("sidebar-button-inactive");
         }
-
-        btn.setOnMouseEntered(e -> {
-            if (!active) {
-                btn.setStyle("-fx-background-color: #34495e; -fx-text-fill: white; " +
-                        "-fx-padding: 12 15; -fx-background-radius: 5;");
-            }
-        });
-        btn.setOnMouseExited(e -> {
-            if (!active) {
-                btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #ecf0f1; " +
-                        "-fx-padding: 12 15; -fx-background-radius: 5;");
-            }
-        });
-
         return btn;
     }
 
     private VBox createAvailabilityToggle() {
         VBox box = new VBox(10);
         box.setPadding(new Insets(15));
-        box.setStyle("-fx-background-color: #34495e; -fx-background-radius: 8;");
+        box.getStyleClass().add("availability-box");
 
         Label statusLabel = new Label("Availability Status");
         statusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        statusLabel.setTextFill(Color.web("#ecf0f1"));
+        statusLabel.getStyleClass().add("availability-status-label");
 
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
 
         CheckBox availableCheck = new CheckBox("Available for assignments");
-        availableCheck.setTextFill(Color.WHITE);
         availableCheck.setSelected(staff.isAvailable());
-        availableCheck.setStyle("-fx-font-size: 12px;");
+        availableCheck.getStyleClass().add("availability-checkbox");
 
         availableCheck.setOnAction(e -> {
             staff.updateAvailability(availableCheck.isSelected());
@@ -170,7 +152,7 @@ public class StaffDashboardController {
         Label workloadLabel = new Label("Workload: " + staff.getCurrentWorkload() +
                 "/" + staff.getMaxCapacity());
         workloadLabel.setFont(Font.font("Arial", 11));
-        workloadLabel.setTextFill(Color.web("#bdc3c7"));
+        workloadLabel.getStyleClass().add("availability-workload-label");
 
         box.getChildren().addAll(statusLabel, availableCheck, workloadLabel);
         return box;
@@ -213,12 +195,12 @@ public class StaffDashboardController {
 
         Label welcomeLabel = new Label("Welcome back, " + staff.getFirstName() + "!");
         welcomeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-        welcomeLabel.setTextFill(Color.web("#2c3e50"));
+        welcomeLabel.getStyleClass().add("welcome-heading");
 
         Label dateLabel = new Label("Today: " +
                 java.time.LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy")));
         dateLabel.setFont(Font.font("Arial", 13));
-        dateLabel.setTextFill(Color.GRAY);
+        dateLabel.getStyleClass().add("welcome-subheading");
 
         welcomeBox.getChildren().addAll(welcomeLabel, dateLabel);
         return welcomeBox;
@@ -252,23 +234,22 @@ public class StaffDashboardController {
                 .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
                 .count();
 
-        VBox assignedCard = createStatCard("Assigned Tasks", String.valueOf(assigned), "#667eea", "📋");
-        VBox inProgressCard = createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "⚙️");
-        VBox completedCard = createStatCard("Completed Today", String.valueOf(completed), "#4caf50", "✅");
-        VBox urgentCard = createStatCard("Urgent", String.valueOf(urgent), "#f44336", "🚨");
-        VBox cancelledCard = createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
+        VBox assignedCard = createStatCard("Assigned Tasks", String.valueOf(assigned), "stat-card-value-primary", "📋");
+        VBox inProgressCard = createStatCard("In Progress", String.valueOf(inProgress), "stat-card-value-warning", "⚙️");
+        VBox completedCard = createStatCard("Completed Today", String.valueOf(completed), "stat-card-value-success", "✅");
+        VBox urgentCard = createStatCard("Urgent", String.valueOf(urgent), "stat-card-value-alert", "🚨");
+        VBox cancelledCard = createStatCard("Cancelled", String.valueOf(cancelled), "stat-card-value-danger", "❌");
 
         statsBox.getChildren().addAll(assignedCard, inProgressCard, urgentCard, completedCard, cancelledCard);
         return statsBox;
     }
 
-    private VBox createStatCard(String title, String value, String color, String icon) {
+    private VBox createStatCard(String title, String value, String valueStyleClass, String icon) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20));
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 10; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
         card.setPrefWidth(220);
         card.setAlignment(Pos.TOP_LEFT);
+        card.getStyleClass().addAll("card", "stat-card");
 
         HBox headerBox = new HBox(10);
         headerBox.setAlignment(Pos.CENTER_LEFT);
@@ -278,24 +259,15 @@ public class StaffDashboardController {
 
         Label titleLabel = new Label(title);
         titleLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 13));
-        titleLabel.setTextFill(Color.GRAY);
+        titleLabel.getStyleClass().add("stat-card-title");
 
         headerBox.getChildren().addAll(iconLabel, titleLabel);
 
         Label valueLabel = new Label(value);
         valueLabel.setFont(Font.font("Arial", FontWeight.BOLD, 36));
-        valueLabel.setTextFill(Color.web(color));
+        valueLabel.getStyleClass().addAll("stat-card-value", valueStyleClass);
 
         card.getChildren().addAll(headerBox, valueLabel);
-
-        // Hover effect
-        card.setOnMouseEntered(e ->
-                card.setStyle("-fx-background-color: white; -fx-background-radius: 10; " +
-                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 15, 0, 0, 5); " +
-                        "-fx-cursor: hand;"));
-        card.setOnMouseExited(e ->
-                card.setStyle("-fx-background-color: white; -fx-background-radius: 10; " +
-                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);"));
 
         return card;
     }
@@ -309,6 +281,7 @@ public class StaffDashboardController {
 
         Label sectionTitle = new Label("My Assigned Requests");
         sectionTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        sectionTitle.getStyleClass().add("section-title");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -316,29 +289,28 @@ public class StaffDashboardController {
         ComboBox<String> filterBox = new ComboBox<>();
         filterBox.getItems().addAll("All Tasks", "Assigned", "In Progress", "Urgent Only");
         filterBox.setValue("All Tasks");
-        filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
+        filterBox.getStyleClass().add("filter-box");
         filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
 
         Button refreshBtn = new Button("🔄 Refresh");
-        refreshBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                "-fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        refreshBtn.getStyleClass().addAll("button", "button-primary", "refresh-button");
         refreshBtn.setOnAction(e -> loadRequests());
 
         headerBox.getChildren().addAll(sectionTitle, spacer, filterBox, refreshBtn);
 
         requestTable = new TableView<>();
-        requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
+        requestTable.getStyleClass().add("request-table");
         requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("Request ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
         idCol.setPrefWidth(100);
-        idCol.setStyle("-fx-alignment: CENTER;");
+        idCol.setCellFactory(column -> createCenteredTextCell());
 
         TableColumn<MaintenanceRequest, String> aptCol = new TableColumn<>("Apartment");
         aptCol.setCellValueFactory(new PropertyValueFactory<>("apartmentNumber"));
         aptCol.setPrefWidth(100);
-        aptCol.setStyle("-fx-alignment: CENTER;");
+        aptCol.setCellFactory(column -> createCenteredTextCell());
 
         TableColumn<MaintenanceRequest, String> categoryCol = new TableColumn<>("Category");
         categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
@@ -347,31 +319,58 @@ public class StaffDashboardController {
         TableColumn<MaintenanceRequest, String> descCol = new TableColumn<>("Description");
         descCol.setCellValueFactory(new PropertyValueFactory<>("description"));
         descCol.setPrefWidth(280);
-        descCol.setStyle("-fx-wrap-text: true;");
+        descCol.setCellFactory(column -> new TableCell<>() {
+            private final Label label = new Label();
+
+            {
+                label.setWrapText(true);
+                label.setMaxWidth(Double.MAX_VALUE);
+                label.getStyleClass().add("request-description");
+            }
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(null);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    label.setText(item);
+                    setGraphic(label);
+                    setPrefHeight(Control.USE_COMPUTED_SIZE);
+                }
+            }
+        });
 
         // CORRECTED Priority Column - uses PriorityLevel type instead of String
         TableColumn<MaintenanceRequest, PriorityLevel> priorityCol = new TableColumn<>("Priority");
         priorityCol.setCellValueFactory(new PropertyValueFactory<>("priority"));
         priorityCol.setPrefWidth(100);
-        priorityCol.setStyle("-fx-alignment: CENTER;");
         priorityCol.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(PriorityLevel item, boolean empty) {
                 super.updateItem(item, empty);
+                getStyleClass().removeAll("priority-badge", "priority-emergency", "priority-urgent",
+                        "priority-high", "priority-medium", "priority-low");
                 if (empty || item == null) {
                     setText(null);
-                    setStyle("");
+                    setAlignment(Pos.CENTER);
+                    setGraphic(null);
                 } else {
                     setText(item.getDisplayName());
-                    if (item == PriorityLevel.EMERGENCY || item == PriorityLevel.URGENT) {
-                        setStyle("-fx-background-color: #ffebee; -fx-text-fill: #c62828; " +
-                                "-fx-font-weight: bold;");
+                    setAlignment(Pos.CENTER);
+                    setGraphic(null);
+                    getStyleClass().add("priority-badge");
+                    if (item == PriorityLevel.EMERGENCY) {
+                        getStyleClass().add("priority-emergency");
+                    } else if (item == PriorityLevel.URGENT) {
+                        getStyleClass().add("priority-urgent");
                     } else if (item == PriorityLevel.HIGH) {
-                        setStyle("-fx-background-color: #fff3e0; -fx-text-fill: #ef6c00;");
+                        getStyleClass().add("priority-high");
                     } else if (item == PriorityLevel.MEDIUM) {
-                        setStyle("-fx-background-color: #fff9c4; -fx-text-fill: #f57f17;");
+                        getStyleClass().add("priority-medium");
                     } else {
-                        setStyle("-fx-background-color: #e8f5e9; -fx-text-fill: #2e7d32;");
+                        getStyleClass().add("priority-low");
                     }
                 }
             }
@@ -381,34 +380,33 @@ public class StaffDashboardController {
         TableColumn<MaintenanceRequest, RequestStatus> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
         statusCol.setPrefWidth(120);
-        statusCol.setStyle("-fx-alignment: CENTER;");
         statusCol.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(RequestStatus item, boolean empty) {
                 super.updateItem(item, empty);
+                getStyleClass().removeAll("status-badge", "status-completed", "status-in-progress",
+                        "status-reopened", "status-assigned", "status-cancelled", "status-default");
                 if (empty || item == null) {
                     setText(null);
-                    setStyle("");
+                    setAlignment(Pos.CENTER);
+                    setGraphic(null);
                 } else {
                     setText(item.getDisplayName());
+                    setAlignment(Pos.CENTER);
+                    setGraphic(null);
+                    getStyleClass().add("status-badge");
                     if (item == RequestStatus.COMPLETED) {
-                        setStyle("-fx-background-color: #4caf50; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
+                        getStyleClass().add("status-completed");
                     } else if (item == RequestStatus.IN_PROGRESS) {
-                        setStyle("-fx-background-color: #ff9800; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
+                        getStyleClass().add("status-in-progress");
                     } else if (item == RequestStatus.REOPENED) {
-                        setStyle("-fx-background-color: #FFB74D; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
+                        getStyleClass().add("status-reopened");
                     } else if (item == RequestStatus.ASSIGNED) {
-                        setStyle("-fx-background-color: #2196f3; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
+                        getStyleClass().add("status-assigned");
                     } else if (item == RequestStatus.CANCELLED) {
-                        setStyle("-fx-background-color: #F44336; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
+                        getStyleClass().add("status-cancelled");
                     } else {
-                        setStyle("-fx-background-color: #9e9e9e; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
+                        getStyleClass().add("status-default");
                     }
                 }
             }
@@ -422,11 +420,10 @@ public class StaffDashboardController {
                 )
         );
         dateCol.setPrefWidth(150);
-        dateCol.setStyle("-fx-alignment: CENTER;");
+        dateCol.setCellFactory(column -> createCenteredTextCell());
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
         actionCol.setPrefWidth(180);
-        actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
             private final Button startBtn = new Button("Start");
             private final Button completeBtn = new Button("Complete");
@@ -434,12 +431,9 @@ public class StaffDashboardController {
             private final HBox buttonBox = new HBox(5);
 
             {
-                startBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
-                completeBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
-                viewBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
+                startBtn.getStyleClass().addAll("button", "button-primary", "table-action-button");
+                completeBtn.getStyleClass().addAll("button", "button-success", "table-action-button");
+                viewBtn.getStyleClass().addAll("button", "button-secondary", "table-action-button");
 
                 startBtn.setOnAction(event -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
@@ -457,6 +451,7 @@ public class StaffDashboardController {
                 });
 
                 buttonBox.setAlignment(Pos.CENTER);
+                buttonBox.getStyleClass().add("action-button-group");
             }
 
             @Override
@@ -496,7 +491,7 @@ public class StaffDashboardController {
         // Empty state
         Label emptyLabel = new Label("No requests assigned yet");
         emptyLabel.setFont(Font.font("Arial", 14));
-        emptyLabel.setTextFill(Color.GRAY);
+        emptyLabel.getStyleClass().add("table-empty-placeholder");
         requestTable.setPlaceholder(emptyLabel);
 
         requestTable.setMaxHeight(Double.MAX_VALUE); // allow vertical growth
@@ -506,6 +501,23 @@ public class StaffDashboardController {
         VBox.setVgrow(requestTable, Priority.ALWAYS);
 
         return section;
+    }
+
+    private TableCell<MaintenanceRequest, String> createCenteredTextCell() {
+        return new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    setText(item);
+                    setGraphic(null);
+                }
+                setAlignment(Pos.CENTER);
+            }
+        };
     }
 
     private void loadRequests() {
@@ -580,6 +592,7 @@ public class StaffDashboardController {
         grid.setHgap(10);
         grid.setVgap(15);
         grid.setPadding(new Insets(20));
+        grid.getStyleClass().add("dialog-grid");
 
         TextArea resolutionArea = new TextArea();
         resolutionArea.setPromptText("Describe what was done to resolve the issue...");
@@ -601,7 +614,6 @@ public class StaffDashboardController {
         grid.add(costField, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
-        dialog.getDialogPane().setStyle("-fx-background-color: white;");
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == completeButtonType) {
@@ -653,7 +665,7 @@ public class StaffDashboardController {
         grid.setHgap(15);
         grid.setVgap(12);
         grid.setPadding(new Insets(20));
-        grid.setStyle("-fx-background-color: white;");
+        grid.getStyleClass().add("details-grid");
 
         int row = 0;
 
@@ -672,6 +684,7 @@ public class StaffDashboardController {
 
         Label descLabel = new Label("Description:");
         descLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        descLabel.getStyleClass().add("detail-section-label");
         TextArea descArea = new TextArea(request.getDescription());
         descArea.setWrapText(true);
         descArea.setEditable(false);
@@ -683,6 +696,7 @@ public class StaffDashboardController {
         if (request.getResolutionNotes() != null && !request.getResolutionNotes().isEmpty()) {
             Label resLabel = new Label("Resolution:");
             resLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            resLabel.getStyleClass().add("detail-section-label");
             TextArea resArea = new TextArea(request.getResolutionNotes());
             resArea.setWrapText(true);
             resArea.setEditable(false);
@@ -705,11 +719,12 @@ public class StaffDashboardController {
     private void addDetailRow(GridPane grid, int row, String label, String value) {
         Label lblLabel = new Label(label);
         lblLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        lblLabel.setTextFill(Color.web("#555"));
+        lblLabel.getStyleClass().add("detail-label");
 
         Label valueLabel = new Label(value);
         valueLabel.setFont(Font.font("Arial", 12));
         valueLabel.setWrapText(true);
+        valueLabel.getStyleClass().add("detail-value");
 
         grid.add(lblLabel, 0, row);
         grid.add(valueLabel, 1, row);
