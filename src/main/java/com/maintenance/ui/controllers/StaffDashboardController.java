@@ -19,6 +19,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 
 public class StaffDashboardController {
     private final ViewFactory viewFactory;
@@ -33,7 +34,10 @@ public class StaffDashboardController {
     }
 
     public void createDashboardUI(AnchorPane root) {
-        root.setStyle("-fx-background-color: #f5f7fa;");
+        root.getStylesheets().add(
+                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
+        );
+        root.getStyleClass().add("app-root");
 
         BorderPane mainLayout = new BorderPane();
         mainLayout.setPadding(new Insets(0));
@@ -62,11 +66,10 @@ public class StaffDashboardController {
         HBox topBar = new HBox(20);
         topBar.setPadding(new Insets(15, 30, 15, 30));
         topBar.setAlignment(Pos.CENTER_LEFT);
-        topBar.setStyle("-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;");
+        topBar.getStyleClass().add("top-bar");
 
         Label titleLabel = new Label("🔧 Staff Dashboard");
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        titleLabel.setTextFill(Color.web("#667eea"));
+        titleLabel.getStyleClass().add("top-bar-title");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -349,7 +352,6 @@ public class StaffDashboardController {
         descCol.setPrefWidth(280);
         descCol.setStyle("-fx-wrap-text: true;");
 
-        // CORRECTED Priority Column - uses PriorityLevel type instead of String
         TableColumn<MaintenanceRequest, PriorityLevel> priorityCol = new TableColumn<>("Priority");
         priorityCol.setCellValueFactory(new PropertyValueFactory<>("priority"));
         priorityCol.setPrefWidth(100);
@@ -358,58 +360,51 @@ public class StaffDashboardController {
             @Override
             protected void updateItem(PriorityLevel item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setStyle("");
-                } else {
-                    setText(item.getDisplayName());
-                    if (item == PriorityLevel.EMERGENCY || item == PriorityLevel.URGENT) {
-                        setStyle("-fx-background-color: #ffebee; -fx-text-fill: #c62828; " +
-                                "-fx-font-weight: bold;");
-                    } else if (item == PriorityLevel.HIGH) {
-                        setStyle("-fx-background-color: #fff3e0; -fx-text-fill: #ef6c00;");
-                    } else if (item == PriorityLevel.MEDIUM) {
-                        setStyle("-fx-background-color: #fff9c4; -fx-text-fill: #f57f17;");
-                    } else {
-                        setStyle("-fx-background-color: #e8f5e9; -fx-text-fill: #2e7d32;");
-                    }
-                }
+                setText(null);
+                setStyle(""); // clear inline in case
+                getStyleClass().removeAll("priority-urgent","priority-high","priority-medium","priority-else");
+                if (empty || item == null) return;
+                setText(item.getDisplayName());
+                getStyleClass().add(
+                        (item == PriorityLevel.EMERGENCY || item == PriorityLevel.URGENT) ? "priority-urgent" :
+                                item == PriorityLevel.HIGH ? "priority-high" :
+                                        item == PriorityLevel.MEDIUM ? "priority-medium" : "priority-else"
+                );
             }
+
         });
 
-        // CORRECTED Status Column - uses RequestStatus type instead of String
         TableColumn<MaintenanceRequest, RequestStatus> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
         statusCol.setPrefWidth(120);
         statusCol.setStyle("-fx-alignment: CENTER;");
         statusCol.setCellFactory(column -> new TableCell<>() {
+
+            private final List<String> statusClasses = List.of(
+                    "status-completed",
+                    "status-in-progress",
+                    "status-reopened",
+                    "status-assigned",
+                    "status-cancelled",
+                    "status-else"
+            );
+
             @Override
             protected void updateItem(RequestStatus item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setStyle("");
-                } else {
-                    setText(item.getDisplayName());
-                    if (item == RequestStatus.COMPLETED) {
-                        setStyle("-fx-background-color: #4caf50; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
-                    } else if (item == RequestStatus.IN_PROGRESS) {
-                        setStyle("-fx-background-color: #ff9800; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
-                    } else if (item == RequestStatus.REOPENED) {
-                        setStyle("-fx-background-color: #FFB74D; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
-                    } else if (item == RequestStatus.ASSIGNED) {
-                        setStyle("-fx-background-color: #2196f3; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
-                    } else if (item == RequestStatus.CANCELLED) {
-                        setStyle("-fx-background-color: #F44336; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
-                    } else {
-                        setStyle("-fx-background-color: #9e9e9e; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
-                    }
+                setText(null);
+                setStyle("");                      // clear any inline styles
+                getStyleClass().removeAll(statusClasses);  // clear old classes
+                if (empty || item == null) return;
+
+                setText(item.getDisplayName());
+                switch (item) {
+                    case COMPLETED -> getStyleClass().add("status-completed");
+                    case IN_PROGRESS -> getStyleClass().add("status-in-progress");
+                    case REOPENED -> getStyleClass().add("status-reopened");
+                    case ASSIGNED -> getStyleClass().add("status-assigned");
+                    case CANCELLED -> getStyleClass().add("status-cancelled");
+                    default -> getStyleClass().add("status-else");
                 }
             }
         });
@@ -482,10 +477,6 @@ public class StaffDashboardController {
                 }
             }
         });
-
-        // Old version
-//        requestTable.getColumns().addAll(idCol, aptCol, categoryCol, descCol,
-//                priorityCol, statusCol, dateCol, actionCol);
 
         requestTable.getColumns().setAll(java.util.Arrays.asList(
                 idCol, aptCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol
