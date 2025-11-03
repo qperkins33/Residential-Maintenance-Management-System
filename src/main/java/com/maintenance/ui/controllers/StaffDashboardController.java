@@ -360,22 +360,18 @@ public class StaffDashboardController {
             @Override
             protected void updateItem(PriorityLevel item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setStyle("");
-                } else {
-                    setText(item.getDisplayName());
-                    if (item == PriorityLevel.EMERGENCY || item == PriorityLevel.URGENT) {
-                        getStyleClass().add("priority-urgent");
-                    } else if (item == PriorityLevel.HIGH) {
-                        getStyleClass().add("priority-high");
-                    } else if (item == PriorityLevel.MEDIUM) {
-                        getStyleClass().add("priority-medium");
-                    } else {
-                        getStyleClass().add("priority-else");
-                    }
-                }
+                setText(null);
+                setStyle(""); // clear inline in case
+                getStyleClass().removeAll("priority-urgent","priority-high","priority-medium","priority-else");
+                if (empty || item == null) return;
+                setText(item.getDisplayName());
+                getStyleClass().add(
+                        (item == PriorityLevel.EMERGENCY || item == PriorityLevel.URGENT) ? "priority-urgent" :
+                                item == PriorityLevel.HIGH ? "priority-high" :
+                                        item == PriorityLevel.MEDIUM ? "priority-medium" : "priority-else"
+                );
             }
+
         });
 
         TableColumn<MaintenanceRequest, RequestStatus> statusCol = new TableColumn<>("Status");
