@@ -19,6 +19,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 
 public class StaffDashboardController {
     private final ViewFactory viewFactory;
@@ -33,7 +34,10 @@ public class StaffDashboardController {
     }
 
     public void createDashboardUI(AnchorPane root) {
-        root.setStyle("-fx-background-color: #f5f7fa;");
+        root.getStylesheets().add(
+                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
+        );
+        root.getStyleClass().add("app-root");
 
         BorderPane mainLayout = new BorderPane();
         mainLayout.setPadding(new Insets(0));
@@ -62,11 +66,10 @@ public class StaffDashboardController {
         HBox topBar = new HBox(20);
         topBar.setPadding(new Insets(15, 30, 15, 30));
         topBar.setAlignment(Pos.CENTER_LEFT);
-        topBar.setStyle("-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;");
+        topBar.getStyleClass().add("top-bar");
 
         Label titleLabel = new Label("🔧 Staff Dashboard");
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        titleLabel.setTextFill(Color.web("#667eea"));
+        titleLabel.getStyleClass().add("top-bar-title");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);

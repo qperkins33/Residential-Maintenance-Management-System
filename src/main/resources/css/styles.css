@@ -1,4 +1,19 @@
 /* Root Variables */
+.app-root { -fx-background-color: #f5f7fa; }
+
+.top-bar {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.top-bar-title {
+    -fx-font-family: "Arial";
+    -fx-font-size: 20;
+    -fx-font-weight: bold;
+    -fx-text-fill: #667eea;
+}
+
 :root {
     -fx-primary-color: #667eea;
     -fx-primary-dark: #5568d3;
