@@ -352,7 +352,6 @@ public class StaffDashboardController {
         descCol.setPrefWidth(280);
         descCol.setStyle("-fx-wrap-text: true;");
 
-        // CORRECTED Priority Column - uses PriorityLevel type instead of String
         TableColumn<MaintenanceRequest, PriorityLevel> priorityCol = new TableColumn<>("Priority");
         priorityCol.setCellValueFactory(new PropertyValueFactory<>("priority"));
         priorityCol.setPrefWidth(100);
@@ -379,7 +378,6 @@ public class StaffDashboardController {
             }
         });
 
-        // CORRECTED Status Column - uses RequestStatus type instead of String
         TableColumn<MaintenanceRequest, RequestStatus> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
         statusCol.setPrefWidth(120);
@@ -473,10 +471,6 @@ public class StaffDashboardController {
                 }
             }
         });
-
-        // Old version
-//        requestTable.getColumns().addAll(idCol, aptCol, categoryCol, descCol,
-//                priorityCol, statusCol, dateCol, actionCol);
 
         requestTable.getColumns().setAll(java.util.Arrays.asList(
                 idCol, aptCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol
