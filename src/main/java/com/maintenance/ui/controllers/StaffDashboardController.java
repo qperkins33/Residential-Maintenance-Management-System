@@ -367,14 +367,13 @@ public class StaffDashboardController {
                 } else {
                     setText(item.getDisplayName());
                     if (item == PriorityLevel.EMERGENCY || item == PriorityLevel.URGENT) {
-                        setStyle("-fx-background-color: #ffebee; -fx-text-fill: #c62828; " +
-                                "-fx-font-weight: bold;");
+                        getStyleClass().add("priority-urgent");
                     } else if (item == PriorityLevel.HIGH) {
-                        setStyle("-fx-background-color: #fff3e0; -fx-text-fill: #ef6c00;");
+                        getStyleClass().add("priority-high");
                     } else if (item == PriorityLevel.MEDIUM) {
-                        setStyle("-fx-background-color: #fff9c4; -fx-text-fill: #f57f17;");
+                        getStyleClass().add("priority-medium");
                     } else {
-                        setStyle("-fx-background-color: #e8f5e9; -fx-text-fill: #2e7d32;");
+                        getStyleClass().add("priority-else");
                     }
                 }
             }
@@ -395,23 +394,17 @@ public class StaffDashboardController {
                 } else {
                     setText(item.getDisplayName());
                     if (item == RequestStatus.COMPLETED) {
-                        setStyle("-fx-background-color: #4caf50; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
+                        getStyleClass().add("status-completed");
                     } else if (item == RequestStatus.IN_PROGRESS) {
-                        setStyle("-fx-background-color: #ff9800; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
+                        getStyleClass().add("status-in-progress");
                     } else if (item == RequestStatus.REOPENED) {
-                        setStyle("-fx-background-color: #FFB74D; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
+                        getStyleClass().add("status-reopened");
                     } else if (item == RequestStatus.ASSIGNED) {
-                        setStyle("-fx-background-color: #2196f3; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
+                        getStyleClass().add("status-assigned");
                     } else if (item == RequestStatus.CANCELLED) {
-                        setStyle("-fx-background-color: #F44336; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
+                        getStyleClass().add("status-cancelled");
                     } else {
-                        setStyle("-fx-background-color: #9e9e9e; -fx-text-fill: white; " +
-                                "-fx-background-radius: 3; -fx-padding: 5;");
+                        getStyleClass().add("status-else");
                     }
                 }
             }

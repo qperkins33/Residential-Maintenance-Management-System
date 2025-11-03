@@ -188,36 +188,63 @@
 }
 
 .status-completed {
-    -fx-background-color: #4CAF50;
+    -fx-background-color: #4caf50;
     -fx-text-fill: white;
     -fx-background-radius: 3;
-    -fx-padding: 3 8;
+    -fx-padding: 5;
 }
 
 .status-in-progress {
-    -fx-background-color: #FF9800;
+    -fx-background-color: #ff9800;
     -fx-text-fill: white;
     -fx-background-radius: 3;
-    -fx-padding: 3 8;
+    -fx-padding: 5;
+}
+
+.status-reopened {
+    -fx-background-color: #FFB74D;
+    -fx-text-fill: white;
+    -fx-background-radius: 3;
+    -fx-padding: 5
+}
+
+.status-assigned {
+    -fx-background-color: #2196f3;
+    -fx-text-fill: white;
+    -fx-background-radius: 3;
+    -fx-padding: 5;
+}
+
+.status-cancelled {
+    -fx-background-color: #F44336;
+    -fx-text-fill: white;
+    -fx-background-radius: 3;
+    -fx-padding: 5;
+}
+
+.status-else {
+    -fx-background-color: #9e9e9e;
+    -fx-text-fill: white;
+    -fx-background-radius: 3;
+    -fx-padding: 5;
 }
 
 .priority-high {
-    -fx-background-color: #FF5722;
-    -fx-text-fill: white;
-    -fx-background-radius: 3;
-    -fx-padding: 3 8;
+    -fx-background-color: #fff3e0;
+    -fx-text-fill: #ef6c00;
 }
 
 .priority-medium {
-    -fx-background-color: #FFC107;
-    -fx-text-fill: white;
-    -fx-background-radius: 3;
-    -fx-padding: 3 8;
+    -fx-background-color: #fff9c4;
+    -fx-text-fill: #f57f17;
 }
 
-.priority-low {
-    -fx-background-color: #4CAF50;
-    -fx-text-fill: white;
-    -fx-background-radius: 3;
-    -fx-padding: 3 8;
+.priority-else {
+    -fx-background-color: #e8f5e9;
+    -fx-text-fill: #2e7d32;
+}
+
+.priority-emergency, .priority-urgent {
+    -fx-background-color: #ffebee;
+    -fx-text-fill: #c62828;
 }
