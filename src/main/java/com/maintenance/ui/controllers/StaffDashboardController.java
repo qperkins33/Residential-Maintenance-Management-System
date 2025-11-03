@@ -393,18 +393,13 @@ public class StaffDashboardController {
                     setStyle("");
                 } else {
                     setText(item.getDisplayName());
-                    if (item == RequestStatus.COMPLETED) {
-                        getStyleClass().add("status-completed");
-                    } else if (item == RequestStatus.IN_PROGRESS) {
-                        getStyleClass().add("status-in-progress");
-                    } else if (item == RequestStatus.REOPENED) {
-                        getStyleClass().add("status-reopened");
-                    } else if (item == RequestStatus.ASSIGNED) {
-                        getStyleClass().add("status-assigned");
-                    } else if (item == RequestStatus.CANCELLED) {
-                        getStyleClass().add("status-cancelled");
-                    } else {
-                        getStyleClass().add("status-else");
+                    switch (item) {
+                        case COMPLETED -> getStyleClass().add("status-completed");
+                        case IN_PROGRESS -> getStyleClass().add("status-in-progress");
+                        case REOPENED -> getStyleClass().add("status-reopened");
+                        case ASSIGNED -> getStyleClass().add("status-assigned");
+                        case CANCELLED -> getStyleClass().add("status-cancelled");
+                        default -> getStyleClass().add("status-else");
                     }
                 }
             }
