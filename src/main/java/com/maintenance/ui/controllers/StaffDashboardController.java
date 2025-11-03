@@ -379,22 +379,32 @@ public class StaffDashboardController {
         statusCol.setPrefWidth(120);
         statusCol.setStyle("-fx-alignment: CENTER;");
         statusCol.setCellFactory(column -> new TableCell<>() {
+
+            private final List<String> statusClasses = List.of(
+                    "status-completed",
+                    "status-in-progress",
+                    "status-reopened",
+                    "status-assigned",
+                    "status-cancelled",
+                    "status-else"
+            );
+
             @Override
             protected void updateItem(RequestStatus item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setStyle("");
-                } else {
-                    setText(item.getDisplayName());
-                    switch (item) {
-                        case COMPLETED -> getStyleClass().add("status-completed");
-                        case IN_PROGRESS -> getStyleClass().add("status-in-progress");
-                        case REOPENED -> getStyleClass().add("status-reopened");
-                        case ASSIGNED -> getStyleClass().add("status-assigned");
-                        case CANCELLED -> getStyleClass().add("status-cancelled");
-                        default -> getStyleClass().add("status-else");
-                    }
+                setText(null);
+                setStyle("");                      // clear any inline styles
+                getStyleClass().removeAll(statusClasses);  // clear old classes
+                if (empty || item == null) return;
+
+                setText(item.getDisplayName());
+                switch (item) {
+                    case COMPLETED -> getStyleClass().add("status-completed");
+                    case IN_PROGRESS -> getStyleClass().add("status-in-progress");
+                    case REOPENED -> getStyleClass().add("status-reopened");
+                    case ASSIGNED -> getStyleClass().add("status-assigned");
+                    case CANCELLED -> getStyleClass().add("status-cancelled");
+                    default -> getStyleClass().add("status-else");
                 }
             }
         });
