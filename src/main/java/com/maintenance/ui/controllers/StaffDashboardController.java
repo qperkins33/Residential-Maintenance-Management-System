@@ -424,6 +424,25 @@ public class StaffDashboardController {
         dateCol.setMinWidth(120);
         dateCol.setResizable(false);
 
+        dateCol.setStyle("-fx-alignment: CENTER;");
+
+        dateCol.setCellFactory(col -> new TableCell<>() {
+            private final Label pill = new Label();
+            {
+                pill.getStyleClass().add("submitted-grey");
+                setAlignment(Pos.CENTER);
+            }
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(null);
+                setGraphic(null);
+                if (empty || item == null) return;
+                pill.setText(item);
+                setGraphic(pill);
+            }
+        });
+
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
         actionCol.setPrefWidth(220); // wider actions column
         actionCol.setMinWidth(220);
