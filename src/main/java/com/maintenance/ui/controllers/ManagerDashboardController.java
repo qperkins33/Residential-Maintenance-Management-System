@@ -247,13 +247,14 @@ public class ManagerDashboardController {
         actionCol.setStyle("-fx-alignment: CENTER;");
 
         actionCol.setCellFactory(param -> new TableCell<>() {
-            private final Button assignBtn = new Button("Assign");
+            private final Button assignBtn = new Button();
             private final Button viewBtn   = new Button("View");
             private final HBox box = new HBox(8);
 
             {
-                assignBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand;");
-                viewBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand;");
+                String btnStyle = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand;";
+                assignBtn.setStyle(btnStyle);
+                viewBtn.setStyle(btnStyle);
                 box.setAlignment(Pos.CENTER);
 
                 assignBtn.setOnAction(event -> {
@@ -272,6 +273,9 @@ public class ManagerDashboardController {
                 if (empty) {
                     setGraphic(null);
                 } else {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    assignBtn.setText(request.getStatus() == RequestStatus.SUBMITTED ? "Assign" : "Reassign");
+
                     box.getChildren().setAll(assignBtn, viewBtn);
                     setGraphic(box);
                 }
