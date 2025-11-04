@@ -828,11 +828,12 @@ public class StaffDashboardController {
     }
 
     private static void cancelReopenButton(Button b, String base, String hover, String pressed) {
-        b.setStyle("-fx-background-color: " + base + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
-        b.setOnMouseEntered(ev -> b.setStyle("-fx-background-color: " + hover + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
-        b.setOnMouseExited(ev  -> b.setStyle("-fx-background-color: " + base  + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
-        b.setOnMousePressed(ev -> b.setStyle("-fx-background-color: " + pressed + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
-        b.setOnMouseReleased(ev-> b.setStyle("-fx-background-color: " + hover + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+        String common = "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;";
+        b.setStyle("-fx-background-color: " + base + common);
+        b.setOnMouseEntered(ev -> b.setStyle("-fx-background-color: " + hover + common));
+        b.setOnMouseExited(ev  -> b.setStyle("-fx-background-color: " + base  + common));
+        b.setOnMousePressed(ev -> b.setStyle("-fx-background-color: " + pressed + common));
+        b.setOnMouseReleased(ev-> b.setStyle("-fx-background-color: " + hover + common));
     }
 
     private void showError(String message) {
