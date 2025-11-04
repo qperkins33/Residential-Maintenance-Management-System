@@ -261,7 +261,7 @@ public class StaffDashboardController {
 
         VBox assignedCard = createStatCard("Assigned Tasks", String.valueOf(assigned), "#667eea", "📋");
         VBox inProgressCard = createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "⚙️");
-        VBox completedCard = createStatCard("Completed Today", String.valueOf(completed), "#4caf50", "✅");
+        VBox completedCard = createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
         VBox urgentCard = createStatCard("Urgent", String.valueOf(urgent), "#f44336", "🚨");
         VBox cancelledCard = createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
 
