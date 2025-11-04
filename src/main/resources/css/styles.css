@@ -229,6 +229,15 @@
     -fx-padding: 5;
 }
 
+/* Submitted badge in grey tones */
+.submitted-grey {
+    -fx-background-color: #d6dae2; /* darker grey */
+    -fx-text-fill: #1f2937;        /* near-black */
+    -fx-padding: 3 8;
+    -fx-background-radius: 4;
+    -fx-font-weight: 600;
+}
+
 .priority-high {
     -fx-background-color: #fff3e0;
     -fx-text-fill: #ef6c00;

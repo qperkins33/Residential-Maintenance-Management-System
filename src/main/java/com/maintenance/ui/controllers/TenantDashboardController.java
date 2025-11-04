@@ -21,14 +21,16 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;            // added
 import java.util.Objects;
 
 public class TenantDashboardController {
     private final ViewFactory viewFactory;
     private final AuthenticationService authService;
-//    private final TicketingSystem ticketingSystem;
+    //    private final TicketingSystem ticketingSystem;
     private final MaintenanceRequestDAO requestDAO;
     private TableView<MaintenanceRequest> requestTable;
 
@@ -110,9 +112,9 @@ public class TenantDashboardController {
         menuLabel.setTextFill(Color.web("#95a5a6"));
 
         Button dashboardBtn = createSidebarButton("📊 Dashboard", true);
-        Button requestsBtn = createSidebarButton("📝 My Requests", false);
-        Button newRequestBtn = createSidebarButton("➕ New Request", false);
-        Button settingsBtn = createSidebarButton("⚙️ Settings", false);
+        Button requestsBtn  = createSidebarButton("📝 My Requests", false);
+        Button newRequestBtn= createSidebarButton("➕ New Request", false);
+        Button settingsBtn  = createSidebarButton("⚙️ Settings", false);
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn, requestsBtn, newRequestBtn, settingsBtn);
         return sidebar;
@@ -158,8 +160,6 @@ public class TenantDashboardController {
 
         // Requests section
         VBox requestsSection = createRequestsSection();
-
-        // make the requests area take remaining vertical space
         VBox.setVgrow(requestsSection, Priority.ALWAYS);
 
         content.getChildren().addAll(statsBox, requestsSection);
@@ -173,44 +173,67 @@ public class TenantDashboardController {
         var requests = requestDAO.getRequestsByTenant(tenant.getUserId());
 
         long pending = requests.stream()
-                .filter(r -> r.getStatus().name().contains("SUBMITTED") ||
-                        r.getStatus().name().contains("IN_PROGRESS") ||
-                        r.getStatus().name().contains("REOPENED"))
+                .filter(r -> r.getStatus() == RequestStatus.SUBMITTED
+                        || r.getStatus() == RequestStatus.ASSIGNED)
+                .count();
+
+        long inProgress = requests.stream()
+                .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS
+                        || r.getStatus() == RequestStatus.REOPENED)
                 .count();
 
         long completed = requests.stream()
-                .filter(r -> r.getStatus().name().contains("COMPLETED"))
+                .filter(r -> r.getStatus() == RequestStatus.COMPLETED)
                 .count();
 
         long cancelled = requests.stream()
-                .filter(r -> r.getStatus().name().contains("CANCELLED"))
+                .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
                 .count();
 
-        VBox totalCard = createStatCard("Total Requests", String.valueOf(requests.size()), "#667eea");
-        VBox pendingCard = createStatCard("Pending", String.valueOf(pending), "#ff9800");
-        VBox completedCard = createStatCard("Completed", String.valueOf(completed), "#4caf50");
-        VBox cancelledCard = createStatCard("Cancelled", String.valueOf(cancelled), "#ff5252");
+        VBox totalCard    = createStatCard("Total Requests", String.valueOf(requests.size()), "#667eea", "📋");
+        VBox pendingCard  = createStatCard("Pending",        String.valueOf(pending),        "#ff9800", "⏸️");
+        VBox inProgressCard  = createStatCard("In Progress",        String.valueOf(inProgress),        "#ff9800", "⚙️");
+        VBox completedCard= createStatCard("Completed",      String.valueOf(completed),      "#4caf50", "✅");
+        VBox cancelledCard= createStatCard("Cancelled",      String.valueOf(cancelled),      "#f44336", "❌");
 
-        statsBox.getChildren().addAll(totalCard, pendingCard, completedCard, cancelledCard);
+        statsBox.getChildren().addAll(totalCard, pendingCard, inProgressCard, completedCard, cancelledCard);
         return statsBox;
     }
 
-    private VBox createStatCard(String title, String value, String color) {
+    private VBox createStatCard(String title, String value, String color, String icon) {
+        // same visual style as Staff cards
         VBox card = new VBox(10);
         card.setPadding(new Insets(20));
         card.setStyle("-fx-background-color: white; -fx-background-radius: 10; " +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
-        card.setPrefWidth(200);
+        card.setPrefWidth(220);
+        card.setAlignment(Pos.TOP_LEFT);
+
+        HBox headerBox = new HBox(10);
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label iconLabel = new Label(icon);
+        iconLabel.setFont(Font.font(24));
 
         Label titleLabel = new Label(title);
-        titleLabel.setFont(Font.font("Arial", 12));
+        titleLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 13));
         titleLabel.setTextFill(Color.GRAY);
 
+        headerBox.getChildren().addAll(iconLabel, titleLabel);
+
         Label valueLabel = new Label(value);
-        valueLabel.setFont(Font.font("Arial", FontWeight.BOLD, 32));
+        valueLabel.setFont(Font.font("Arial", FontWeight.BOLD, 36));
         valueLabel.setTextFill(Color.web(color));
 
-        card.getChildren().addAll(titleLabel, valueLabel);
+        card.getChildren().addAll(headerBox, valueLabel);
+
+        card.setOnMouseEntered(e ->
+                card.setStyle("-fx-background-color: white; -fx-background-radius: 10; " +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 15, 0, 0, 5); -fx-cursor: hand;"));
+        card.setOnMouseExited(e ->
+                card.setStyle("-fx-background-color: white; -fx-background-radius: 10; " +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);"));
+
         return card;
     }
 
@@ -237,12 +260,13 @@ public class TenantDashboardController {
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
         requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        requestTable.setMaxHeight(Double.MAX_VALUE);              // allow vertical growth
-        VBox.setVgrow(requestTable, Priority.ALWAYS);             // take leftover space
+        requestTable.setMaxHeight(Double.MAX_VALUE);
+        VBox.setVgrow(requestTable, Priority.ALWAYS);
 
         TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("Request ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
         idCol.setPrefWidth(120);
+        idCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaintenanceRequest, String> categoryCol = new TableColumn<>("Category");
         categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
@@ -251,50 +275,139 @@ public class TenantDashboardController {
         TableColumn<MaintenanceRequest, String> descCol = new TableColumn<>("Description");
         descCol.setCellValueFactory(new PropertyValueFactory<>("description"));
         descCol.setPrefWidth(300);
+        descCol.setStyle("-fx-wrap-text: true;");
 
-        TableColumn<MaintenanceRequest, String> priorityCol = new TableColumn<>("Priority");
+        // match Staff: typed column + CSS classes
+        TableColumn<MaintenanceRequest, PriorityLevel> priorityCol = new TableColumn<>("Priority");
         priorityCol.setCellValueFactory(new PropertyValueFactory<>("priority"));
         priorityCol.setPrefWidth(100);
-
-        TableColumn<MaintenanceRequest, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
-        statusCol.setPrefWidth(120);
-
-        TableColumn<MaintenanceRequest, String> dateCol = new TableColumn<>("Submitted");
-        dateCol.setCellValueFactory(cellData ->
-                new javafx.beans.property.SimpleStringProperty(
-                        cellData.getValue().getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"))
-                )
-        );
-        dateCol.setPrefWidth(150);
-        dateCol.setStyle("-fx-alignment: CENTER;");
-
-        TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(120);
-        actionCol.setStyle("-fx-alignment: CENTER;");
-        actionCol.setCellFactory(param -> new TableCell<>() {
-            private final Button editButton = new Button("Edit");
-
-            {
-                editButton.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
-                editButton.setOnAction(e -> {
-                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
-                    showEditRequestDialog(request);
-                });
-            }
-
+        priorityCol.setStyle("-fx-alignment: CENTER;");
+        priorityCol.setCellFactory(column -> new TableCell<>() {
             @Override
-            protected void updateItem(Void item, boolean empty) {
+            protected void updateItem(PriorityLevel item, boolean empty) {
                 super.updateItem(item, empty);
-                setGraphic(empty ? null : editButton);
+                setText(null);
+                setStyle("");
+                getStyleClass().removeAll("priority-urgent","priority-high","priority-medium","priority-else");
+                if (empty || item == null) return;
+                setText(item.getDisplayName());
+                getStyleClass().add(
+                        (item == PriorityLevel.EMERGENCY || item == PriorityLevel.URGENT) ? "priority-urgent" :
+                                item == PriorityLevel.HIGH   ? "priority-high"   :
+                                        item == PriorityLevel.MEDIUM ? "priority-medium" : "priority-else"
+                );
             }
         });
 
-        // OLD Version
-//        requestTable.getColumns().addAll(idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol);
+        TableColumn<MaintenanceRequest, RequestStatus> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+        statusCol.setPrefWidth(120);
+        statusCol.setStyle("-fx-alignment: CENTER;");
+        statusCol.setCellFactory(column -> new TableCell<>() {
+            private final List<String> statusClasses = List.of(
+                    "status-completed",
+                    "status-in-progress",
+                    "status-reopened",
+                    "status-assigned",
+                    "status-cancelled",
+                    "status-else"
+            );
+            @Override
+            protected void updateItem(RequestStatus item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(null);
+                setStyle("");
+                getStyleClass().removeAll(statusClasses);
+                if (empty || item == null) return;
+                setText(item.getDisplayName());
+                switch (item) {
+                    case COMPLETED   -> getStyleClass().add("status-completed");
+                    case IN_PROGRESS -> getStyleClass().add("status-in-progress");
+                    case REOPENED    -> getStyleClass().add("status-reopened");
+                    case ASSIGNED    -> getStyleClass().add("status-assigned");
+                    case CANCELLED   -> getStyleClass().add("status-cancelled");
+                    default          -> getStyleClass().add("status-else");
+                }
+            }
+        });
+
+        // match Staff: date pill + center align
+        TableColumn<MaintenanceRequest, String> dateCol = new TableColumn<>("Submitted");
+        dateCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(
+                        cellData.getValue().getSubmissionDate().format(
+                                DateTimeFormatter.ofPattern("MM/dd/yyyy")
+                        )
+                )
+        );
+        dateCol.setPrefWidth(120);
+        dateCol.setMinWidth(120);
+        dateCol.setResizable(false);
+        dateCol.setStyle("-fx-alignment: CENTER;");
+        dateCol.setCellFactory(col -> new TableCell<>() {
+            private final Label pill = new Label();
+            {
+                pill.getStyleClass().add("submitted-grey");
+                setAlignment(Pos.CENTER);
+            }
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(null);
+                setGraphic(null);
+                if (empty || item == null) return;
+                pill.setText(item);
+                setGraphic(pill);
+            }
+        });
+
+        // actions: keep same actions (Edit, View) but match Staff styling and spacing
+        TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
+        actionCol.setPrefWidth(220);
+        actionCol.setMinWidth(220);
+        actionCol.setMaxWidth(300);
+        actionCol.setResizable(false);
+        actionCol.setStyle("-fx-alignment: CENTER;");
+        actionCol.setCellFactory(param -> new TableCell<>() {
+            private final Button editBtn = new Button("Edit");
+            private final Button viewBtn = new Button("View");
+            private final HBox buttonBox = new HBox(5);
+            {
+                String btnStyle = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ";
+                editBtn.setStyle(btnStyle);
+                viewBtn.setStyle(btnStyle);
+
+                editBtn.setOnAction(e -> {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    showEditRequestDialog(request);
+                });
+                viewBtn.setOnAction(e -> {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    showRequestDetails(request);
+                });
+                buttonBox.setAlignment(Pos.CENTER);
+            }
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    buttonBox.getChildren().setAll(editBtn, viewBtn);
+                    setGraphic(buttonBox);
+                }
+            }
+        });
+
         requestTable.getColumns().setAll(java.util.Arrays.asList(
-                idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol));
+                idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol
+        ));
+
+        // placeholder like Staff
+        Label emptyLabel = new Label("No requests yet");
+        emptyLabel.setFont(Font.font("Arial", 14));
+        emptyLabel.setTextFill(Color.GRAY);
+        requestTable.setPlaceholder(emptyLabel);
 
         loadRequests();
 
@@ -367,6 +480,77 @@ public class TenantDashboardController {
         });
     }
 
+    private void showRequestDetails(MaintenanceRequest request) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Request Details");
+        dialog.setHeaderText("Request #" + request.getRequestId());
+
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(12);
+        grid.setPadding(new Insets(20));
+        grid.setStyle("-fx-background-color: white;");
+
+        int row = 0;
+
+        addDetailRow(grid, row++, "Request ID:", request.getRequestId());
+        addDetailRow(grid, row++, "Apartment:", request.getApartmentNumber());
+        addDetailRow(grid, row++, "Category:", request.getCategory().getDisplayName());
+        addDetailRow(grid, row++, "Priority:", request.getPriority().getDisplayName());
+        addDetailRow(grid, row++, "Status:", request.getStatus().getDisplayName());
+        addDetailRow(grid, row++, "Submitted:",
+                request.getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")));
+
+        if (request.getScheduledDate() != null) {
+            addDetailRow(grid, row++, "Scheduled:",
+                    request.getScheduledDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")));
+        }
+
+        Label descLabel = new Label("Description:");
+        descLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        TextArea descArea = new TextArea(request.getDescription());
+        descArea.setWrapText(true);
+        descArea.setEditable(false);
+        descArea.setPrefRowCount(3);
+
+        grid.add(descLabel, 0, row);
+        grid.add(descArea, 1, row++);
+
+        if (request.getResolutionNotes() != null && !request.getResolutionNotes().isEmpty()) {
+            Label resLabel = new Label("Resolution:");
+            resLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            TextArea resArea = new TextArea(request.getResolutionNotes());
+            resArea.setWrapText(true);
+            resArea.setEditable(false);
+            resArea.setPrefRowCount(3);
+
+            grid.add(resLabel, 0, row);
+            grid.add(resArea, 1, row);
+        }
+
+        ScrollPane scrollPane = new ScrollPane(grid);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefSize(500, 400);
+
+        dialog.getDialogPane().setContent(scrollPane);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        dialog.showAndWait();
+    }
+
+    private void addDetailRow(GridPane grid, int row, String label, String value) {
+        Label lblLabel = new Label(label);
+        lblLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        lblLabel.setTextFill(Color.web("#555"));
+
+        Label valueLabel = new Label(value);
+        valueLabel.setFont(Font.font("Arial", 12));
+        valueLabel.setWrapText(true);
+
+        grid.add(lblLabel, 0, row);
+        grid.add(valueLabel, 1, row);
+    }
+
     private void showEditRequestDialog(MaintenanceRequest request) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Edit Maintenance Request");
@@ -398,7 +582,7 @@ public class TenantDashboardController {
 
         if (request.getStatus() == RequestStatus.COMPLETED || request.getStatus() == RequestStatus.CANCELLED) {
             Button reopenBtn = new Button("Reopen Request");
-            cancelReopenButton(reopenBtn, "#4caf50", "#43a047", "#388e3c"); // green, hover, pressed
+            cancelReopenButton(reopenBtn, "#4caf50", "#43a047", "#388e3c");
             reopenBtn.setOnAction(e -> {
                 selectedStatus[0] = RequestStatus.REOPENED;
                 new Alert(Alert.AlertType.INFORMATION, "Request reopened.").showAndWait();
@@ -406,7 +590,7 @@ public class TenantDashboardController {
             statusButtons.getChildren().add(reopenBtn);
         } else if (request.getStatus() != RequestStatus.CANCELLED) {
             Button cancelBtn = new Button("Cancel Request");
-            cancelReopenButton(cancelBtn, "#e53935", "#d32f2f", "#c62828"); // red, hover, pressed
+            cancelReopenButton(cancelBtn, "#e53935", "#d32f2f", "#c62828");
             cancelBtn.setOnAction(e -> {
                 selectedStatus[0] = RequestStatus.CANCELLED;
                 new Alert(Alert.AlertType.INFORMATION, "Request cancelled.").showAndWait();
@@ -457,10 +641,12 @@ public class TenantDashboardController {
     }
 
     private static void cancelReopenButton(Button b, String base, String hover, String pressed) {
-        b.setStyle("-fx-background-color: " + base + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
-        b.setOnMouseEntered(ev -> b.setStyle("-fx-background-color: " + hover + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
-        b.setOnMouseExited(ev  -> b.setStyle("-fx-background-color: " + base  + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
-        b.setOnMousePressed(ev -> b.setStyle("-fx-background-color: " + pressed + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
-        b.setOnMouseReleased(ev-> b.setStyle("-fx-background-color: " + hover + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+        // match Staff helper
+        String common = "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;";
+        b.setStyle("-fx-background-color: " + base + common);
+        b.setOnMouseEntered(ev -> b.setStyle("-fx-background-color: " + hover + common));
+        b.setOnMouseExited(ev  -> b.setStyle("-fx-background-color: " + base  + common));
+        b.setOnMousePressed(ev -> b.setStyle("-fx-background-color: " + pressed + common));
+        b.setOnMouseReleased(ev-> b.setStyle("-fx-background-color: " + hover + common));
     }
 }
