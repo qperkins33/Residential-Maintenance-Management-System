@@ -1,6 +1,7 @@
 package com.maintenance.ui.controllers;
 
 import com.maintenance.dao.MaintenanceRequestDAO;
+import com.maintenance.enums.CategoryType;
 import com.maintenance.enums.PriorityLevel;
 import com.maintenance.enums.RequestStatus;
 import com.maintenance.models.MaintenanceRequest;
@@ -8,6 +9,7 @@ import com.maintenance.models.MaintenanceStaff;
 import com.maintenance.service.AuthenticationService;
 import com.maintenance.ui.views.ViewFactory;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -17,6 +19,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
@@ -413,28 +417,59 @@ public class StaffDashboardController {
         dateCol.setCellValueFactory(cellData ->
                 new javafx.beans.property.SimpleStringProperty(
                         cellData.getValue().getSubmissionDate().format(
-                                DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"))
+                                DateTimeFormatter.ofPattern("MM/dd/yyyy"))
                 )
         );
-        dateCol.setPrefWidth(150);
+        dateCol.setPrefWidth(120);
+        dateCol.setMinWidth(120);
+        dateCol.setResizable(false);
+
         dateCol.setStyle("-fx-alignment: CENTER;");
 
+        dateCol.setCellFactory(col -> new TableCell<>() {
+            private final Label pill = new Label();
+            {
+                pill.getStyleClass().add("submitted-grey");
+                setAlignment(Pos.CENTER);
+            }
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(null);
+                setGraphic(null);
+                if (empty || item == null) return;
+                pill.setText(item);
+                setGraphic(pill);
+            }
+        });
+
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(180);
+        actionCol.setPrefWidth(220); // wider actions column
+        actionCol.setMinWidth(220);
+        actionCol.setMaxWidth(300);
+        actionCol.setResizable(false);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
+            private final Button editBtn = new Button("Edit");
             private final Button startBtn = new Button("Start");
             private final Button completeBtn = new Button("Complete");
             private final Button viewBtn = new Button("View");
             private final HBox buttonBox = new HBox(5);
 
             {
+                editBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
                 startBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
                         "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
                 completeBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
                         "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
                 viewBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
                         "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
+
+                editBtn.setOnAction(e -> {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    showEditRequestDialog(request);
+                });
 
                 startBtn.setOnAction(event -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
@@ -466,11 +501,11 @@ public class StaffDashboardController {
                     if (request.getStatus() == RequestStatus.ASSIGNED) {
                         buttonBox.getChildren().addAll(startBtn, viewBtn);
                     } else if (request.getStatus() == RequestStatus.IN_PROGRESS || request.getStatus() == RequestStatus.REOPENED) {
-                        buttonBox.getChildren().addAll(completeBtn, viewBtn);
+                        buttonBox.getChildren().addAll(completeBtn, editBtn, viewBtn);
                     } else if (request.getStatus() == RequestStatus.COMPLETED) {
-                        buttonBox.getChildren().add(viewBtn);
+                        buttonBox.getChildren().addAll(editBtn, viewBtn);
                     } else {
-                        buttonBox.getChildren().add(viewBtn);
+                        buttonBox.getChildren().addAll(editBtn, viewBtn);
                     }
 
                     setGraphic(buttonBox);
@@ -704,6 +739,103 @@ public class StaffDashboardController {
 
         grid.add(lblLabel, 0, row);
         grid.add(valueLabel, 1, row);
+    }
+
+    private void showEditRequestDialog(MaintenanceRequest request) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Edit Maintenance Request");
+        dialog.setHeaderText("Update your request");
+
+        ButtonType saveBtnType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+
+        ComboBox<CategoryType> categoryBox = new ComboBox<>();
+        categoryBox.getItems().addAll(CategoryType.values());
+        categoryBox.setValue(request.getCategory());
+
+        TextArea descArea = new TextArea(request.getDescription());
+        descArea.setPrefRowCount(5);
+
+        ComboBox<PriorityLevel> priorityBox = new ComboBox<>();
+        priorityBox.getItems().addAll(PriorityLevel.values());
+        priorityBox.setValue(request.getPriority());
+
+        HBox statusButtons = new HBox(10);
+        statusButtons.setAlignment(Pos.CENTER_LEFT);
+
+        final RequestStatus[] selectedStatus = {request.getStatus()};
+
+        if (request.getStatus() == RequestStatus.COMPLETED || request.getStatus() == RequestStatus.CANCELLED) {
+            Button reopenBtn = new Button("Reopen Request");
+            cancelReopenButton(reopenBtn, "#4caf50", "#43a047", "#388e3c"); // green, hover, pressed
+            reopenBtn.setOnAction(e -> {
+                selectedStatus[0] = RequestStatus.REOPENED;
+                new Alert(Alert.AlertType.INFORMATION, "Request reopened.").showAndWait();
+            });
+            statusButtons.getChildren().add(reopenBtn);
+        } else if (request.getStatus() != RequestStatus.CANCELLED) {
+            Button cancelBtn = new Button("Cancel Request");
+            cancelReopenButton(cancelBtn, "#e53935", "#d32f2f", "#c62828"); // red, hover, pressed
+            cancelBtn.setOnAction(e -> {
+                selectedStatus[0] = RequestStatus.CANCELLED;
+                new Alert(Alert.AlertType.INFORMATION, "Request cancelled.").showAndWait();
+            });
+            statusButtons.getChildren().add(cancelBtn);
+        }
+
+        grid.add(new Label("Category:"), 0, 0);
+        grid.add(categoryBox, 1, 0);
+        grid.add(new Label("Description:"), 0, 1);
+        grid.add(descArea, 1, 1);
+        grid.add(new Label("Priority:"), 0, 2);
+        grid.add(priorityBox, 1, 2);
+        grid.add(new Label("Status:"), 0, 3);
+        grid.add(statusButtons, 1, 3);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtnType);
+        boolean[] updated = {false};
+        saveButton.addEventFilter(ActionEvent.ACTION, event -> {
+            if (categoryBox.getValue() == null || priorityBox.getValue() == null || descArea.getText().isBlank()) {
+                new Alert(Alert.AlertType.WARNING, "All fields are required.").showAndWait();
+                event.consume();
+                return;
+            }
+
+            request.setCategory(categoryBox.getValue());
+            request.setDescription(descArea.getText().trim());
+            request.setPriority(priorityBox.getValue());
+            request.setStatus(selectedStatus[0]);
+            request.setLastUpdated(LocalDateTime.now());
+
+            if (!requestDAO.updateRequest(request)) {
+                new Alert(Alert.AlertType.ERROR, "Unable to update request. Please try again.").showAndWait();
+                event.consume();
+            } else {
+                updated[0] = true;
+            }
+        });
+
+        dialog.showAndWait();
+
+        if (updated[0]) {
+            loadRequests();
+            new Alert(Alert.AlertType.INFORMATION, "Request updated successfully.").showAndWait();
+        }
+    }
+
+    private static void cancelReopenButton(Button b, String base, String hover, String pressed) {
+        b.setStyle("-fx-background-color: " + base + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
+        b.setOnMouseEntered(ev -> b.setStyle("-fx-background-color: " + hover + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+        b.setOnMouseExited(ev  -> b.setStyle("-fx-background-color: " + base  + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+        b.setOnMousePressed(ev -> b.setStyle("-fx-background-color: " + pressed + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+        b.setOnMouseReleased(ev-> b.setStyle("-fx-background-color: " + hover + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
     }
 
     private void showError(String message) {
