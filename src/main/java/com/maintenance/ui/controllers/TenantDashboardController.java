@@ -273,21 +273,38 @@ public class TenantDashboardController {
         actionCol.setPrefWidth(120);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
-            private final Button editButton = new Button("Edit");
+            private final Button editBtn = new Button("Edit");
+            private final Button viewBtn = new Button("View");
+            private final HBox buttonBox = new HBox(5);
 
             {
-                editButton.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                editBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
                         "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
-                editButton.setOnAction(e -> {
+                viewBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
+                editBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     showEditRequestDialog(request);
                 });
+
+                viewBtn.setOnAction(event -> {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    showRequestDetails(request);
+                });
+
+                buttonBox.setAlignment(Pos.CENTER);
             }
 
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                setGraphic(empty ? null : editButton);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    buttonBox.getChildren().clear();
+                    buttonBox.getChildren().addAll(editBtn, viewBtn);
+                    setGraphic(buttonBox);
+                }
             }
         });
 
@@ -365,6 +382,77 @@ public class TenantDashboardController {
             alert.showAndWait();
             loadRequests();
         });
+    }
+
+    private void showRequestDetails(MaintenanceRequest request) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Request Details");
+        dialog.setHeaderText("Request #" + request.getRequestId());
+
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(12);
+        grid.setPadding(new Insets(20));
+        grid.setStyle("-fx-background-color: white;");
+
+        int row = 0;
+
+        addDetailRow(grid, row++, "Request ID:", request.getRequestId());
+        addDetailRow(grid, row++, "Apartment:", request.getApartmentNumber());
+        addDetailRow(grid, row++, "Category:", request.getCategory().getDisplayName());
+        addDetailRow(grid, row++, "Priority:", request.getPriority().getDisplayName());
+        addDetailRow(grid, row++, "Status:", request.getStatus().getDisplayName());
+        addDetailRow(grid, row++, "Submitted:",
+                request.getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")));
+
+        if (request.getScheduledDate() != null) {
+            addDetailRow(grid, row++, "Scheduled:",
+                    request.getScheduledDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")));
+        }
+
+        Label descLabel = new Label("Description:");
+        descLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        TextArea descArea = new TextArea(request.getDescription());
+        descArea.setWrapText(true);
+        descArea.setEditable(false);
+        descArea.setPrefRowCount(3);
+
+        grid.add(descLabel, 0, row);
+        grid.add(descArea, 1, row++);
+
+        if (request.getResolutionNotes() != null && !request.getResolutionNotes().isEmpty()) {
+            Label resLabel = new Label("Resolution:");
+            resLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            TextArea resArea = new TextArea(request.getResolutionNotes());
+            resArea.setWrapText(true);
+            resArea.setEditable(false);
+            resArea.setPrefRowCount(3);
+
+            grid.add(resLabel, 0, row);
+            grid.add(resArea, 1, row);
+        }
+
+        ScrollPane scrollPane = new ScrollPane(grid);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefSize(500, 400);
+
+        dialog.getDialogPane().setContent(scrollPane);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        dialog.showAndWait();
+    }
+
+    private void addDetailRow(GridPane grid, int row, String label, String value) {
+        Label lblLabel = new Label(label);
+        lblLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        lblLabel.setTextFill(Color.web("#555"));
+
+        Label valueLabel = new Label(value);
+        valueLabel.setFont(Font.font("Arial", 12));
+        valueLabel.setWrapText(true);
+
+        grid.add(lblLabel, 0, row);
+        grid.add(valueLabel, 1, row);
     }
 
     private void showEditRequestDialog(MaintenanceRequest request) {
