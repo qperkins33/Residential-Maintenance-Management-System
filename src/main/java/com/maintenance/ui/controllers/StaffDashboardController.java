@@ -261,7 +261,7 @@ public class StaffDashboardController {
 
         VBox assignedCard = createStatCard("Assigned Tasks", String.valueOf(assigned), "#667eea", "📋");
         VBox inProgressCard = createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "⚙️");
-        VBox completedCard = createStatCard("Completed Today", String.valueOf(completed), "#4caf50", "✅");
+        VBox completedCard = createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
         VBox urgentCard = createStatCard("Urgent", String.valueOf(urgent), "#f44336", "🚨");
         VBox cancelledCard = createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
 
@@ -457,14 +457,11 @@ public class StaffDashboardController {
             private final HBox buttonBox = new HBox(5);
 
             {
-                editBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
-                startBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
-                completeBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
-                viewBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                        "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ");
+                String btnStyle = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ";
+                editBtn.setStyle(btnStyle);
+                startBtn.setStyle(btnStyle);
+                completeBtn.setStyle(btnStyle);
+                viewBtn.setStyle(btnStyle);
 
                 editBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
@@ -831,11 +828,12 @@ public class StaffDashboardController {
     }
 
     private static void cancelReopenButton(Button b, String base, String hover, String pressed) {
-        b.setStyle("-fx-background-color: " + base + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;");
-        b.setOnMouseEntered(ev -> b.setStyle("-fx-background-color: " + hover + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
-        b.setOnMouseExited(ev  -> b.setStyle("-fx-background-color: " + base  + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
-        b.setOnMousePressed(ev -> b.setStyle("-fx-background-color: " + pressed + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
-        b.setOnMouseReleased(ev-> b.setStyle("-fx-background-color: " + hover + "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;"));
+        String common = "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;";
+        b.setStyle("-fx-background-color: " + base + common);
+        b.setOnMouseEntered(ev -> b.setStyle("-fx-background-color: " + hover + common));
+        b.setOnMouseExited(ev  -> b.setStyle("-fx-background-color: " + base  + common));
+        b.setOnMousePressed(ev -> b.setStyle("-fx-background-color: " + pressed + common));
+        b.setOnMouseReleased(ev-> b.setStyle("-fx-background-color: " + hover + common));
     }
 
     private void showError(String message) {
