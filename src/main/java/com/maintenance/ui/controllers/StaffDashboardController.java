@@ -420,8 +420,9 @@ public class StaffDashboardController {
                                 DateTimeFormatter.ofPattern("MM/dd/yyyy"))
                 )
         );
-        dateCol.setPrefWidth(100);
-        dateCol.setStyle("-fx-alignment: CENTER;");
+        dateCol.setPrefWidth(120);
+        dateCol.setMinWidth(120);
+        dateCol.setResizable(false);
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
         actionCol.setPrefWidth(220); // wider actions column
