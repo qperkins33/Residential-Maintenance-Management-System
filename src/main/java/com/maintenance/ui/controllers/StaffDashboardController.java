@@ -189,10 +189,6 @@ public class StaffDashboardController {
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
         List<MaintenanceRequest> myRequests = requestDAO.getRequestsByStaff(staff.getStaffId());
 
-        long assigned = myRequests.stream()
-                .filter(r -> r.getStatus() == RequestStatus.ASSIGNED)
-                .count();
-
         long inProgress = myRequests.stream()
                 .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS
                         || r.getStatus() == RequestStatus.REOPENED)
@@ -215,13 +211,13 @@ public class StaffDashboardController {
                 .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
                 .count();
 
-        VBox assignedCard = DashboardUIHelper.createStatCard("Assigned", String.valueOf(assigned), "#667eea", "📋");
+        VBox totalCard = DashboardUIHelper.createStatCard("Assigned Tasks", String.valueOf(myRequests.size()), "#667eea", "📋");
         VBox urgentCard = DashboardUIHelper.createStatCard("Urgent (Active)", String.valueOf(urgent), "#f44336", "🚨");
         VBox inProgressCard = DashboardUIHelper.createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "👷");
         VBox completedCard = DashboardUIHelper.createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
         VBox cancelledCard = DashboardUIHelper.createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
 
-        statsBox.getChildren().addAll(assignedCard, urgentCard, inProgressCard, completedCard, cancelledCard);
+        statsBox.getChildren().addAll(totalCard, urgentCard, inProgressCard, completedCard, cancelledCard);
         return statsBox;
     }
 
