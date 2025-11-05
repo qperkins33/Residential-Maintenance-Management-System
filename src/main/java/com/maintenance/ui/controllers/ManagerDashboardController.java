@@ -1,8 +1,11 @@
 package com.maintenance.ui.controllers;
 
-import com.maintenance.dao.*;
+import com.maintenance.dao.MaintenanceRequestDAO;
+import com.maintenance.dao.UserDAO;
 import com.maintenance.enums.RequestStatus;
-import com.maintenance.models.*;
+import com.maintenance.models.BuildingManager;
+import com.maintenance.models.MaintenanceRequest;
+import com.maintenance.models.MaintenanceStaff;
 import com.maintenance.service.AuthenticationService;
 import com.maintenance.ui.views.ViewFactory;
 import javafx.collections.FXCollections;
@@ -15,9 +18,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Objects;
 
 public class ManagerDashboardController {
     private final ViewFactory viewFactory;
@@ -34,10 +35,7 @@ public class ManagerDashboardController {
     }
 
     public void createDashboardUI(AnchorPane root) {
-        root.getStylesheets().add(
-                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
-        );
-        root.getStyleClass().add("app-root");
+        DashboardUIHelper.applyRootStyles(root, getClass());
 
         BorderPane mainLayout = new BorderPane();
         mainLayout.setPadding(new Insets(0));
@@ -49,7 +47,7 @@ public class ManagerDashboardController {
         mainLayout.setLeft(sidebar);
 
         VBox centerContent = createCenterContent();
-        VBox.setVgrow(centerContent, Priority.ALWAYS); // helps center fill vertically
+        VBox.setVgrow(centerContent, Priority.ALWAYS);
         mainLayout.setCenter(centerContent);
 
         AnchorPane.setTopAnchor(mainLayout, 0.0);
@@ -100,30 +98,13 @@ public class ManagerDashboardController {
         menuLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         menuLabel.setTextFill(Color.web("#95a5a6"));
 
-        Button dashboardBtn = createSidebarButton("📊 Dashboard", true);
-        Button allRequestsBtn = createSidebarButton("📋 All Requests", false);
-        Button reportsBtn = createSidebarButton("📈 Reports", false);
-        Button settingsBtn = createSidebarButton("⚙️ Settings", false);
+        Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
+        Button allRequestsBtn = DashboardUIHelper.createSidebarButton("📋 All Requests", false);
+        Button reportsBtn = DashboardUIHelper.createSidebarButton("📈 Reports", false);
+        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn, allRequestsBtn, reportsBtn, settingsBtn);
         return sidebar;
-    }
-
-    private Button createSidebarButton(String text, boolean active) {
-        Button btn = new Button(text);
-        btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setAlignment(Pos.CENTER_LEFT);
-        btn.setFont(Font.font("Arial", 14));
-
-        if (active) {
-            btn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                    "-fx-padding: 12 15; -fx-background-radius: 5;");
-        } else {
-            btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #ecf0f1; " +
-                    "-fx-padding: 12 15; -fx-background-radius: 5;");
-        }
-
-        return btn;
     }
 
     private VBox createCenterContent() {
@@ -134,7 +115,7 @@ public class ManagerDashboardController {
         HBox statsBox = createStatsCards();
         VBox requestsSection = createRequestsSection();
 
-        VBox.setVgrow(requestsSection, Priority.ALWAYS); // take remaining height
+        VBox.setVgrow(requestsSection, Priority.ALWAYS);
 
         content.getChildren().addAll(statsBox, requestsSection);
         return content;
@@ -145,52 +126,31 @@ public class ManagerDashboardController {
 
         List<MaintenanceRequest> allRequests = requestDAO.getAllRequests();
 
-        long pending = allRequests.stream()
-                .filter(r -> r.getStatus() == RequestStatus.SUBMITTED ||
-                        r.getStatus() == RequestStatus.IN_PROGRESS ||
-                        r.getStatus() == RequestStatus.REOPENED)
+        long unassigned = allRequests.stream()
+                .filter(r -> r.getStatus() == RequestStatus.SUBMITTED)
+                .count();
+
+        long inProgress = allRequests.stream()
+                .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS
+                        || r.getStatus() == RequestStatus.REOPENED)
                 .count();
 
         long completed = allRequests.stream()
                 .filter(r -> r.getStatus() == RequestStatus.COMPLETED)
                 .count();
 
-        long urgent = allRequests.stream()
-                .filter(r -> r.getPriority().name().contains("URGENT") ||
-                        r.getPriority().name().contains("EMERGENCY"))
-                .count();
-
         long cancelled = allRequests.stream()
                 .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
                 .count();
 
-        VBox totalCard = createStatCard("Total Requests", String.valueOf(allRequests.size()), "#667eea");
-        VBox pendingCard = createStatCard("Pending", String.valueOf(pending), "#ff9800");
-        VBox completedCard = createStatCard("Completed", String.valueOf(completed), "#4caf50");
-        VBox urgentCard = createStatCard("Urgent", String.valueOf(urgent), "#f44336");
-        VBox cancelledCard = createStatCard("Cancelled", String.valueOf(cancelled), "#f44336");
+        VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(allRequests.size()), "#667eea", "📋");
+        VBox unassignedCard = DashboardUIHelper.createStatCard("Unassigned", String.valueOf(unassigned), "#2196f3", "👀");
+        VBox inProgressCard = DashboardUIHelper.createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "👷️");
+        VBox completedCard = DashboardUIHelper.createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
+        VBox cancelledCard = DashboardUIHelper.createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
 
-        statsBox.getChildren().addAll(totalCard, pendingCard, urgentCard, completedCard, cancelledCard);
+        statsBox.getChildren().addAll(totalCard, unassignedCard, inProgressCard, completedCard, cancelledCard);
         return statsBox;
-    }
-
-    private VBox createStatCard(String title, String value, String color) {
-        VBox card = new VBox(10);
-        card.setPadding(new Insets(20));
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 10; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);");
-        card.setPrefWidth(200);
-
-        Label titleLabel = new Label(title);
-        titleLabel.setFont(Font.font("Arial", 12));
-        titleLabel.setTextFill(Color.GRAY);
-
-        Label valueLabel = new Label(value);
-        valueLabel.setFont(Font.font("Arial", FontWeight.BOLD, 32));
-        valueLabel.setTextFill(Color.web(color));
-
-        card.getChildren().addAll(titleLabel, valueLabel);
-        return card;
     }
 
     private VBox createRequestsSection() {
@@ -203,8 +163,8 @@ public class ManagerDashboardController {
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
         requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        requestTable.setMaxHeight(Double.MAX_VALUE);      // allow vertical growth
-        VBox.setVgrow(requestTable, Priority.ALWAYS);     // fill leftover space
+        requestTable.setMaxHeight(Double.MAX_VALUE);
+        VBox.setVgrow(requestTable, Priority.ALWAYS);
 
         TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("Request ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
@@ -221,26 +181,14 @@ public class ManagerDashboardController {
         TableColumn<MaintenanceRequest, String> descCol = new TableColumn<>("Description");
         descCol.setCellValueFactory(new PropertyValueFactory<>("description"));
         descCol.setPrefWidth(250);
+        descCol.setStyle("-fx-wrap-text: true;");
 
-        TableColumn<MaintenanceRequest, String> priorityCol = new TableColumn<>("Priority");
-        priorityCol.setCellValueFactory(new PropertyValueFactory<>("priority"));
-        priorityCol.setPrefWidth(100);
-
-        TableColumn<MaintenanceRequest, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
-        statusCol.setPrefWidth(120);
-
-        TableColumn<MaintenanceRequest, String> dateCol = new TableColumn<>("Submitted");
-        dateCol.setCellValueFactory(cellData ->
-                new javafx.beans.property.SimpleStringProperty(
-                        cellData.getValue().getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"))
-                )
-        );
-        dateCol.setPrefWidth(150);
-        dateCol.setStyle("-fx-alignment: CENTER;");
+        TableColumn<MaintenanceRequest, ?> priorityCol = DashboardUIHelper.createPriorityColumn();
+        TableColumn<MaintenanceRequest, ?> statusCol = DashboardUIHelper.createStatusColumn();
+        TableColumn<MaintenanceRequest, ?> dateCol = DashboardUIHelper.createSubmittedDateColumn();
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(220); // wider actions column
+        actionCol.setPrefWidth(220);
         actionCol.setMinWidth(220);
         actionCol.setMaxWidth(300);
         actionCol.setResizable(false);
@@ -248,7 +196,7 @@ public class ManagerDashboardController {
 
         actionCol.setCellFactory(param -> new TableCell<>() {
             private final Button assignBtn = new Button();
-            private final Button viewBtn   = new Button("View");
+            private final Button viewBtn = new Button("View");
             private final HBox box = new HBox(8);
 
             {
@@ -263,7 +211,7 @@ public class ManagerDashboardController {
                 });
                 viewBtn.setOnAction(event -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
-                    showRequestDetails(request);
+                    DashboardUIHelper.showRequestDetailsDialog(request);
                 });
             }
 
@@ -274,8 +222,11 @@ public class ManagerDashboardController {
                     setGraphic(null);
                 } else {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
-                    assignBtn.setText(request.getStatus() == RequestStatus.SUBMITTED ? "Assign" : "Reassign");
-
+                    if (request.getStatus() == RequestStatus.SUBMITTED) {
+                        assignBtn.setText("Assign");
+                    } else {
+                        assignBtn.setText("Reassign");
+                    }
                     box.getChildren().setAll(assignBtn, viewBtn);
                     setGraphic(box);
                 }
@@ -292,77 +243,6 @@ public class ManagerDashboardController {
         VBox.setVgrow(requestTable, Priority.ALWAYS);
         return section;
     }
-
-    private void showRequestDetails(MaintenanceRequest request) {
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Request Details");
-        dialog.setHeaderText("Request #" + request.getRequestId());
-
-        GridPane grid = new GridPane();
-        grid.setHgap(15);
-        grid.setVgap(12);
-        grid.setPadding(new Insets(20));
-        grid.setStyle("-fx-background-color: white;");
-
-        int row = 0;
-
-        addDetailRow(grid, row++, "Request ID:", request.getRequestId());
-        addDetailRow(grid, row++, "Apartment:", request.getApartmentNumber());
-        addDetailRow(grid, row++, "Category:", request.getCategory().getDisplayName());
-        addDetailRow(grid, row++, "Priority:", request.getPriority().getDisplayName());
-        addDetailRow(grid, row++, "Status:", request.getStatus().getDisplayName());
-        addDetailRow(grid, row++, "Submitted:",
-                request.getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")));
-
-        if (request.getScheduledDate() != null) {
-            addDetailRow(grid, row++, "Scheduled:",
-                    request.getScheduledDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")));
-        }
-
-        Label descLabel = new Label("Description:");
-        descLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        TextArea descArea = new TextArea(request.getDescription());
-        descArea.setWrapText(true);
-        descArea.setEditable(false);
-        descArea.setPrefRowCount(3);
-
-        grid.add(descLabel, 0, row);
-        grid.add(descArea, 1, row++);
-
-        if (request.getResolutionNotes() != null && !request.getResolutionNotes().isEmpty()) {
-            Label resLabel = new Label("Resolution:");
-            resLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-            TextArea resArea = new TextArea(request.getResolutionNotes());
-            resArea.setWrapText(true);
-            resArea.setEditable(false);
-            resArea.setPrefRowCount(3);
-
-            grid.add(resLabel, 0, row);
-            grid.add(resArea, 1, row);
-        }
-
-        ScrollPane scrollPane = new ScrollPane(grid);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPrefSize(500, 400);
-
-        dialog.getDialogPane().setContent(scrollPane);
-        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-        dialog.showAndWait();
-    }
-
-    private void addDetailRow(GridPane grid, int row, String label, String value) {
-        Label lblLabel = new Label(label);
-        lblLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        lblLabel.setTextFill(Color.web("#555"));
-
-        Label valueLabel = new Label(value);
-        valueLabel.setFont(Font.font("Arial", 12));
-        valueLabel.setWrapText(true);
-
-        grid.add(lblLabel, 0, row);
-        grid.add(valueLabel, 1, row);
-    }
-
 
     private void loadRequests() {
         requestTable.setItems(FXCollections.observableArrayList(requestDAO.getAllRequests()));
