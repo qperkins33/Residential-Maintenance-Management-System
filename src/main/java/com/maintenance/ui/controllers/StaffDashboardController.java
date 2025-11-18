@@ -281,7 +281,7 @@ public class StaffDashboardController {
         actionCol.setResizable(false);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
-            private final Button editBtn = new Button("Edit");
+            private final Button updateBtn = new Button("Update");
             private final Button startBtn = new Button("Start");
             private final Button completeBtn = new Button("Complete");
             private final Button viewBtn = new Button("View");
@@ -289,14 +289,14 @@ public class StaffDashboardController {
 
             {
                 String btnStyle = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ";
-                editBtn.setStyle(btnStyle);
+                updateBtn.setStyle(btnStyle);
                 startBtn.setStyle(btnStyle);
                 completeBtn.setStyle(btnStyle);
                 viewBtn.setStyle(btnStyle);
 
-                editBtn.setOnAction(e -> {
+                updateBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
-                    DashboardUIHelper.showEditRequestDialog(request, requestDAO, StaffDashboardController.this::loadRequests);
+                    DashboardUIHelper.showEditRequestDialog(request, requestDAO, StaffDashboardController.this::loadRequests); //TODO utilize and create showUpdateRequestDialog
                 });
 
                 startBtn.setOnAction((ActionEvent event) -> {
@@ -329,11 +329,11 @@ public class StaffDashboardController {
                     if (request.getStatus() == RequestStatus.ASSIGNED) {
                         buttonBox.getChildren().addAll(startBtn, viewBtn);
                     } else if (request.getStatus() == RequestStatus.IN_PROGRESS || request.getStatus() == RequestStatus.REOPENED) {
-                        buttonBox.getChildren().addAll(completeBtn, editBtn, viewBtn);
+                        buttonBox.getChildren().addAll(completeBtn, updateBtn, viewBtn);
                     } else if (request.getStatus() == RequestStatus.COMPLETED) {
-                        buttonBox.getChildren().addAll(editBtn, viewBtn);
+                        buttonBox.getChildren().addAll(updateBtn, viewBtn);
                     } else {
-                        buttonBox.getChildren().addAll(editBtn, viewBtn);
+                        buttonBox.getChildren().addAll(updateBtn, viewBtn);
                     }
 
                     setGraphic(buttonBox);
