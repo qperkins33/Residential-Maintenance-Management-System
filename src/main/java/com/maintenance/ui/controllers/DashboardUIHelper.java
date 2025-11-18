@@ -208,6 +208,7 @@ public final class DashboardUIHelper {
         grid.add(valueLabel, 1, row);
     }
 
+    // TODO: Implement functionality
     public static void showRequestDetailsDialog(MaintenanceRequest request) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Request Details");
