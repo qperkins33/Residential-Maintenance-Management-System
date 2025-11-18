@@ -226,6 +226,7 @@ public final class DashboardUIHelper {
         addDetailRow(grid, row++, "Category:", request.getCategory().getDisplayName());
         addDetailRow(grid, row++, "Priority:", request.getPriority().getDisplayName());
         addDetailRow(grid, row++, "Status:", request.getStatus().getDisplayName());
+
         if (request.getSubmissionDate() != null) {
             addDetailRow(grid, row++, "Submitted:",
                     request.getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")));
@@ -236,8 +237,10 @@ public final class DashboardUIHelper {
                     request.getScheduledDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")));
         }
 
+        // Description (tenant text, read-only)
         Label descLabel = new Label("Description:");
         descLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+
         TextArea descArea = new TextArea(request.getDescription());
         descArea.setWrapText(true);
         descArea.setEditable(false);
@@ -246,16 +249,39 @@ public final class DashboardUIHelper {
         grid.add(descLabel, 0, row);
         grid.add(descArea, 1, row++);
 
+        // Staff update section (visually similar to description) with placeholder
+        Label updateLabel = new Label("Staff Update:");
+        updateLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+
+        TextArea updateArea = new TextArea();
+        updateArea.setWrapText(true);
+        updateArea.setEditable(false);
+        updateArea.setPrefRowCount(3);
+
+        String staffUpdate = request.getStaffUpdateNotes();
+        if (staffUpdate != null && !staffUpdate.isBlank()) {
+            updateArea.setText(staffUpdate);
+        } else {
+            // Placeholder text when no update has been added yet
+            updateArea.setText("No staff updates yet.");
+            updateArea.setStyle("-fx-text-fill: #7f8c8d; -fx-font-style: italic;");
+        }
+
+        grid.add(updateLabel, 0, row);
+        grid.add(updateArea, 1, row++);
+
+        // Resolution (if present)
         if (request.getResolutionNotes() != null && !request.getResolutionNotes().isEmpty()) {
             Label resLabel = new Label("Resolution:");
             resLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+
             TextArea resArea = new TextArea(request.getResolutionNotes());
             resArea.setWrapText(true);
             resArea.setEditable(false);
             resArea.setPrefRowCount(3);
 
             grid.add(resLabel, 0, row);
-            grid.add(resArea, 1, row);
+            grid.add(resArea, 1, row++);
         }
 
         ScrollPane scrollPane = new ScrollPane(grid);
@@ -267,6 +293,7 @@ public final class DashboardUIHelper {
 
         dialog.showAndWait();
     }
+
 
     public static void showEditRequestDialog(MaintenanceRequest request,
                                              MaintenanceRequestDAO requestDAO,
