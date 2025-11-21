@@ -12,4 +12,4 @@ This configuration sets the required JavaFX module path and runs with Java 21, f
 
 
 ## Entity-Relationship Diagram
-<img width="672" height="638" alt="Screenshot 2025-10-11 at 11 45 11 PM copy" src="https://github.com/user-attachments/assets/a00634fc-e9ee-4f2b-8e7a-5a110d37fc6a" />
+<img width="759" height="726" alt="Screenshot 2025-11-21 at 3 55 19 PM" src="https://github.com/user-attachments/assets/c2c65e6a-c478-4e76-a18e-118fc2941806" />
