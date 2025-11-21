@@ -105,7 +105,7 @@ public class AdminDashboardController {
 
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
         Button usersBtn = DashboardUIHelper.createSidebarButton("👥 Users", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
+        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false); //TODO: Add functionality
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn, usersBtn, settingsBtn);
         return sidebar;

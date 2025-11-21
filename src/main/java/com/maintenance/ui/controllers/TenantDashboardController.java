@@ -99,7 +99,7 @@ public class TenantDashboardController {
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
         Button requestsBtn = DashboardUIHelper.createSidebarButton("📝 My Requests", false);
         Button newRequestBtn = DashboardUIHelper.createSidebarButton("➕ New Request", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
+        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false); //TODO: Add functionality
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn, requestsBtn, newRequestBtn, settingsBtn);
         return sidebar;

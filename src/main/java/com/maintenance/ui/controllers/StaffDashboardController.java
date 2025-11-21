@@ -100,7 +100,7 @@ public class StaffDashboardController {
         Button assignedBtn = DashboardUIHelper.createSidebarButton("📋 Assigned Tasks", false);
         Button historyBtn = DashboardUIHelper.createSidebarButton("📜 History", false);
         Button profileBtn = DashboardUIHelper.createSidebarButton("👤 Profile", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
+        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false); //TODO: Add functionality
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -133,6 +133,7 @@ public class StaffDashboardController {
             showStatusNotification(availableCheck.isSelected());
         });
 
+        //TODO: Add functionality
         Label workloadLabel = new Label("Workload: " + staff.getCurrentWorkload() +
                 "/" + staff.getMaxCapacity());
         workloadLabel.setFont(Font.font("Arial", 11));

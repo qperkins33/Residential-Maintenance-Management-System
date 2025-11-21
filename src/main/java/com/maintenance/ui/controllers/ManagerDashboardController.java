@@ -101,7 +101,7 @@ public class ManagerDashboardController {
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
         Button allRequestsBtn = DashboardUIHelper.createSidebarButton("📋 All Requests", false);
         Button reportsBtn = DashboardUIHelper.createSidebarButton("📈 Reports", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
+        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false); //TODO: Add functionality
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn, allRequestsBtn, reportsBtn, settingsBtn);
         return sidebar;
