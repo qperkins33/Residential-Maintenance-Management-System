@@ -4,16 +4,14 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class IDGenerator {
-    private static final AtomicInteger requestCounter = new AtomicInteger(1000);
-    private static final AtomicInteger userCounter = new AtomicInteger(1000);
     private static final AtomicInteger buildingCounter = new AtomicInteger(1000);
 
     public static String generateRequestId() {
-        return "REQ" + requestCounter.incrementAndGet();
+        return "REQ" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     public static String generateUserId() {
-        return "USR" + userCounter.incrementAndGet();
+        return "USR" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     public static String generateBuildingId() {

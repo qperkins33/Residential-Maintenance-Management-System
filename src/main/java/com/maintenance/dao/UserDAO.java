@@ -2,6 +2,7 @@ package com.maintenance.dao;
 
 import com.maintenance.database.DatabaseManager;
 import com.maintenance.models.*;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +47,8 @@ public class UserDAO {
                 return loadManager(userId);
             case "STAFF":
                 return loadStaff(userId);
+            case "ADMIN":
+                return loadAdmin(userId);
             default:
                 return null;
         }
@@ -104,6 +107,22 @@ public class UserDAO {
                 staff.setMaxCapacity(rs.getInt("max_capacity"));
                 staff.setAvailable(rs.getBoolean("is_available"));
                 return staff;
+            }
+        }
+        return null;
+    }
+
+    private Admin loadAdmin(String userId) throws SQLException {
+        String sql = "SELECT * FROM users WHERE user_id = ?";
+
+        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                Admin admin = new Admin();
+                populateUserFields(admin, rs);
+                return admin;
             }
         }
         return null;

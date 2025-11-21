@@ -1,7 +1,6 @@
 package com.maintenance.ui.views;
 
 import com.maintenance.ui.controllers.*;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
@@ -77,6 +76,25 @@ public class ViewFactory {
             scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
 
             stage.setTitle("Staff Dashboard");
+            stage.setScene(scene);
+            stage.setMaximized(true);
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void showAdminDashboard(Stage stage) {
+        try {
+            AdminDashboardController controller = new AdminDashboardController(this);
+
+            AnchorPane root = new AnchorPane();
+            controller.createDashboardUI(root);
+
+            Scene scene = new Scene(root, 1200, 700);
+            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+
+            stage.setTitle("Admin Dashboard");
             stage.setScene(scene);
             stage.setMaximized(true);
             stage.show();
