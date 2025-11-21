@@ -185,11 +185,11 @@ public class TenantDashboardController {
 
         TableColumn<MaintenanceRequest, String> categoryCol = new TableColumn<>("Category");
         categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
-        categoryCol.setPrefWidth(150);
+        categoryCol.setPrefWidth(110);
 
         TableColumn<MaintenanceRequest, String> descCol = new TableColumn<>("Description");
         descCol.setCellValueFactory(new PropertyValueFactory<>("description"));
-        descCol.setPrefWidth(300);
+        descCol.setPrefWidth(240);
         descCol.setStyle("-fx-wrap-text: true;");
 
         TableColumn<MaintenanceRequest, ?> priorityCol = DashboardUIHelper.createPriorityColumn();
@@ -197,9 +197,8 @@ public class TenantDashboardController {
         TableColumn<MaintenanceRequest, ?> dateCol = DashboardUIHelper.createSubmittedDateColumn();
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(220);
-        actionCol.setMinWidth(220);
-        actionCol.setMaxWidth(300);
+        actionCol.setPrefWidth(260);
+        actionCol.setMinWidth(260);
         actionCol.setResizable(false);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {

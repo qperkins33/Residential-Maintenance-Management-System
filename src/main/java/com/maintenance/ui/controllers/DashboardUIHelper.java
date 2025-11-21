@@ -226,6 +226,7 @@ public final class DashboardUIHelper {
         addDetailRow(grid, row++, "Category:", request.getCategory().getDisplayName());
         addDetailRow(grid, row++, "Priority:", request.getPriority().getDisplayName());
         addDetailRow(grid, row++, "Status:", request.getStatus().getDisplayName());
+
         if (request.getSubmissionDate() != null) {
             addDetailRow(grid, row++, "Submitted:",
                     request.getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")));
@@ -236,8 +237,10 @@ public final class DashboardUIHelper {
                     request.getScheduledDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")));
         }
 
+        // Description (tenant text, read-only)
         Label descLabel = new Label("Description:");
         descLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+
         TextArea descArea = new TextArea(request.getDescription());
         descArea.setWrapText(true);
         descArea.setEditable(false);
@@ -246,16 +249,39 @@ public final class DashboardUIHelper {
         grid.add(descLabel, 0, row);
         grid.add(descArea, 1, row++);
 
+        // Staff update section (visually similar to description) with placeholder
+        Label updateLabel = new Label("Staff Update:");
+        updateLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+
+        TextArea updateArea = new TextArea();
+        updateArea.setWrapText(true);
+        updateArea.setEditable(false);
+        updateArea.setPrefRowCount(3);
+
+        String staffUpdate = request.getStaffUpdateNotes();
+        if (staffUpdate != null && !staffUpdate.isBlank()) {
+            updateArea.setText(staffUpdate);
+        } else {
+            // Placeholder text when no update has been added yet
+            updateArea.setText("No staff updates yet.");
+            updateArea.setStyle("-fx-text-fill: #7f8c8d; -fx-font-style: italic;");
+        }
+
+        grid.add(updateLabel, 0, row);
+        grid.add(updateArea, 1, row++);
+
+        // Resolution (if present)
         if (request.getResolutionNotes() != null && !request.getResolutionNotes().isEmpty()) {
             Label resLabel = new Label("Resolution:");
             resLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+
             TextArea resArea = new TextArea(request.getResolutionNotes());
             resArea.setWrapText(true);
             resArea.setEditable(false);
             resArea.setPrefRowCount(3);
 
             grid.add(resLabel, 0, row);
-            grid.add(resArea, 1, row);
+            grid.add(resArea, 1, row++);
         }
 
         ScrollPane scrollPane = new ScrollPane(grid);
@@ -358,6 +384,75 @@ public final class DashboardUIHelper {
                 afterSave.run();
             }
             new Alert(Alert.AlertType.INFORMATION, "Request updated successfully.").showAndWait();
+        }
+    }
+
+    // staff update dialog (staff cannot change description, only staff update notes)
+    public static void showStaffUpdateDialog(MaintenanceRequest request,
+                                             MaintenanceRequestDAO requestDAO,
+                                             Runnable afterSave) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Staff Update");
+        dialog.setHeaderText("Add update for Request #" + request.getRequestId());
+
+        ButtonType saveBtnType = new ButtonType("Save Update", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+
+        TextArea descArea = new TextArea(request.getDescription());
+        descArea.setEditable(false);
+        descArea.setWrapText(true);
+        descArea.setPrefRowCount(4);
+
+        TextArea updateArea = new TextArea();
+        updateArea.setWrapText(true);
+        updateArea.setPrefRowCount(4);
+        updateArea.setPromptText("Add a staff update for this request...");
+
+        String existing = request.getStaffUpdateNotes();
+        if (existing != null && !existing.isBlank()) {
+            updateArea.setText(existing);
+        }
+
+        grid.add(new Label("Original Description:"), 0, 0);
+        grid.add(descArea, 1, 0);
+        grid.add(new Label("Staff Update:"), 0, 1);
+        grid.add(updateArea, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtnType);
+        boolean[] updated = {false};
+        saveButton.addEventFilter(ActionEvent.ACTION, event -> {
+            String text = updateArea.getText().trim();
+            if (text.isEmpty()) {
+                new Alert(Alert.AlertType.WARNING, "Please enter an update or cancel.").showAndWait();
+                event.consume();
+                return;
+            }
+
+            request.setStaffUpdateNotes(text);
+            request.setLastUpdated(LocalDateTime.now());
+
+            if (!requestDAO.updateRequest(request)) {
+                new Alert(Alert.AlertType.ERROR, "Unable to save staff update. Please try again.").showAndWait();
+                event.consume();
+            } else {
+                updated[0] = true;
+            }
+        });
+
+        dialog.showAndWait();
+
+        if (updated[0]) {
+            if (afterSave != null) {
+                afterSave.run();
+            }
+            new Alert(Alert.AlertType.INFORMATION, "Staff update saved successfully.").showAndWait();
         }
     }
 

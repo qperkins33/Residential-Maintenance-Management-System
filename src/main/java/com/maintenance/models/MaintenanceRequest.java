@@ -25,6 +25,7 @@ public class MaintenanceRequest {
     private double actualCost;
     private String assignedStaffId;
     private String workOrderNumber;
+    private String staffUpdateNotes;
     private String resolutionNotes;
     private List<Photo> photos;
     private List<Comment> comments;
@@ -147,6 +148,9 @@ public class MaintenanceRequest {
 
     public String getWorkOrderNumber() { return workOrderNumber; }
     public void setWorkOrderNumber(String workOrderNumber) { this.workOrderNumber = workOrderNumber; }
+
+    public String getStaffUpdateNotes() { return staffUpdateNotes; }
+    public void setStaffUpdateNotes(String staffUpdateNotes) { this.staffUpdateNotes = staffUpdateNotes; }
 
     public String getResolutionNotes() { return resolutionNotes; }
     public void setResolutionNotes(String resolutionNotes) { this.resolutionNotes = resolutionNotes; }
