@@ -498,29 +498,33 @@ public class AdminDashboardController {
             }
 
             // Type specific validation
-            if ("TENANT".equals(userType)) {
-                if (aptField.getText().trim().isEmpty()) {
-                    new Alert(Alert.AlertType.WARNING,
-                            "Apartment number is required for tenants.")
-                            .showAndWait();
-                    event.consume();
-                    return;
+            switch (userType) {
+                case "TENANT" -> {
+                    if (aptField.getText().trim().isEmpty()) {
+                        new Alert(Alert.AlertType.WARNING,
+                                "Apartment number is required for tenants.")
+                                .showAndWait();
+                        event.consume();
+                        return;
+                    }
                 }
-            } else if ("STAFF".equals(userType)) {
-                if (staffIdField.getText().trim().isEmpty()) {
-                    new Alert(Alert.AlertType.WARNING,
-                            "Staff ID is required for maintenance staff.")
-                            .showAndWait();
-                    event.consume();
-                    return;
+                case "STAFF" -> {
+                    if (staffIdField.getText().trim().isEmpty()) {
+                        new Alert(Alert.AlertType.WARNING,
+                                "Staff ID is required for maintenance staff.")
+                                .showAndWait();
+                        event.consume();
+                        return;
+                    }
                 }
-            } else if ("MANAGER".equals(userType)) {
-                if (employeeIdField.getText().trim().isEmpty()) {
-                    new Alert(Alert.AlertType.WARNING,
-                            "Employee ID is required for managers.")
-                            .showAndWait();
-                    event.consume();
-                    return;
+                case "MANAGER" -> {
+                    if (employeeIdField.getText().trim().isEmpty()) {
+                        new Alert(Alert.AlertType.WARNING,
+                                "Employee ID is required for managers.")
+                                .showAndWait();
+                        event.consume();
+                        return;
+                    }
                 }
             }
 

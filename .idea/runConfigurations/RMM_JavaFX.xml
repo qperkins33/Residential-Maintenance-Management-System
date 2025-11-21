@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="RMM JavaFX" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="com.maintenance.MainApplication" />
-    <module name="Residential-Maintenance-Management-System" />
+    <module name="Residential-Maintenance-Management" />
     <option name="VM_PARAMETERS" value="--add-modules=javafx.controls,javafx.fxml --module-path $MAVEN_REPOSITORY$/org/openjfx/javafx-base/21.0.1/javafx-base-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/21.0.1/javafx-graphics-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/21.0.1/javafx-controls-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/21.0.1/javafx-fxml-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-base/21.0.1/javafx-base-21.0.1-mac.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/21.0.1/javafx-graphics-21.0.1-mac.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/21.0.1/javafx-controls-21.0.1-mac.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/21.0.1/javafx-fxml-21.0.1-mac.jar " />
     <method v="2">
       <option name="Make" enabled="true" />
