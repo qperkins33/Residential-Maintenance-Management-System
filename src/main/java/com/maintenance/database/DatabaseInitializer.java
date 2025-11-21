@@ -147,6 +147,12 @@ public class DatabaseInitializer {
 
     private static void insertDefaultUsers(Statement stmt) {
         try {
+            // Insert default admin
+            stmt.execute("MERGE INTO users (user_id, username, password, first_name, last_name, " +
+                    "email, phone_number, user_type, date_created, is_active) " +
+                    "VALUES ('A001', 'admin1', 'pass123', 'System', 'Admin', 'admin@email.com', " +
+                    "'555-0100', 'ADMIN', CURRENT_TIMESTAMP, true)");
+
             // Insert default tenant
             stmt.execute("MERGE INTO users (user_id, username, password, first_name, last_name, " +
                     "email, phone_number, user_type, date_created, is_active) " +

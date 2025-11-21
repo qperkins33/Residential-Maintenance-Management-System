@@ -85,18 +85,15 @@ public class LoginController {
         // Keep text synced between both fields
         visiblePasswordField.textProperty().bindBidirectional(passwordField.textProperty());
 
-
         // Load eye icons
         Image eyeOpen = new Image(getClass().getResource("/images/eye-open.png").toExternalForm());
         Image eyeClosed = new Image(getClass().getResource("/images/eye-closed.png").toExternalForm());
-
 
         ImageView eyeIconView = new ImageView(eyeClosed);
         eyeIconView.setFitWidth(20);
         eyeIconView.setFitHeight(20);
         eyeIconView.setPreserveRatio(true);
         eyeIconView.setCursor(javafx.scene.Cursor.HAND);
-
 
         // Toggle between hidden/visible password
         eyeIconView.setOnMouseClicked(e -> {
@@ -106,7 +103,6 @@ public class LoginController {
             passwordField.setVisible(isVisible);
             passwordField.setManaged(isVisible);
 
-
             // Swap the eye icons
             eyeIconView.setImage(isVisible ? eyeClosed : eyeOpen);
         });
@@ -114,7 +110,6 @@ public class LoginController {
         // Container to hold password field and eye icon
         StackPane passwordFieldContainer = new StackPane();
         passwordFieldContainer.setAlignment(Pos.CENTER_RIGHT);
-
 
         // StackPane with both visible and hidden fields
         StackPane passwordStack = new StackPane(passwordField, visiblePasswordField);
@@ -124,7 +119,6 @@ public class LoginController {
         visiblePasswordField.setPadding(new Insets(10, 35, 10, 10));
         StackPane.setMargin(eyeIconView, new Insets(0, 10, 0, 0));
         passwordFieldContainer.getChildren().addAll(passwordStack, eyeIconView);
-
 
         // Error label
         Label errorLabel = new Label();
@@ -176,6 +170,8 @@ public class LoginController {
                     viewFactory.showManagerDashboard(newStage);
                 } else if (currentUser instanceof MaintenanceStaff) {
                     viewFactory.showStaffDashboard(newStage);
+                } else if (currentUser instanceof Admin) {
+                    viewFactory.showAdminDashboard(newStage);
                 }
             } else {
                 errorLabel.setText("Invalid username or password");
@@ -184,7 +180,7 @@ public class LoginController {
         });
 
         // Demo credentials info
-        Label infoLabel = new Label("Demo: tenant1/pass123, manager1/pass123, staff1/pass123");
+        Label infoLabel = new Label("Demo: admin1/pass123, tenant1/pass123, manager1/pass123, staff1/pass123");
         infoLabel.setFont(Font.font("Arial", 10));
         infoLabel.setTextFill(Color.GRAY);
         infoLabel.setWrapText(true);
