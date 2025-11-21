@@ -41,7 +41,7 @@ public class MaintenanceRequestDAO {
     public boolean updateRequest(MaintenanceRequest request) {
         String sql = "UPDATE maintenance_requests SET description = ?, category = ?, priority = ?, " +
                 "status = ?, last_updated = ?, assigned_staff_id = ?, scheduled_date = ?, completion_date = ?, " +
-                "resolution_notes = ? WHERE request_id = ?";
+                "staff_update_notes = ?, resolution_notes = ? WHERE request_id = ?";
 
         try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
             pstmt.setString(1, request.getDescription());
@@ -54,8 +54,9 @@ public class MaintenanceRequestDAO {
                     Timestamp.valueOf(request.getScheduledDate()) : null);
             pstmt.setTimestamp(8, request.getCompletionDate() != null ?
                     Timestamp.valueOf(request.getCompletionDate()) : null);
-            pstmt.setString(9, request.getResolutionNotes());
-            pstmt.setString(10, request.getRequestId());
+            pstmt.setString(9, request.getStaffUpdateNotes());
+            pstmt.setString(10, request.getResolutionNotes());
+            pstmt.setString(11, request.getRequestId());
 
             pstmt.executeUpdate();
             return true;
@@ -159,6 +160,7 @@ public class MaintenanceRequestDAO {
         request.setActualCost(rs.getDouble("actual_cost"));
         request.setAssignedStaffId(rs.getString("assigned_staff_id"));
         request.setWorkOrderNumber(rs.getString("work_order_number"));
+        request.setStaffUpdateNotes(rs.getString("staff_update_notes"));
         request.setResolutionNotes(rs.getString("resolution_notes"));
 
         return request;

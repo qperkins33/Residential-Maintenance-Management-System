@@ -208,7 +208,6 @@ public final class DashboardUIHelper {
         grid.add(valueLabel, 1, row);
     }
 
-    // TODO: Implement functionality
     public static void showRequestDetailsDialog(MaintenanceRequest request) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Request Details");
@@ -294,7 +293,6 @@ public final class DashboardUIHelper {
 
         dialog.showAndWait();
     }
-
 
     public static void showEditRequestDialog(MaintenanceRequest request,
                                              MaintenanceRequestDAO requestDAO,
@@ -386,6 +384,75 @@ public final class DashboardUIHelper {
                 afterSave.run();
             }
             new Alert(Alert.AlertType.INFORMATION, "Request updated successfully.").showAndWait();
+        }
+    }
+
+    // staff update dialog (staff cannot change description, only staff update notes)
+    public static void showStaffUpdateDialog(MaintenanceRequest request,
+                                             MaintenanceRequestDAO requestDAO,
+                                             Runnable afterSave) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Staff Update");
+        dialog.setHeaderText("Add update for Request #" + request.getRequestId());
+
+        ButtonType saveBtnType = new ButtonType("Save Update", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+
+        TextArea descArea = new TextArea(request.getDescription());
+        descArea.setEditable(false);
+        descArea.setWrapText(true);
+        descArea.setPrefRowCount(4);
+
+        TextArea updateArea = new TextArea();
+        updateArea.setWrapText(true);
+        updateArea.setPrefRowCount(4);
+        updateArea.setPromptText("Add a staff update for this request...");
+
+        String existing = request.getStaffUpdateNotes();
+        if (existing != null && !existing.isBlank()) {
+            updateArea.setText(existing);
+        }
+
+        grid.add(new Label("Original Description:"), 0, 0);
+        grid.add(descArea, 1, 0);
+        grid.add(new Label("Staff Update:"), 0, 1);
+        grid.add(updateArea, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtnType);
+        boolean[] updated = {false};
+        saveButton.addEventFilter(ActionEvent.ACTION, event -> {
+            String text = updateArea.getText().trim();
+            if (text.isEmpty()) {
+                new Alert(Alert.AlertType.WARNING, "Please enter an update or cancel.").showAndWait();
+                event.consume();
+                return;
+            }
+
+            request.setStaffUpdateNotes(text);
+            request.setLastUpdated(LocalDateTime.now());
+
+            if (!requestDAO.updateRequest(request)) {
+                new Alert(Alert.AlertType.ERROR, "Unable to save staff update. Please try again.").showAndWait();
+                event.consume();
+            } else {
+                updated[0] = true;
+            }
+        });
+
+        dialog.showAndWait();
+
+        if (updated[0]) {
+            if (afterSave != null) {
+                afterSave.run();
+            }
+            new Alert(Alert.AlertType.INFORMATION, "Staff update saved successfully.").showAndWait();
         }
     }
 

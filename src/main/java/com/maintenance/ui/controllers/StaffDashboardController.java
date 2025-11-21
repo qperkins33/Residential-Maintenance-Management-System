@@ -296,7 +296,8 @@ public class StaffDashboardController {
 
                 updateBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
-                    DashboardUIHelper.showEditRequestDialog(request, requestDAO, StaffDashboardController.this::loadRequests); //TODO utilize and create showUpdateRequestDialog
+                    // Staff can only add/update staff update notes, not change tenant description
+                    DashboardUIHelper.showStaffUpdateDialog(request, requestDAO, StaffDashboardController.this::loadRequests);
                 });
 
                 startBtn.setOnAction((ActionEvent event) -> {

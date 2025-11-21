@@ -93,6 +93,7 @@ public class DatabaseInitializer {
                     "actual_cost DECIMAL(10,2)," +
                     "assigned_staff_id VARCHAR(50)," +
                     "work_order_number VARCHAR(50)," +
+                    "staff_update_notes VARCHAR(1000)," +
                     "resolution_notes VARCHAR(1000))");
 
             // Create Photos table

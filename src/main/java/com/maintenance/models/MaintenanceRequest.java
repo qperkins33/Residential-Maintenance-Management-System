@@ -149,7 +149,7 @@ public class MaintenanceRequest {
     public String getWorkOrderNumber() { return workOrderNumber; }
     public void setWorkOrderNumber(String workOrderNumber) { this.workOrderNumber = workOrderNumber; }
 
-    public String getStaffUpdateNotes() {return staffUpdateNotes; }
+    public String getStaffUpdateNotes() { return staffUpdateNotes; }
     public void setStaffUpdateNotes(String staffUpdateNotes) { this.staffUpdateNotes = staffUpdateNotes; }
 
     public String getResolutionNotes() { return resolutionNotes; }
