@@ -250,6 +250,8 @@ public class StaffDashboardController {
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
         requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        requestTable.setMaxHeight(Double.MAX_VALUE);
+        VBox.setVgrow(requestTable, Priority.ALWAYS);
 
         TableColumn<MaintenanceRequest, String> idCol = new TableColumn<>("Request ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
@@ -263,11 +265,11 @@ public class StaffDashboardController {
 
         TableColumn<MaintenanceRequest, String> categoryCol = new TableColumn<>("Category");
         categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
-        categoryCol.setPrefWidth(130);
+        categoryCol.setPrefWidth(110);
 
         TableColumn<MaintenanceRequest, String> descCol = new TableColumn<>("Description");
         descCol.setCellValueFactory(new PropertyValueFactory<>("description"));
-        descCol.setPrefWidth(280);
+        descCol.setPrefWidth(240);
         descCol.setStyle("-fx-wrap-text: true;");
 
         TableColumn<MaintenanceRequest, ?> priorityCol = DashboardUIHelper.createPriorityColumn();
@@ -275,9 +277,8 @@ public class StaffDashboardController {
         TableColumn<MaintenanceRequest, ?> dateCol = DashboardUIHelper.createSubmittedDateColumn();
 
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(220);
-        actionCol.setMinWidth(220);
-        actionCol.setMaxWidth(300);
+        actionCol.setPrefWidth(260);
+        actionCol.setMinWidth(260);
         actionCol.setResizable(false);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
