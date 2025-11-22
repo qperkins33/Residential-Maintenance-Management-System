@@ -335,7 +335,7 @@ public final class DashboardUIHelper {
                                              Runnable afterSave) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Edit Maintenance Request");
-        dialog.setHeaderText("Update your request");
+        dialog.setHeaderText("Edit your request");
 
         ButtonType saveBtnType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);
@@ -356,27 +356,36 @@ public final class DashboardUIHelper {
         priorityBox.getItems().addAll(PriorityLevel.values());
         priorityBox.setValue(request.getPriority());
 
-        HBox statusButtons = new HBox(10);
-        statusButtons.setAlignment(Pos.CENTER_LEFT);
+        HBox statusOptions = new HBox(10);
+        statusOptions.setAlignment(Pos.CENTER_LEFT);
 
-        final RequestStatus[] selectedStatus = {request.getStatus()};
+        RequestStatus originalStatus = request.getStatus();
+        final RequestStatus[] selectedStatus = { originalStatus };
 
-        if (request.getStatus() == RequestStatus.COMPLETED || request.getStatus() == RequestStatus.CANCELLED) {
-            Button reopenBtn = new Button("Reopen Request");
-            styleActionToggleButton(reopenBtn, "#4caf50", "#43a047", "#388e3c");
-            reopenBtn.setOnAction(e -> {
-                selectedStatus[0] = RequestStatus.REOPENED;
-                new Alert(Alert.AlertType.INFORMATION, "Request reopened.").showAndWait();
+        // Completed or Cancelled can be reopened
+        if (originalStatus == RequestStatus.COMPLETED || originalStatus == RequestStatus.CANCELLED) {
+            CheckBox reopenCheck = new CheckBox("Reopen request");
+            styleActionToggleButton(reopenCheck, "#4caf50", "#43a047", "#388e3c");
+            reopenCheck.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+                if (isSelected) {
+                    selectedStatus[0] = RequestStatus.REOPENED;
+                } else {
+                    selectedStatus[0] = originalStatus;
+                }
             });
-            statusButtons.getChildren().add(reopenBtn);
-        } else if (request.getStatus() != RequestStatus.CANCELLED) {
-            Button cancelBtn = new Button("Cancel Request");
-            styleActionToggleButton(cancelBtn, "#e53935", "#d32f2f", "#c62828");
-            cancelBtn.setOnAction(e -> {
-                selectedStatus[0] = RequestStatus.CANCELLED;
-                new Alert(Alert.AlertType.INFORMATION, "Request cancelled.").showAndWait();
+            statusOptions.getChildren().add(reopenCheck);
+
+        } else { // any non-completed, non-cancelled status
+            CheckBox cancelCheck = new CheckBox("Cancel request");
+            styleActionToggleButton(cancelCheck, "#e53935", "#d32f2f", "#c62828");
+            cancelCheck.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+                if (isSelected) {
+                    selectedStatus[0] = RequestStatus.CANCELLED;
+                } else {
+                    selectedStatus[0] = originalStatus;
+                }
             });
-            statusButtons.getChildren().add(cancelBtn);
+            statusOptions.getChildren().add(cancelCheck);
         }
 
         grid.add(new Label("Category:"), 0, 0);
@@ -386,7 +395,7 @@ public final class DashboardUIHelper {
         grid.add(new Label("Priority:"), 0, 2);
         grid.add(priorityBox, 1, 2);
         grid.add(new Label("Status:"), 0, 3);
-        grid.add(statusButtons, 1, 3);
+        grid.add(statusOptions, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -491,7 +500,7 @@ public final class DashboardUIHelper {
         }
     }
 
-    public static void styleActionToggleButton(Button b, String base, String hover, String pressed) {
+    public static void styleActionToggleButton(Labeled b, String base, String hover, String pressed) {
         String common = "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;";
         b.setStyle("-fx-background-color: " + base + common);
         b.setOnMouseEntered(ev -> b.setStyle("-fx-background-color: " + hover + common));
