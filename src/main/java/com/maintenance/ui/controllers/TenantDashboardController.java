@@ -149,7 +149,7 @@ public class TenantDashboardController {
                 .count();
 
         VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(requests.size()), "#667eea", "📋");
-        VBox pendingCard = DashboardUIHelper.createStatCard("Pending", String.valueOf(pending), "#2196f3", "⏸️");
+        VBox pendingCard = DashboardUIHelper.createStatCard("Pending Start", String.valueOf(pending), "#2196f3", "⏸️");
         VBox inProgressCard = DashboardUIHelper.createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "👷");
         VBox completedCard = DashboardUIHelper.createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
         VBox cancelledCard = DashboardUIHelper.createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");

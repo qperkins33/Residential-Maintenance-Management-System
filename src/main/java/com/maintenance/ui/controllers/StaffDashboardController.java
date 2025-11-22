@@ -218,13 +218,19 @@ public class StaffDashboardController {
                 .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
                 .count();
 
-        VBox totalCard = DashboardUIHelper.createStatCard("Assigned Tasks", String.valueOf(myRequests.size()), "#667eea", "📋");
+        long pending = myRequests.stream()
+                .filter(r -> r.getStatus() == RequestStatus.SUBMITTED
+                        || r.getStatus() == RequestStatus.ASSIGNED)
+                .count();
+
+        VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(myRequests.size()), "#667eea", "📋");
         VBox urgentCard = DashboardUIHelper.createStatCard("Urgent (Active)", String.valueOf(urgent), "#f44336", "🚨");
         VBox inProgressCard = DashboardUIHelper.createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "👷");
+        VBox pendingCard = DashboardUIHelper.createStatCard("Not Started", String.valueOf(pending), "#2196f3", "⏸️");
         VBox completedCard = DashboardUIHelper.createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
         VBox cancelledCard = DashboardUIHelper.createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
 
-        statsBox.getChildren().addAll(totalCard, urgentCard, inProgressCard, completedCard, cancelledCard);
+        statsBox.getChildren().addAll(totalCard, urgentCard, inProgressCard, pendingCard, completedCard, cancelledCard);
         return statsBox;
     }
 
