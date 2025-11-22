@@ -1,6 +1,7 @@
 package com.maintenance.ui.controllers;
 
 import com.maintenance.dao.MaintenanceRequestDAO;
+import com.maintenance.dao.PhotoDAO;
 import com.maintenance.enums.CategoryType;
 import com.maintenance.enums.RequestStatus;
 import com.maintenance.models.MaintenanceRequest;
@@ -17,19 +18,24 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+import java.io.File;
 import java.util.List;
 
 public class TenantDashboardController {
     private final ViewFactory viewFactory;
     private final AuthenticationService authService;
     private final MaintenanceRequestDAO requestDAO;
+    private final PhotoDAO photoDAO;
     private TableView<MaintenanceRequest> requestTable;
 
     public TenantDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
         this.authService = AuthenticationService.getInstance();
         this.requestDAO = new MaintenanceRequestDAO();
+        this.photoDAO = new PhotoDAO();
     }
 
     public void createDashboardUI(AnchorPane root) {
@@ -278,10 +284,41 @@ public class TenantDashboardController {
         descArea.setPromptText("Describe the issue...");
         descArea.setPrefRowCount(4);
 
+        // Photo attachment
+        final File[] selectedPhotoFile = { null };
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select Photo");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif")
+        );
+
+        Button attachPhotoBtn = new Button("Attach Photo");
+        attachPhotoBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                "-fx-padding: 6 12; -fx-background-radius: 3; -fx-cursor: hand;");
+
+        Label photoNameLabel = new Label("No file selected");
+        photoNameLabel.setFont(Font.font("Arial", 12));
+        photoNameLabel.setTextFill(Color.GRAY);
+
+        attachPhotoBtn.setOnAction(e -> {
+            File file = fileChooser.showOpenDialog(null);
+            if (file != null) {
+                selectedPhotoFile[0] = file;
+                photoNameLabel.setText(file.getName());
+                photoNameLabel.setTextFill(Color.BLACK);
+            }
+        });
+
+        HBox photoRow = new HBox(10, attachPhotoBtn, photoNameLabel);
+        photoRow.setAlignment(Pos.CENTER_LEFT);
+
         grid.add(new Label("Category:"), 0, 0);
         grid.add(categoryBox, 1, 0);
         grid.add(new Label("Description:"), 0, 1);
         grid.add(descArea, 1, 1);
+        grid.add(new Label("Photo (optional):"), 0, 2);
+        grid.add(photoRow, 1, 2);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -305,6 +342,15 @@ public class TenantDashboardController {
         });
 
         dialog.showAndWait().ifPresent(request -> {
+            // Persist photo for this request if one was selected
+            if (selectedPhotoFile[0] != null && request.getRequestId() != null) {
+                File file = selectedPhotoFile[0];
+                String uri = file.toURI().toString();
+                long size = file.length();
+                String fileName = file.getName();
+                photoDAO.savePhotoForRequest(request.getRequestId(), fileName, uri, size);
+            }
+
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Success");
             alert.setHeaderText("Request Submitted");

@@ -1,6 +1,7 @@
 package com.maintenance.ui.controllers;
 
 import com.maintenance.dao.MaintenanceRequestDAO;
+import com.maintenance.dao.PhotoDAO;
 import com.maintenance.enums.CategoryType;
 import com.maintenance.enums.PriorityLevel;
 import com.maintenance.enums.RequestStatus;
@@ -12,6 +13,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -23,6 +26,8 @@ import java.util.List;
 import java.util.Objects;
 
 public final class DashboardUIHelper {
+
+    private static final PhotoDAO PHOTO_DAO = new PhotoDAO();
 
     private DashboardUIHelper() {}
 
@@ -221,7 +226,19 @@ public final class DashboardUIHelper {
         grid.add(valueLabel, 1, row);
     }
 
+    // Public entry for all controllers. Looks up photo path from DB.
     public static void showRequestDetailsDialog(MaintenanceRequest request) {
+        String photoUri = null;
+        if (request != null && request.getRequestId() != null) {
+            photoUri = PHOTO_DAO.getLatestPhotoPathForRequest(request.getRequestId());
+        }
+        if (request != null) {
+            showRequestDetailsDialog(request, photoUri);
+        }
+    }
+
+    // Internal helper that actually builds the dialog UI.
+    private static void showRequestDetailsDialog(MaintenanceRequest request, String photoUri) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Request Details");
         dialog.setHeaderText("Request #" + request.getRequestId());
@@ -316,8 +333,29 @@ public final class DashboardUIHelper {
             GridPane.setHgrow(resArea, Priority.ALWAYS);
 
             grid.add(resLabel, 0, row);
-            grid.add(resArea, 1, row);
-            // row++;    // uncomment only if you actually add more rows below
+            grid.add(resArea, 1, row++);
+        }
+
+        // Photo at the bottom, if present
+        if (photoUri != null && !photoUri.isBlank()) {
+            Label photoLabel = new Label("Photo:");
+            photoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+
+            ImageView imageView = new ImageView();
+            imageView.setPreserveRatio(true);
+            imageView.setSmooth(true);
+            imageView.setFitWidth(320);
+
+            try {
+                imageView.setImage(new Image(photoUri, true));
+                grid.add(photoLabel, 0, row);
+                grid.add(imageView, 1, row++);
+            } catch (Exception ex) {
+                Label errorLabel = new Label("Unable to load image");
+                errorLabel.setTextFill(Color.RED);
+                grid.add(photoLabel, 0, row);
+                grid.add(errorLabel, 1, row);
+            }
         }
 
         ScrollPane scrollPane = new ScrollPane(grid);
@@ -362,7 +400,6 @@ public final class DashboardUIHelper {
         RequestStatus originalStatus = request.getStatus();
         final RequestStatus[] selectedStatus = { originalStatus };
 
-        // Completed or Cancelled can be reopened
         if (originalStatus == RequestStatus.COMPLETED || originalStatus == RequestStatus.CANCELLED) {
             CheckBox reopenCheck = new CheckBox("Reopen request");
             styleActionToggleButton(reopenCheck, "#4caf50", "#43a047", "#388e3c");
@@ -374,8 +411,7 @@ public final class DashboardUIHelper {
                 }
             });
             statusOptions.getChildren().add(reopenCheck);
-
-        } else { // any non-completed, non-cancelled status
+        } else {
             CheckBox cancelCheck = new CheckBox("Cancel request");
             styleActionToggleButton(cancelCheck, "#e53935", "#d32f2f", "#c62828");
             cancelCheck.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
