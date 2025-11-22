@@ -171,12 +171,31 @@ public class TenantDashboardController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        // Filter like staff
+        ComboBox<String> filterBox = new ComboBox<>();
+        filterBox.getItems().addAll(
+                "All Requests",
+                "Pending Start",
+                "In Progress",
+                "Completed",
+                "Cancelled"
+        );
+        filterBox.setValue("All Requests");
+        filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
+        filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
+
+        // Refresh button like staff
+        Button refreshBtn = new Button("🔄 Refresh");
+        refreshBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                "-fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        refreshBtn.setOnAction(e -> loadRequests());
+
         Button newRequestBtn = new Button("+ New Request");
         newRequestBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
                 "-fx-padding: 10 20; -fx-background-radius: 5; -fx-cursor: hand;");
         newRequestBtn.setOnAction(e -> showNewRequestDialog());
 
-        headerBox.getChildren().addAll(sectionTitle, spacer, newRequestBtn);
+        headerBox.getChildren().addAll(sectionTitle, spacer, filterBox, refreshBtn, newRequestBtn);
 
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
@@ -261,6 +280,34 @@ public class TenantDashboardController {
         ObservableList<MaintenanceRequest> requests =
                 FXCollections.observableArrayList(requestDAO.getRequestsByTenant(tenant.getUserId()));
         requestTable.setItems(requests);
+    }
+
+    // New: filter like staff, but scoped to tenant's own tickets
+    private void filterRequests(String filter) {
+        Tenant tenant = (Tenant) authService.getCurrentUser();
+        List<MaintenanceRequest> requests = requestDAO.getRequestsByTenant(tenant.getUserId());
+
+        switch (filter) {
+            case "Pending Start" -> requests = requests.stream()
+                    .filter(r -> r.getStatus() == RequestStatus.SUBMITTED
+                            || r.getStatus() == RequestStatus.ASSIGNED)
+                    .toList();
+            case "In Progress" -> requests = requests.stream()
+                    .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS
+                            || r.getStatus() == RequestStatus.REOPENED)
+                    .toList();
+            case "Completed" -> requests = requests.stream()
+                    .filter(r -> r.getStatus() == RequestStatus.COMPLETED)
+                    .toList();
+            case "Cancelled" -> requests = requests.stream()
+                    .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
+                    .toList();
+            default -> {
+                // "All Requests" -> no filter
+            }
+        }
+
+        requestTable.setItems(FXCollections.observableArrayList(requests));
     }
 
     private void showNewRequestDialog() {

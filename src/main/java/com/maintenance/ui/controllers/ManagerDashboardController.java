@@ -158,8 +158,34 @@ public class ManagerDashboardController {
         VBox section = new VBox(15);
         section.setFillWidth(true);
 
+        HBox headerBox = new HBox(20);
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
         Label sectionTitle = new Label("All Maintenance Requests");
         sectionTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        // Filter similar to staff
+        ComboBox<String> filterBox = new ComboBox<>();
+        filterBox.getItems().addAll(
+                "All Requests",
+                "Unassigned",
+                "In Progress",
+                "Completed",
+                "Cancelled"
+        );
+        filterBox.setValue("All Requests");
+        filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
+        filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
+
+        Button refreshBtn = new Button("🔄 Refresh");
+        refreshBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                "-fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        refreshBtn.setOnAction(e -> loadRequests());
+
+        headerBox.getChildren().addAll(sectionTitle, spacer, filterBox, refreshBtn);
 
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
@@ -239,13 +265,39 @@ public class ManagerDashboardController {
 
         loadRequests();
 
-        section.getChildren().addAll(sectionTitle, requestTable);
+        section.getChildren().addAll(headerBox, requestTable);
         VBox.setVgrow(requestTable, Priority.ALWAYS);
         return section;
     }
 
     private void loadRequests() {
         requestTable.setItems(FXCollections.observableArrayList(requestDAO.getAllRequests()));
+    }
+
+    // New: filter like staff, but on all requests
+    private void filterRequests(String filter) {
+        List<MaintenanceRequest> requests = requestDAO.getAllRequests();
+
+        switch (filter) {
+            case "Unassigned" -> requests = requests.stream()
+                    .filter(r -> r.getStatus() == RequestStatus.SUBMITTED)
+                    .toList();
+            case "In Progress" -> requests = requests.stream()
+                    .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS
+                            || r.getStatus() == RequestStatus.REOPENED)
+                    .toList();
+            case "Completed" -> requests = requests.stream()
+                    .filter(r -> r.getStatus() == RequestStatus.COMPLETED)
+                    .toList();
+            case "Cancelled" -> requests = requests.stream()
+                    .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
+                    .toList();
+            default -> {
+                // "All Requests" -> no filter
+            }
+        }
+
+        requestTable.setItems(FXCollections.observableArrayList(requests));
     }
 
     private void showAssignDialog(MaintenanceRequest request) {
