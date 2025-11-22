@@ -18,6 +18,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -133,7 +134,6 @@ public class StaffDashboardController {
             showStatusNotification(availableCheck.isSelected());
         });
 
-        //TODO: Add functionality
         Label workloadLabel = new Label("Workload: " + staff.getCurrentWorkload() +
                 "/" + staff.getMaxCapacity());
         workloadLabel.setFont(Font.font("Arial", 11));
@@ -298,7 +298,6 @@ public class StaffDashboardController {
 
                 updateBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
-                    // Staff can only add/update staff update notes, not change tenant description
                     DashboardUIHelper.showStaffUpdateDialog(request, requestDAO, StaffDashboardController.this::loadRequests);
                 });
 
@@ -382,8 +381,8 @@ public class StaffDashboardController {
                     .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS || r.getStatus() == RequestStatus.REOPENED)
                     .toList();
             case "Urgent Only" -> requests = requests.stream()
-                    .filter(r -> r.getPriority() == com.maintenance.enums.PriorityLevel.URGENT ||
-                            r.getPriority() == com.maintenance.enums.PriorityLevel.EMERGENCY)
+                    .filter(r -> r.getPriority() == PriorityLevel.URGENT ||
+                            r.getPriority() == PriorityLevel.EMERGENCY)
                     .toList();
             default -> {
             }
@@ -474,7 +473,7 @@ public class StaffDashboardController {
                     request.setActualCost(cost);
                 }
             } catch (NumberFormatException e) {
-                // ignore
+                // ignore parse error
             }
 
             request.close(resolution);
@@ -482,7 +481,7 @@ public class StaffDashboardController {
             if (requestDAO.updateRequest(request)) {
                 Alert success = new Alert(Alert.AlertType.INFORMATION);
                 success.setTitle("Success");
-                success.setHeaderText("Request Completed!");
+                success.setHeaderText("Request Completed");
                 success.setContentText("Request #" + request.getRequestId() +
                         " has been marked as completed successfully.");
                 success.showAndWait();

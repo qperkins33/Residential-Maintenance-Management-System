@@ -1,6 +1,7 @@
 package com.maintenance.ui.controllers;
 
 import com.maintenance.dao.MaintenanceRequestDAO;
+import com.maintenance.dao.PhotoDAO;
 import com.maintenance.enums.CategoryType;
 import com.maintenance.enums.PriorityLevel;
 import com.maintenance.enums.RequestStatus;
@@ -12,6 +13,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -23,6 +26,8 @@ import java.util.List;
 import java.util.Objects;
 
 public final class DashboardUIHelper {
+
+    private static final PhotoDAO PHOTO_DAO = new PhotoDAO();
 
     private DashboardUIHelper() {}
 
@@ -221,13 +226,28 @@ public final class DashboardUIHelper {
         grid.add(valueLabel, 1, row);
     }
 
+    // Public entry for all controllers. Looks up photo path from DB.
     public static void showRequestDetailsDialog(MaintenanceRequest request) {
+        String photoUri = null;
+        if (request != null && request.getRequestId() != null) {
+            photoUri = PHOTO_DAO.getLatestPhotoPathForRequest(request.getRequestId());
+        }
+        if (request != null) {
+            showRequestDetailsDialog(request, photoUri);
+        }
+    }
+
+    // Internal helper that actually builds the dialog UI.
+    private static void showRequestDetailsDialog(MaintenanceRequest request, String photoUri) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Request Details");
         dialog.setHeaderText("Request #" + request.getRequestId());
 
         DialogPane pane = dialog.getDialogPane();
         pane.getButtonTypes().add(ButtonType.CLOSE);
+
+        pane.setMinWidth(700);
+        pane.setPrefWidth(700);
 
         GridPane grid = new GridPane();
         grid.setHgap(15);
@@ -316,13 +336,34 @@ public final class DashboardUIHelper {
             GridPane.setHgrow(resArea, Priority.ALWAYS);
 
             grid.add(resLabel, 0, row);
-            grid.add(resArea, 1, row);
-            // row++;    // uncomment only if you actually add more rows below
+            grid.add(resArea, 1, row++);
+        }
+
+        // Photo at the bottom, if present
+        if (photoUri != null && !photoUri.isBlank()) {
+            Label photoLabel = new Label("Photo:");
+            photoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+
+            ImageView imageView = new ImageView();
+            imageView.setPreserveRatio(true);
+            imageView.setSmooth(true);
+            imageView.setFitWidth(320);
+
+            try {
+                imageView.setImage(new Image(photoUri, true));
+                grid.add(photoLabel, 0, row);
+                grid.add(imageView, 1, row++);
+            } catch (Exception ex) {
+                Label errorLabel = new Label("Unable to load image");
+                errorLabel.setTextFill(Color.RED);
+                grid.add(photoLabel, 0, row);
+                grid.add(errorLabel, 1, row);
+            }
         }
 
         ScrollPane scrollPane = new ScrollPane(grid);
         scrollPane.setFitToWidth(true);
-        scrollPane.setPrefSize(500, 400);
+        scrollPane.setPrefSize(660, 500);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 
         pane.setContent(scrollPane);
@@ -335,7 +376,7 @@ public final class DashboardUIHelper {
                                              Runnable afterSave) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Edit Maintenance Request");
-        dialog.setHeaderText("Update your request");
+        dialog.setHeaderText("Edit your request");
 
         ButtonType saveBtnType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);
@@ -356,27 +397,34 @@ public final class DashboardUIHelper {
         priorityBox.getItems().addAll(PriorityLevel.values());
         priorityBox.setValue(request.getPriority());
 
-        HBox statusButtons = new HBox(10);
-        statusButtons.setAlignment(Pos.CENTER_LEFT);
+        HBox statusOptions = new HBox(10);
+        statusOptions.setAlignment(Pos.CENTER_LEFT);
 
-        final RequestStatus[] selectedStatus = {request.getStatus()};
+        RequestStatus originalStatus = request.getStatus();
+        final RequestStatus[] selectedStatus = { originalStatus };
 
-        if (request.getStatus() == RequestStatus.COMPLETED || request.getStatus() == RequestStatus.CANCELLED) {
-            Button reopenBtn = new Button("Reopen Request");
-            styleActionToggleButton(reopenBtn, "#4caf50", "#43a047", "#388e3c");
-            reopenBtn.setOnAction(e -> {
-                selectedStatus[0] = RequestStatus.REOPENED;
-                new Alert(Alert.AlertType.INFORMATION, "Request reopened.").showAndWait();
+        if (originalStatus == RequestStatus.COMPLETED || originalStatus == RequestStatus.CANCELLED) {
+            CheckBox reopenCheck = new CheckBox("Reopen request");
+            styleActionToggleButton(reopenCheck, "#4caf50", "#43a047", "#388e3c");
+            reopenCheck.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+                if (isSelected) {
+                    selectedStatus[0] = RequestStatus.REOPENED;
+                } else {
+                    selectedStatus[0] = originalStatus;
+                }
             });
-            statusButtons.getChildren().add(reopenBtn);
-        } else if (request.getStatus() != RequestStatus.CANCELLED) {
-            Button cancelBtn = new Button("Cancel Request");
-            styleActionToggleButton(cancelBtn, "#e53935", "#d32f2f", "#c62828");
-            cancelBtn.setOnAction(e -> {
-                selectedStatus[0] = RequestStatus.CANCELLED;
-                new Alert(Alert.AlertType.INFORMATION, "Request cancelled.").showAndWait();
+            statusOptions.getChildren().add(reopenCheck);
+        } else {
+            CheckBox cancelCheck = new CheckBox("Cancel request");
+            styleActionToggleButton(cancelCheck, "#e53935", "#d32f2f", "#c62828");
+            cancelCheck.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+                if (isSelected) {
+                    selectedStatus[0] = RequestStatus.CANCELLED;
+                } else {
+                    selectedStatus[0] = originalStatus;
+                }
             });
-            statusButtons.getChildren().add(cancelBtn);
+            statusOptions.getChildren().add(cancelCheck);
         }
 
         grid.add(new Label("Category:"), 0, 0);
@@ -386,7 +434,7 @@ public final class DashboardUIHelper {
         grid.add(new Label("Priority:"), 0, 2);
         grid.add(priorityBox, 1, 2);
         grid.add(new Label("Status:"), 0, 3);
-        grid.add(statusButtons, 1, 3);
+        grid.add(statusOptions, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -491,7 +539,7 @@ public final class DashboardUIHelper {
         }
     }
 
-    public static void styleActionToggleButton(Button b, String base, String hover, String pressed) {
+    public static void styleActionToggleButton(Labeled b, String base, String hover, String pressed) {
         String common = "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;";
         b.setStyle("-fx-background-color: " + base + common);
         b.setOnMouseEntered(ev -> b.setStyle("-fx-background-color: " + hover + common));
