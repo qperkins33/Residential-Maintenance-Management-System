@@ -115,7 +115,6 @@ public class ManagerDashboardController {
 
         HBox statsBox = createStatsCards();
         VBox requestsSection = createRequestsSection();
-
         VBox.setVgrow(requestsSection, Priority.ALWAYS);
 
         content.getChildren().addAll(statsBox, requestsSection);
@@ -131,18 +130,9 @@ public class ManagerDashboardController {
                 .filter(r -> r.getStatus() == RequestStatus.SUBMITTED)
                 .count();
 
-        long inProgress = allRequests.stream()
-                .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS
-                        || r.getStatus() == RequestStatus.REOPENED)
-                .count();
-
-        long completed = allRequests.stream()
-                .filter(r -> r.getStatus() == RequestStatus.COMPLETED)
-                .count();
-
-        long cancelled = allRequests.stream()
-                .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
-                .count();
+        long inProgress = allRequests.stream().filter(this::isInProgress).count();
+        long completed = allRequests.stream().filter(this::isCompleted).count();
+        long cancelled = allRequests.stream().filter(this::isCancelled).count();
 
         VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(allRequests.size()), "#667eea", "📋");
         VBox unassignedCard = DashboardUIHelper.createStatCard("Unassigned", String.valueOf(unassigned), "#2196f3", "👀");
@@ -167,7 +157,6 @@ public class ManagerDashboardController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        // Filter similar to staff
         ComboBox<String> filterBox = new ComboBox<>();
         filterBox.getItems().addAll(
                 "All Requests",
@@ -274,7 +263,6 @@ public class ManagerDashboardController {
         requestTable.setItems(FXCollections.observableArrayList(requestDAO.getAllRequests()));
     }
 
-    // New: filter like staff, but on all requests
     private void filterRequests(String filter) {
         List<MaintenanceRequest> requests = requestDAO.getAllRequests();
 
@@ -283,17 +271,16 @@ public class ManagerDashboardController {
                     .filter(r -> r.getStatus() == RequestStatus.SUBMITTED)
                     .toList();
             case "In Progress" -> requests = requests.stream()
-                    .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS
-                            || r.getStatus() == RequestStatus.REOPENED)
+                    .filter(this::isInProgress)
                     .toList();
             case "Completed" -> requests = requests.stream()
-                    .filter(r -> r.getStatus() == RequestStatus.COMPLETED)
+                    .filter(this::isCompleted)
                     .toList();
             case "Cancelled" -> requests = requests.stream()
-                    .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
+                    .filter(this::isCancelled)
                     .toList();
             default -> {
-                // "All Requests" -> no filter
+                // "All Requests"
             }
         }
 
@@ -316,7 +303,6 @@ public class ManagerDashboardController {
         staffBox.getItems().addAll(availableStaff);
         staffBox.setPromptText("Select staff member");
 
-        // Show live workload in the dropdown based on current active requests per staff
         staffBox.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(MaintenanceStaff staff, boolean empty) {
@@ -325,8 +311,7 @@ public class ManagerDashboardController {
                     setText(null);
                 } else {
                     long activeWorkload = requestDAO.getRequestsByStaff(staff.getStaffId()).stream()
-                            .filter(r -> r.getStatus() != RequestStatus.COMPLETED
-                                    && r.getStatus() != RequestStatus.CANCELLED)
+                            .filter(r -> !isCompleted(r) && !isCancelled(r))
                             .count();
                     staff.setCurrentWorkload((int) activeWorkload);
                     setText(staff.getFullName() + " (Workload: " +
@@ -335,7 +320,6 @@ public class ManagerDashboardController {
             }
         });
 
-        // Also show same text when selected
         staffBox.setButtonCell(new ListCell<>() {
             @Override
             protected void updateItem(MaintenanceStaff staff, boolean empty) {
@@ -344,8 +328,7 @@ public class ManagerDashboardController {
                     setText(null);
                 } else {
                     long activeWorkload = requestDAO.getRequestsByStaff(staff.getStaffId()).stream()
-                            .filter(r -> r.getStatus() != RequestStatus.COMPLETED
-                                    && r.getStatus() != RequestStatus.CANCELLED)
+                            .filter(r -> !isCompleted(r) && !isCancelled(r))
                             .count();
                     setText(staff.getFullName() + " (Workload: " +
                             activeWorkload + "/" + staff.getMaxCapacity() + ")");
@@ -375,5 +358,24 @@ public class ManagerDashboardController {
                 loadRequests();
             }
         });
+    }
+
+    // Shared status grouping helpers (same across controllers)
+    private boolean isNotStarted(MaintenanceRequest r) {
+        return r.getStatus() == RequestStatus.SUBMITTED
+                || r.getStatus() == RequestStatus.ASSIGNED;
+    }
+
+    private boolean isInProgress(MaintenanceRequest r) {
+        return r.getStatus() == RequestStatus.IN_PROGRESS
+                || r.getStatus() == RequestStatus.REOPENED;
+    }
+
+    private boolean isCompleted(MaintenanceRequest r) {
+        return r.getStatus() == RequestStatus.COMPLETED;
+    }
+
+    private boolean isCancelled(MaintenanceRequest r) {
+        return r.getStatus() == RequestStatus.CANCELLED;
     }
 }
