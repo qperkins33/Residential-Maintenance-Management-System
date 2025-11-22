@@ -18,6 +18,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+
 import java.util.List;
 
 public class ManagerDashboardController {
@@ -263,6 +264,7 @@ public class ManagerDashboardController {
         staffBox.getItems().addAll(availableStaff);
         staffBox.setPromptText("Select staff member");
 
+        // Show live workload in the dropdown based on current active requests per staff
         staffBox.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(MaintenanceStaff staff, boolean empty) {
@@ -270,8 +272,31 @@ public class ManagerDashboardController {
                 if (empty || staff == null) {
                     setText(null);
                 } else {
+                    long activeWorkload = requestDAO.getRequestsByStaff(staff.getStaffId()).stream()
+                            .filter(r -> r.getStatus() != RequestStatus.COMPLETED
+                                    && r.getStatus() != RequestStatus.CANCELLED)
+                            .count();
+                    staff.setCurrentWorkload((int) activeWorkload);
                     setText(staff.getFullName() + " (Workload: " +
-                            staff.getCurrentWorkload() + "/" + staff.getMaxCapacity() + ")");
+                            activeWorkload + "/" + staff.getMaxCapacity() + ")");
+                }
+            }
+        });
+
+        // Also show same text when selected
+        staffBox.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(MaintenanceStaff staff, boolean empty) {
+                super.updateItem(staff, empty);
+                if (empty || staff == null) {
+                    setText(null);
+                } else {
+                    long activeWorkload = requestDAO.getRequestsByStaff(staff.getStaffId()).stream()
+                            .filter(r -> r.getStatus() != RequestStatus.COMPLETED
+                                    && r.getStatus() != RequestStatus.CANCELLED)
+                            .count();
+                    setText(staff.getFullName() + " (Workload: " +
+                            activeWorkload + "/" + staff.getMaxCapacity() + ")");
                 }
             }
         });

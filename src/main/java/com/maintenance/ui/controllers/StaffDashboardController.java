@@ -28,6 +28,9 @@ public class StaffDashboardController {
     private final MaintenanceRequestDAO requestDAO;
     private TableView<MaintenanceRequest> requestTable;
 
+    // Workload label so we can refresh it when requests change
+    private Label workloadLabel;
+
     public StaffDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
         this.authService = AuthenticationService.getInstance();
@@ -134,10 +137,13 @@ public class StaffDashboardController {
             showStatusNotification(availableCheck.isSelected());
         });
 
-        Label workloadLabel = new Label("Workload: " + staff.getCurrentWorkload() +
-                "/" + staff.getMaxCapacity());
+        // Create workload label and let refreshWorkload compute the true value
+        workloadLabel = new Label();
         workloadLabel.setFont(Font.font("Arial", 11));
         workloadLabel.setTextFill(Color.web("#bdc3c7"));
+
+        // Compute initial workload from active requests
+        refreshWorkload();
 
         box.getChildren().addAll(statusLabel, availableCheck, workloadLabel);
         return box;
@@ -298,6 +304,7 @@ public class StaffDashboardController {
 
                 updateBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    // Staff can only add/update staff update notes, not change tenant description
                     DashboardUIHelper.showStaffUpdateDialog(request, requestDAO, StaffDashboardController.this::loadRequests);
                 });
 
@@ -367,6 +374,9 @@ public class StaffDashboardController {
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
         List<MaintenanceRequest> requests = requestDAO.getRequestsByStaff(staff.getStaffId());
         requestTable.setItems(FXCollections.observableArrayList(requests));
+
+        // After loading requests, recompute workload based on active tickets
+        refreshWorkload();
     }
 
     private void filterRequests(String filter) {
@@ -389,6 +399,31 @@ public class StaffDashboardController {
         }
 
         requestTable.setItems(FXCollections.observableArrayList(requests));
+
+        // Workload itself does not change with filter, but keep it in sync with DB state
+        refreshWorkload();
+    }
+
+    // Central place that computes workload as number of active requests in DB
+    private void refreshWorkload() {
+        if (workloadLabel == null) {
+            return;
+        }
+
+        MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
+        if (staff == null) {
+            return;
+        }
+
+        long activeWorkload = requestDAO.getRequestsByStaff(staff.getStaffId()).stream()
+                .filter(r -> r.getStatus() != RequestStatus.COMPLETED
+                        && r.getStatus() != RequestStatus.CANCELLED)
+                .count();
+
+        // Keep the in-memory object in sync for any other consumers
+        staff.setCurrentWorkload((int) activeWorkload);
+
+        workloadLabel.setText("Workload: " + activeWorkload + "/" + staff.getMaxCapacity());
     }
 
     private void startWork(MaintenanceRequest request) {
