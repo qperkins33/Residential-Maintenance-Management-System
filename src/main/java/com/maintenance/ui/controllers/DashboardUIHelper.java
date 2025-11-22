@@ -246,6 +246,9 @@ public final class DashboardUIHelper {
         DialogPane pane = dialog.getDialogPane();
         pane.getButtonTypes().add(ButtonType.CLOSE);
 
+        pane.setMinWidth(700);
+        pane.setPrefWidth(700);
+
         GridPane grid = new GridPane();
         grid.setHgap(15);
         grid.setVgap(12);
@@ -360,7 +363,7 @@ public final class DashboardUIHelper {
 
         ScrollPane scrollPane = new ScrollPane(grid);
         scrollPane.setFitToWidth(true);
-        scrollPane.setPrefSize(500, 400);
+        scrollPane.setPrefSize(660, 500);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 
         pane.setContent(scrollPane);
