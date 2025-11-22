@@ -7,6 +7,7 @@ import com.maintenance.enums.RequestStatus;
 import com.maintenance.models.MaintenanceRequest;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.event.ActionEvent;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -110,7 +111,9 @@ public final class DashboardUIHelper {
                 setText(null);
                 setStyle("");
                 getStyleClass().removeAll("priority-urgent", "priority-high", "priority-medium", "priority-else");
-                if (empty || item == null) return;
+                if (empty || item == null) {
+                    return;
+                }
                 setText(item.getDisplayName());
                 if (item == PriorityLevel.EMERGENCY || item == PriorityLevel.URGENT) {
                     getStyleClass().add("priority-urgent");
@@ -147,7 +150,9 @@ public final class DashboardUIHelper {
                 setText(null);
                 setStyle("");
                 getStyleClass().removeAll(statusClasses);
-                if (empty || item == null) return;
+                if (empty || item == null) {
+                    return;
+                }
                 setText(item.getDisplayName());
                 switch (item) {
                     case COMPLETED -> getStyleClass().add("status-completed");
@@ -187,7 +192,9 @@ public final class DashboardUIHelper {
                 super.updateItem(item, empty);
                 setText(null);
                 setGraphic(null);
-                if (empty || item == null) return;
+                if (empty || item == null) {
+                    return;
+                }
                 pill.setText(item);
                 setGraphic(pill);
             }
@@ -199,10 +206,16 @@ public final class DashboardUIHelper {
         Label lblLabel = new Label(label);
         lblLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         lblLabel.setTextFill(Color.web("#555"));
+        lblLabel.setMinWidth(Region.USE_PREF_SIZE);
+        lblLabel.getStyleClass().add("request-details-label");
 
-        Label valueLabel = new Label(value);
+        Label valueLabel = new Label(value == null ? "" : value);
         valueLabel.setFont(Font.font("Arial", 12));
         valueLabel.setWrapText(true);
+        valueLabel.setMaxWidth(Double.MAX_VALUE);
+        valueLabel.getStyleClass().add("request-details-value");
+
+        GridPane.setHgrow(valueLabel, Priority.ALWAYS);
 
         grid.add(lblLabel, 0, row);
         grid.add(valueLabel, 1, row);
@@ -213,11 +226,23 @@ public final class DashboardUIHelper {
         dialog.setTitle("Request Details");
         dialog.setHeaderText("Request #" + request.getRequestId());
 
+        DialogPane pane = dialog.getDialogPane();
+        pane.getButtonTypes().add(ButtonType.CLOSE);
+
         GridPane grid = new GridPane();
         grid.setHgap(15);
         grid.setVgap(12);
         grid.setPadding(new Insets(20));
-        grid.setStyle("-fx-background-color: white;");
+
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setMinWidth(110);
+        col1.setPrefWidth(130);
+        col1.setHalignment(HPos.RIGHT);
+
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setHgrow(Priority.ALWAYS);
+
+        grid.getColumnConstraints().setAll(col1, col2);
 
         int row = 0;
 
@@ -228,16 +253,23 @@ public final class DashboardUIHelper {
         addDetailRow(grid, row++, "Status:", request.getStatus().getDisplayName());
 
         if (request.getSubmissionDate() != null) {
-            addDetailRow(grid, row++, "Submitted:",
-                    request.getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")));
+            addDetailRow(
+                    grid,
+                    row++,
+                    "Submitted:",
+                    request.getSubmissionDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"))
+            );
         }
 
         if (request.getScheduledDate() != null) {
-            addDetailRow(grid, row++, "Scheduled:",
-                    request.getScheduledDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")));
+            addDetailRow(
+                    grid,
+                    row++,
+                    "Scheduled:",
+                    request.getScheduledDate().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"))
+            );
         }
 
-        // Description (tenant text, read-only)
         Label descLabel = new Label("Description:");
         descLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
 
@@ -245,11 +277,12 @@ public final class DashboardUIHelper {
         descArea.setWrapText(true);
         descArea.setEditable(false);
         descArea.setPrefRowCount(3);
+        descArea.setMaxWidth(Double.MAX_VALUE);
+        GridPane.setHgrow(descArea, Priority.ALWAYS);
 
         grid.add(descLabel, 0, row);
         grid.add(descArea, 1, row++);
 
-        // Staff update section (visually similar to description) with placeholder
         Label updateLabel = new Label("Staff Update:");
         updateLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
 
@@ -257,12 +290,13 @@ public final class DashboardUIHelper {
         updateArea.setWrapText(true);
         updateArea.setEditable(false);
         updateArea.setPrefRowCount(3);
+        updateArea.setMaxWidth(Double.MAX_VALUE);
+        GridPane.setHgrow(updateArea, Priority.ALWAYS);
 
         String staffUpdate = request.getStaffUpdateNotes();
         if (staffUpdate != null && !staffUpdate.isBlank()) {
             updateArea.setText(staffUpdate);
         } else {
-            // Placeholder text when no update has been added yet
             updateArea.setText("No staff updates yet.");
             updateArea.setStyle("-fx-text-fill: #7f8c8d; -fx-font-style: italic;");
         }
@@ -270,7 +304,6 @@ public final class DashboardUIHelper {
         grid.add(updateLabel, 0, row);
         grid.add(updateArea, 1, row++);
 
-        // Resolution (if present)
         if (request.getResolutionNotes() != null && !request.getResolutionNotes().isEmpty()) {
             Label resLabel = new Label("Resolution:");
             resLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
@@ -279,17 +312,20 @@ public final class DashboardUIHelper {
             resArea.setWrapText(true);
             resArea.setEditable(false);
             resArea.setPrefRowCount(3);
+            resArea.setMaxWidth(Double.MAX_VALUE);
+            GridPane.setHgrow(resArea, Priority.ALWAYS);
 
             grid.add(resLabel, 0, row);
-            grid.add(resArea, 1, row++);
+            grid.add(resArea, 1, row);
+            // row++;    // uncomment only if you actually add more rows below
         }
 
         ScrollPane scrollPane = new ScrollPane(grid);
         scrollPane.setFitToWidth(true);
         scrollPane.setPrefSize(500, 400);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 
-        dialog.getDialogPane().setContent(scrollPane);
-        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        pane.setContent(scrollPane);
 
         dialog.showAndWait();
     }
@@ -387,7 +423,6 @@ public final class DashboardUIHelper {
         }
     }
 
-    // staff update dialog (staff cannot change description, only staff update notes)
     public static void showStaffUpdateDialog(MaintenanceRequest request,
                                              MaintenanceRequestDAO requestDAO,
                                              Runnable afterSave) {
