@@ -130,26 +130,13 @@ public class TenantDashboardController {
         Tenant tenant = (Tenant) authService.getCurrentUser();
         List<MaintenanceRequest> requests = requestDAO.getRequestsByTenant(tenant.getUserId());
 
-        long pending = requests.stream()
-                .filter(r -> r.getStatus() == RequestStatus.SUBMITTED
-                        || r.getStatus() == RequestStatus.ASSIGNED)
-                .count();
-
-        long inProgress = requests.stream()
-                .filter(r -> r.getStatus() == RequestStatus.IN_PROGRESS
-                        || r.getStatus() == RequestStatus.REOPENED)
-                .count();
-
-        long completed = requests.stream()
-                .filter(r -> r.getStatus() == RequestStatus.COMPLETED)
-                .count();
-
-        long cancelled = requests.stream()
-                .filter(r -> r.getStatus() == RequestStatus.CANCELLED)
-                .count();
+        long notStarted = requests.stream().filter(this::isNotStarted).count();
+        long inProgress = requests.stream().filter(this::isInProgress).count();
+        long completed = requests.stream().filter(this::isCompleted).count();
+        long cancelled = requests.stream().filter(this::isCancelled).count();
 
         VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(requests.size()), "#667eea", "📋");
-        VBox pendingCard = DashboardUIHelper.createStatCard("Pending Start", String.valueOf(pending), "#2196f3", "⏸️");
+        VBox pendingCard = DashboardUIHelper.createStatCard("Not Started", String.valueOf(notStarted), "#2196f3", "⏸️");
         VBox inProgressCard = DashboardUIHelper.createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "👷");
         VBox completedCard = DashboardUIHelper.createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
         VBox cancelledCard = DashboardUIHelper.createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
@@ -171,12 +158,29 @@ public class TenantDashboardController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        ComboBox<String> filterBox = new ComboBox<>();
+        filterBox.getItems().addAll(
+                "All Requests",
+                "Not Started",
+                "In Progress",
+                "Completed",
+                "Cancelled"
+        );
+        filterBox.setValue("All Requests");
+        filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
+        filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
+
+        Button refreshBtn = new Button("🔄 Refresh");
+        refreshBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                "-fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        refreshBtn.setOnAction(e -> loadRequests());
+
         Button newRequestBtn = new Button("+ New Request");
         newRequestBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
                 "-fx-padding: 10 20; -fx-background-radius: 5; -fx-cursor: hand;");
         newRequestBtn.setOnAction(e -> showNewRequestDialog());
 
-        headerBox.getChildren().addAll(sectionTitle, spacer, newRequestBtn);
+        headerBox.getChildren().addAll(sectionTitle, spacer, filterBox, refreshBtn, newRequestBtn);
 
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
@@ -263,6 +267,31 @@ public class TenantDashboardController {
         requestTable.setItems(requests);
     }
 
+    private void filterRequests(String filter) {
+        Tenant tenant = (Tenant) authService.getCurrentUser();
+        List<MaintenanceRequest> requests = requestDAO.getRequestsByTenant(tenant.getUserId());
+
+        switch (filter) {
+            case "Not Started" -> requests = requests.stream()
+                    .filter(this::isNotStarted)
+                    .toList();
+            case "In Progress" -> requests = requests.stream()
+                    .filter(this::isInProgress)
+                    .toList();
+            case "Completed" -> requests = requests.stream()
+                    .filter(this::isCompleted)
+                    .toList();
+            case "Cancelled" -> requests = requests.stream()
+                    .filter(this::isCancelled)
+                    .toList();
+            default -> {
+                // "All Requests"
+            }
+        }
+
+        requestTable.setItems(FXCollections.observableArrayList(requests));
+    }
+
     private void showNewRequestDialog() {
         Dialog<MaintenanceRequest> dialog = new Dialog<>();
         dialog.setTitle("Submit New Maintenance Request");
@@ -284,8 +313,7 @@ public class TenantDashboardController {
         descArea.setPromptText("Describe the issue...");
         descArea.setPrefRowCount(4);
 
-        // Photo attachment
-        final File[] selectedPhotoFile = { null };
+        final File[] selectedPhotoFile = {null};
 
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select Photo");
@@ -342,7 +370,6 @@ public class TenantDashboardController {
         });
 
         dialog.showAndWait().ifPresent(request -> {
-            // Persist photo for this request if one was selected
             if (selectedPhotoFile[0] != null && request.getRequestId() != null) {
                 File file = selectedPhotoFile[0];
                 String uri = file.toURI().toString();
@@ -358,5 +385,24 @@ public class TenantDashboardController {
             alert.showAndWait();
             loadRequests();
         });
+    }
+
+    // Shared status grouping helpers (same across controllers)
+    private boolean isNotStarted(MaintenanceRequest r) {
+        return r.getStatus() == RequestStatus.SUBMITTED
+                || r.getStatus() == RequestStatus.ASSIGNED;
+    }
+
+    private boolean isInProgress(MaintenanceRequest r) {
+        return r.getStatus() == RequestStatus.IN_PROGRESS
+                || r.getStatus() == RequestStatus.REOPENED;
+    }
+
+    private boolean isCompleted(MaintenanceRequest r) {
+        return r.getStatus() == RequestStatus.COMPLETED;
+    }
+
+    private boolean isCancelled(MaintenanceRequest r) {
+        return r.getStatus() == RequestStatus.CANCELLED;
     }
 }
