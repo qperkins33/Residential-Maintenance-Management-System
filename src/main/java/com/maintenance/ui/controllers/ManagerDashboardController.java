@@ -186,9 +186,32 @@ public class ManagerDashboardController {
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
         idCol.setPrefWidth(100);
 
-        TableColumn<MaintenanceRequest, String> aptCol = new TableColumn<>("Apartment");
-        aptCol.setCellValueFactory(new PropertyValueFactory<>("apartmentNumber"));
-        aptCol.setPrefWidth(100);
+        TableColumn<MaintenanceRequest, String> staffCol = new TableColumn<>("Assigned Staff");
+        staffCol.setCellValueFactory(new PropertyValueFactory<>("assignedStaffId"));
+        staffCol.setPrefWidth(140);
+
+        staffCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String staffId, boolean empty) {
+                super.updateItem(staffId, empty);
+
+                if (empty) {
+                    setText(null);
+                    return;
+                }
+
+                MaintenanceRequest req = getTableView().getItems().get(getIndex());
+
+                // Blank if unassigned / submitted
+                if (req.getStatus() == RequestStatus.SUBMITTED || staffId == null || staffId.isBlank()) {
+                    setText("");
+                    return;
+                }
+
+                MaintenanceStaff staff = userDAO.getStaffByStaffId(staffId);
+                setText(staff != null ? staff.getFullName() : "");
+            }
+        });
 
         TableColumn<MaintenanceRequest, String> categoryCol = new TableColumn<>("Category");
         categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
@@ -203,9 +226,23 @@ public class ManagerDashboardController {
         TableColumn<MaintenanceRequest, ?> statusCol = DashboardUIHelper.createStatusColumn();
         TableColumn<MaintenanceRequest, ?> dateCol = DashboardUIHelper.createSubmittedDateColumn();
 
+        TableColumn<MaintenanceRequest, Void> actionCol = getMaintenanceRequestVoidTableColumn();
+
+        requestTable.getColumns().setAll(java.util.Arrays.asList(
+                idCol, staffCol, categoryCol, descCol,
+                priorityCol, statusCol, dateCol, actionCol));
+
+        loadRequests();
+
+        section.getChildren().addAll(headerBox, requestTable);
+        VBox.setVgrow(requestTable, Priority.ALWAYS);
+        return section;
+    }
+
+    private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(220);
-        actionCol.setMinWidth(220);
+        actionCol.setPrefWidth(195);
+        actionCol.setMinWidth(195);
         actionCol.setResizable(false);
         actionCol.setStyle("-fx-alignment: CENTER;");
 
@@ -247,16 +284,7 @@ public class ManagerDashboardController {
                 }
             }
         });
-
-        requestTable.getColumns().setAll(java.util.Arrays.asList(
-                idCol, aptCol, categoryCol, descCol,
-                priorityCol, statusCol, dateCol, actionCol));
-
-        loadRequests();
-
-        section.getChildren().addAll(headerBox, requestTable);
-        VBox.setVgrow(requestTable, Priority.ALWAYS);
-        return section;
+        return actionCol;
     }
 
     private void loadRequests() {

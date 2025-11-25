@@ -40,18 +40,13 @@ public class UserDAO {
     }
 
     private User loadUserByType(String userId, String userType) throws SQLException {
-        switch (userType) {
-            case "TENANT":
-                return loadTenant(userId);
-            case "MANAGER":
-                return loadManager(userId);
-            case "STAFF":
-                return loadStaff(userId);
-            case "ADMIN":
-                return loadAdmin(userId);
-            default:
-                return null;
-        }
+        return switch (userType) {
+            case "TENANT" -> loadTenant(userId);
+            case "MANAGER" -> loadManager(userId);
+            case "STAFF" -> loadStaff(userId);
+            case "ADMIN" -> loadAdmin(userId);
+            default -> null;
+        };
     }
 
     private Tenant loadTenant(String userId) throws SQLException {
@@ -173,4 +168,37 @@ public class UserDAO {
 
         return staffList;
     }
+
+    public Tenant getTenantById(String userId) {
+        try {
+            return loadTenant(userId);
+        } catch (SQLException e) {
+            System.err.println("Error loading tenant by id: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public MaintenanceStaff getStaffByStaffId(String staffId) {
+        String sql = "SELECT u.*, s.* FROM users u " +
+                "JOIN maintenance_staff s ON u.user_id = s.user_id WHERE s.staff_id = ?";
+
+        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
+            pstmt.setString(1, staffId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                MaintenanceStaff staff = new MaintenanceStaff();
+                populateUserFields(staff, rs);
+                staff.setStaffId(rs.getString("staff_id"));
+                staff.setCurrentWorkload(rs.getInt("current_workload"));
+                staff.setMaxCapacity(rs.getInt("max_capacity"));
+                staff.setAvailable(rs.getBoolean("is_available"));
+                return staff;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error loading staff by staff_id: " + e.getMessage());
+        }
+        return null;
+    }
+
 }

@@ -206,9 +206,28 @@ public class TenantDashboardController {
         TableColumn<MaintenanceRequest, ?> statusCol = DashboardUIHelper.createStatusColumn();
         TableColumn<MaintenanceRequest, ?> dateCol = DashboardUIHelper.createSubmittedDateColumn();
 
+        TableColumn<MaintenanceRequest, Void> actionCol = getMaintenanceRequestVoidTableColumn();
+
+        requestTable.getColumns().setAll(java.util.Arrays.asList(
+                idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol
+        ));
+
+        Label emptyLabel = new Label("No requests yet");
+        emptyLabel.setFont(Font.font("Arial", 14));
+        emptyLabel.setTextFill(Color.GRAY);
+        requestTable.setPlaceholder(emptyLabel);
+
+        loadRequests();
+
+        section.getChildren().addAll(headerBox, requestTable);
+        VBox.setVgrow(requestTable, Priority.ALWAYS);
+        return section;
+    }
+
+    private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(260);
-        actionCol.setMinWidth(260);
+        actionCol.setPrefWidth(195);
+        actionCol.setMinWidth(195);
         actionCol.setResizable(false);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
@@ -243,21 +262,7 @@ public class TenantDashboardController {
                 }
             }
         });
-
-        requestTable.getColumns().setAll(java.util.Arrays.asList(
-                idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol
-        ));
-
-        Label emptyLabel = new Label("No requests yet");
-        emptyLabel.setFont(Font.font("Arial", 14));
-        emptyLabel.setTextFill(Color.GRAY);
-        requestTable.setPlaceholder(emptyLabel);
-
-        loadRequests();
-
-        section.getChildren().addAll(headerBox, requestTable);
-        VBox.setVgrow(requestTable, Priority.ALWAYS);
-        return section;
+        return actionCol;
     }
 
     private void loadRequests() {

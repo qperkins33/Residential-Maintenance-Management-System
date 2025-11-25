@@ -1,5 +1,8 @@
 package com.maintenance.ui.controllers;
 
+import com.maintenance.dao.UserDAO;
+import com.maintenance.models.MaintenanceStaff;
+import com.maintenance.models.Tenant;
 import com.maintenance.dao.MaintenanceRequestDAO;
 import com.maintenance.dao.PhotoDAO;
 import com.maintenance.enums.CategoryType;
@@ -28,6 +31,8 @@ import java.util.Objects;
 public final class DashboardUIHelper {
 
     private static final PhotoDAO PHOTO_DAO = new PhotoDAO();
+    private static final UserDAO USER_DAO = new UserDAO();
+
 
     private DashboardUIHelper() {}
 
@@ -237,8 +242,35 @@ public final class DashboardUIHelper {
         }
     }
 
-    // Internal helper that actually builds the dialog UI.
+    // Internal helper that actually builds the dialog UI. Used when user clicks 'View'
+// Internal helper that actually builds the dialog UI. Used when user clicks 'View'
     private static void showRequestDetailsDialog(MaintenanceRequest request, String photoUri) {
+        // Look up tenant and staff info using the IDs on the request
+        String tenantName = null;
+        String tenantPhone = null;
+        String tenantEmail = null;
+        String staffEmail = null;
+        String staffName = null;
+
+        // tenantId in MaintenanceRequest is user_id
+        if (request.getTenantId() != null && !request.getTenantId().isBlank()) {
+            Tenant tenant = USER_DAO.getTenantById(request.getTenantId());
+            if (tenant != null) {
+                tenantName = tenant.getFullName();       // from User base class
+                tenantPhone = tenant.getPhoneNumber();   // from User base class
+                tenantEmail = tenant.getEmail();         // <--- add this
+            }
+        }
+
+        // assignedStaffId is staff_id
+        if (request.getAssignedStaffId() != null && !request.getAssignedStaffId().isBlank()) {
+            MaintenanceStaff staff = USER_DAO.getStaffByStaffId(request.getAssignedStaffId());
+            if (staff != null) {
+                staffName = staff.getFullName();
+                staffEmail = staff.getEmail();
+            }
+        }
+
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Request Details");
         dialog.setHeaderText("Request #" + request.getRequestId());
@@ -268,6 +300,26 @@ public final class DashboardUIHelper {
 
         addDetailRow(grid, row++, "Request ID:", request.getRequestId());
         addDetailRow(grid, row++, "Apartment:", request.getApartmentNumber());
+
+        // tenant info
+        if (tenantName != null && !tenantName.isBlank()) {
+            addDetailRow(grid, row++, "Tenant:", tenantName);
+        }
+        if (tenantPhone != null && !tenantPhone.isBlank()) {
+            addDetailRow(grid, row++, "Tenant Phone:", tenantPhone);
+        }
+        if (tenantEmail != null && !tenantEmail.isBlank()) {
+            addDetailRow(grid, row++, "Tenant Email:", tenantEmail);
+        }
+
+        // assigned staff info
+        if (staffName != null && !staffName.isBlank()) {
+            addDetailRow(grid, row++, "Assigned Staff:", staffName);
+        }
+        if (staffEmail != null && !staffEmail.isBlank()) {
+            addDetailRow(grid, row++, "Assigned Staff Email:", staffEmail);
+        }
+
         addDetailRow(grid, row++, "Category:", request.getCategory().getDisplayName());
         addDetailRow(grid, row++, "Priority:", request.getPriority().getDisplayName());
         addDetailRow(grid, row++, "Status:", request.getStatus().getDisplayName());
@@ -414,7 +466,7 @@ public final class DashboardUIHelper {
                 }
             });
             statusOptions.getChildren().add(reopenCheck);
-        } else if (originalStatus != RequestStatus.SUBMITTED && originalStatus != RequestStatus.ASSIGNED) {
+        } else {
             CheckBox cancelCheck = new CheckBox("Cancel request");
             styleActionToggleButton(cancelCheck, "#e53935", "#d32f2f", "#c62828");
             cancelCheck.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
@@ -425,15 +477,6 @@ public final class DashboardUIHelper {
                 }
             });
             statusOptions.getChildren().add(cancelCheck);
-        } else {
-            // For SUBMITTED or ASSIGNED: show read only status text, no action toggle
-            String statusText = originalStatus.name().replace('_', ' ');
-            Label statusLabel = new Label(statusText);
-            statusLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
-            statusOptions.getChildren().add(statusLabel);
-
-            // Make sure we keep the original status
-            selectedStatus[0] = originalStatus;
         }
 
         grid.add(new Label("Category:"), 0, 0);
