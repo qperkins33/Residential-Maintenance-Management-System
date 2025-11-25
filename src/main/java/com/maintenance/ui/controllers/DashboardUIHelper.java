@@ -1,5 +1,8 @@
 package com.maintenance.ui.controllers;
 
+import com.maintenance.dao.UserDAO;
+import com.maintenance.models.MaintenanceStaff;
+import com.maintenance.models.Tenant;
 import com.maintenance.dao.MaintenanceRequestDAO;
 import com.maintenance.dao.PhotoDAO;
 import com.maintenance.enums.CategoryType;
@@ -28,6 +31,8 @@ import java.util.Objects;
 public final class DashboardUIHelper {
 
     private static final PhotoDAO PHOTO_DAO = new PhotoDAO();
+    private static final UserDAO USER_DAO = new UserDAO();
+
 
     private DashboardUIHelper() {}
 
@@ -237,8 +242,31 @@ public final class DashboardUIHelper {
         }
     }
 
-    // Internal helper that actually builds the dialog UI.
+    // Internal helper that actually builds the dialog UI. Used when user clicks 'View'
+// Internal helper that actually builds the dialog UI. Used when user clicks 'View'
     private static void showRequestDetailsDialog(MaintenanceRequest request, String photoUri) {
+        // Look up tenant and staff info using the IDs on the request
+        String tenantName = null;
+        String tenantPhone = null;
+        String staffName = null;
+
+        // tenantId in MaintenanceRequest is user_id
+        if (request.getTenantId() != null && !request.getTenantId().isBlank()) {
+            Tenant tenant = USER_DAO.getTenantById(request.getTenantId());
+            if (tenant != null) {
+                tenantName = tenant.getFullName();       // from User base class
+                tenantPhone = tenant.getPhoneNumber();   // from User base class
+            }
+        }
+
+        // assignedStaffId is staff_id
+        if (request.getAssignedStaffId() != null && !request.getAssignedStaffId().isBlank()) {
+            MaintenanceStaff staff = USER_DAO.getStaffByStaffId(request.getAssignedStaffId());
+            if (staff != null) {
+                staffName = staff.getFullName();
+            }
+        }
+
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Request Details");
         dialog.setHeaderText("Request #" + request.getRequestId());
@@ -268,6 +296,20 @@ public final class DashboardUIHelper {
 
         addDetailRow(grid, row++, "Request ID:", request.getRequestId());
         addDetailRow(grid, row++, "Apartment:", request.getApartmentNumber());
+
+        // New: tenant info
+        if (tenantName != null && !tenantName.isBlank()) {
+            addDetailRow(grid, row++, "Tenant:", tenantName);
+        }
+        if (tenantPhone != null && !tenantPhone.isBlank()) {
+            addDetailRow(grid, row++, "Tenant Phone:", tenantPhone);
+        }
+
+        // New: assigned staff info
+        if (staffName != null && !staffName.isBlank()) {
+            addDetailRow(grid, row++, "Assigned Staff:", staffName);
+        }
+
         addDetailRow(grid, row++, "Category:", request.getCategory().getDisplayName());
         addDetailRow(grid, row++, "Priority:", request.getPriority().getDisplayName());
         addDetailRow(grid, row++, "Status:", request.getStatus().getDisplayName());
