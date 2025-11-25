@@ -248,6 +248,8 @@ public final class DashboardUIHelper {
         // Look up tenant and staff info using the IDs on the request
         String tenantName = null;
         String tenantPhone = null;
+        String tenantEmail = null;
+        String staffEmail = null;
         String staffName = null;
 
         // tenantId in MaintenanceRequest is user_id
@@ -256,6 +258,7 @@ public final class DashboardUIHelper {
             if (tenant != null) {
                 tenantName = tenant.getFullName();       // from User base class
                 tenantPhone = tenant.getPhoneNumber();   // from User base class
+                tenantEmail = tenant.getEmail();         // <--- add this
             }
         }
 
@@ -264,6 +267,7 @@ public final class DashboardUIHelper {
             MaintenanceStaff staff = USER_DAO.getStaffByStaffId(request.getAssignedStaffId());
             if (staff != null) {
                 staffName = staff.getFullName();
+                staffEmail = staff.getEmail();
             }
         }
 
@@ -297,17 +301,23 @@ public final class DashboardUIHelper {
         addDetailRow(grid, row++, "Request ID:", request.getRequestId());
         addDetailRow(grid, row++, "Apartment:", request.getApartmentNumber());
 
-        // New: tenant info
+        // tenant info
         if (tenantName != null && !tenantName.isBlank()) {
             addDetailRow(grid, row++, "Tenant:", tenantName);
         }
         if (tenantPhone != null && !tenantPhone.isBlank()) {
             addDetailRow(grid, row++, "Tenant Phone:", tenantPhone);
         }
+        if (tenantEmail != null && !tenantEmail.isBlank()) {
+            addDetailRow(grid, row++, "Tenant Email:", tenantEmail);
+        }
 
-        // New: assigned staff info
+        // assigned staff info
         if (staffName != null && !staffName.isBlank()) {
             addDetailRow(grid, row++, "Assigned Staff:", staffName);
+        }
+        if (staffEmail != null && !staffEmail.isBlank()) {
+            addDetailRow(grid, row++, "Assigned Staff Email:", staffEmail);
         }
 
         addDetailRow(grid, row++, "Category:", request.getCategory().getDisplayName());
