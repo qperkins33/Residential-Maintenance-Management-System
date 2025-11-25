@@ -241,8 +241,8 @@ public class ManagerDashboardController {
 
     private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(220);
-        actionCol.setMinWidth(220);
+        actionCol.setPrefWidth(200);
+        actionCol.setMinWidth(200);
         actionCol.setResizable(false);
         actionCol.setStyle("-fx-alignment: CENTER;");
 

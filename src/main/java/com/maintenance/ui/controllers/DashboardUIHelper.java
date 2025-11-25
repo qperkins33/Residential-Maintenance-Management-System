@@ -466,7 +466,7 @@ public final class DashboardUIHelper {
                 }
             });
             statusOptions.getChildren().add(reopenCheck);
-        } else if (originalStatus != RequestStatus.SUBMITTED && originalStatus != RequestStatus.ASSIGNED) {
+        } else {
             CheckBox cancelCheck = new CheckBox("Cancel request");
             styleActionToggleButton(cancelCheck, "#e53935", "#d32f2f", "#c62828");
             cancelCheck.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
@@ -477,15 +477,6 @@ public final class DashboardUIHelper {
                 }
             });
             statusOptions.getChildren().add(cancelCheck);
-        } else {
-            // For SUBMITTED or ASSIGNED: show read only status text, no action toggle
-            String statusText = originalStatus.name().replace('_', ' ');
-            Label statusLabel = new Label(statusText);
-            statusLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
-            statusOptions.getChildren().add(statusLabel);
-
-            // Make sure we keep the original status
-            selectedStatus[0] = originalStatus;
         }
 
         grid.add(new Label("Category:"), 0, 0);
