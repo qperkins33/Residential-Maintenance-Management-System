@@ -203,6 +203,20 @@ public class ManagerDashboardController {
         TableColumn<MaintenanceRequest, ?> statusCol = DashboardUIHelper.createStatusColumn();
         TableColumn<MaintenanceRequest, ?> dateCol = DashboardUIHelper.createSubmittedDateColumn();
 
+        TableColumn<MaintenanceRequest, Void> actionCol = getMaintenanceRequestVoidTableColumn();
+
+        requestTable.getColumns().setAll(java.util.Arrays.asList(
+                idCol, aptCol, categoryCol, descCol,
+                priorityCol, statusCol, dateCol, actionCol));
+
+        loadRequests();
+
+        section.getChildren().addAll(headerBox, requestTable);
+        VBox.setVgrow(requestTable, Priority.ALWAYS);
+        return section;
+    }
+
+    private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
         actionCol.setPrefWidth(220);
         actionCol.setMinWidth(220);
@@ -247,16 +261,7 @@ public class ManagerDashboardController {
                 }
             }
         });
-
-        requestTable.getColumns().setAll(java.util.Arrays.asList(
-                idCol, aptCol, categoryCol, descCol,
-                priorityCol, statusCol, dateCol, actionCol));
-
-        loadRequests();
-
-        section.getChildren().addAll(headerBox, requestTable);
-        VBox.setVgrow(requestTable, Priority.ALWAYS);
-        return section;
+        return actionCol;
     }
 
     private void loadRequests() {
