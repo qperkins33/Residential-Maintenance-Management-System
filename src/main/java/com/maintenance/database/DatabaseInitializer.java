@@ -155,32 +155,32 @@ public class DatabaseInitializer {
                     "'555-0100', 'ADMIN', CURRENT_TIMESTAMP, true)");
 
             // Insert default tenant
-            stmt.execute("MERGE INTO users (user_id, username, password, first_name, last_name, " +
-                    "email, phone_number, user_type, date_created, is_active) " +
-                    "VALUES ('T001', 'tenant1', 'pass123', 'John', 'Doe', 'john@email.com', " +
-                    "'555-0101', 'TENANT', CURRENT_TIMESTAMP, true)");
-
-            stmt.execute("MERGE INTO tenants (user_id, apartment_number, lease_start_date, lease_end_date) " +
-                    "VALUES ('T001', 'A101', '2024-01-01', '2025-12-31')");
+//            stmt.execute("MERGE INTO users (user_id, username, password, first_name, last_name, " +
+//                    "email, phone_number, user_type, date_created, is_active) " +
+//                    "VALUES ('T001', 'tenant1', 'pass123', 'John', 'Doe', 'john@email.com', " +
+//                    "'555-0101', 'TENANT', CURRENT_TIMESTAMP, true)");
+//
+//            stmt.execute("MERGE INTO tenants (user_id, apartment_number, lease_start_date, lease_end_date) " +
+//                    "VALUES ('T001', 'A101', '2024-01-01', '2025-12-31')");
 
             // Insert default building manager
-            stmt.execute("MERGE INTO users (user_id, username, password, first_name, last_name, " +
-                    "email, phone_number, user_type, date_created, is_active) " +
-                    "VALUES ('M001', 'manager1', 'pass123', 'Jane', 'Smith', 'jane@email.com', " +
-                    "'555-0102', 'MANAGER', CURRENT_TIMESTAMP, true)");
-
-            stmt.execute("MERGE INTO building_managers (user_id, employee_id, department, access_level) " +
-                    "VALUES ('M001', 'EMP001', 'Operations', 'MANAGER')");
+//            stmt.execute("MERGE INTO users (user_id, username, password, first_name, last_name, " +
+//                    "email, phone_number, user_type, date_created, is_active) " +
+//                    "VALUES ('M001', 'manager1', 'pass123', 'Jane', 'Smith', 'jane@email.com', " +
+//                    "'555-0102', 'MANAGER', CURRENT_TIMESTAMP, true)");
+//
+//            stmt.execute("MERGE INTO building_managers (user_id, employee_id, department, access_level) " +
+//                    "VALUES ('M001', 'EMP001', 'Operations', 'MANAGER')");
 
             // Insert default maintenance staff
-            stmt.execute("MERGE INTO users (user_id, username, password, first_name, last_name, " +
-                    "email, phone_number, user_type, date_created, is_active) " +
-                    "VALUES ('S001', 'staff1', 'pass123', 'Mike', 'Johnson', 'mike@email.com', " +
-                    "'555-0103', 'STAFF', CURRENT_TIMESTAMP, true)");
-
-            stmt.execute("MERGE INTO maintenance_staff (user_id, staff_id, specializations, " +
-                    "current_workload, max_capacity, is_available) " +
-                    "VALUES ('S001', 'STF001', 'Plumbing,Electrical', 0, 10, true)");
+//            stmt.execute("MERGE INTO users (user_id, username, password, first_name, last_name, " +
+//                    "email, phone_number, user_type, date_created, is_active) " +
+//                    "VALUES ('S001', 'staff1', 'pass123', 'Mike', 'Johnson', 'mike@email.com', " +
+//                    "'555-0103', 'STAFF', CURRENT_TIMESTAMP, true)");
+//
+//            stmt.execute("MERGE INTO maintenance_staff (user_id, staff_id, specializations, " +
+//                    "current_workload, max_capacity, is_available) " +
+//                    "VALUES ('S001', 'STF001', 'Plumbing,Electrical', 0, 10, true)");
 
             // Insert default building
             stmt.execute("MERGE INTO buildings (building_id, building_name, address, manager_id, " +
