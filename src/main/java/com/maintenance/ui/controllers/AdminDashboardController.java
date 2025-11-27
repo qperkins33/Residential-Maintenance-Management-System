@@ -1,7 +1,10 @@
 package com.maintenance.ui.controllers;
 
+import com.maintenance.dao.MaintenanceRequestDAO;
 import com.maintenance.database.DatabaseManager;
+import com.maintenance.enums.RequestStatus;
 import com.maintenance.models.Admin;
+import com.maintenance.models.MaintenanceRequest;
 import com.maintenance.service.AuthenticationService;
 import com.maintenance.ui.views.ViewFactory;
 import com.maintenance.util.IDGenerator;
@@ -26,6 +29,7 @@ public class AdminDashboardController {
     private final ViewFactory viewFactory;
     private final AuthenticationService authService;
     private final DatabaseManager dbManager;
+    private final MaintenanceRequestDAO requestDAO;
 
     private TableView<UserRow> userTable;
     private HBox statsBox;
@@ -34,6 +38,7 @@ public class AdminDashboardController {
         this.viewFactory = viewFactory;
         this.authService = AuthenticationService.getInstance();
         this.dbManager = DatabaseManager.getInstance();
+        this.requestDAO = new MaintenanceRequestDAO();
     }
 
     public void createDashboardUI(AnchorPane root) {
@@ -105,7 +110,7 @@ public class AdminDashboardController {
 
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
         Button usersBtn = DashboardUIHelper.createSidebarButton("👥 Users", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false); //TODO: Add functionality
+        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false); // TODO: Add functionality
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn, usersBtn, settingsBtn);
         return sidebar;
@@ -188,9 +193,42 @@ public class AdminDashboardController {
         dateCol.setCellValueFactory(new PropertyValueFactory<>("dateCreated"));
         dateCol.setPrefWidth(120);
 
+        // New Actions column with "View User" button
+        TableColumn<UserRow, Void> actionCol = new TableColumn<>("Actions");
+        actionCol.setPrefWidth(140);
+        actionCol.setStyle("-fx-alignment: CENTER;");
+        actionCol.setCellFactory(col -> new TableCell<>() {
+            private final Button viewBtn = new Button("View User");
+            private final HBox box = new HBox(viewBtn);
+
+            {
+                box.setAlignment(Pos.CENTER);
+                viewBtn.setStyle(
+                        "-fx-background-color: #667eea; -fx-text-fill: white; " +
+                                "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand;"
+                );
+                viewBtn.setOnAction(e -> {
+                    UserRow row = getTableView().getItems().get(getIndex());
+                    if (row != null) {
+                        showUserDetailsDialog(row);
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(box);
+                }
+            }
+        });
+
         userTable.getColumns().setAll(
                 idCol, usernameCol, nameCol, emailCol,
-                phoneCol, typeCol, activeCol, dateCol
+                phoneCol, typeCol, activeCol, dateCol, actionCol
         );
 
         Label emptyLabel = new Label("No users found");
@@ -351,7 +389,7 @@ public class AdminDashboardController {
         baseGrid.add(new Label("User Type:"), 0, row);
         baseGrid.add(userTypeBox, 1, row++);
         baseGrid.add(new Label("Status:"), 0, row);
-        baseGrid.add(activeCheckBox, 1, row++);
+        baseGrid.add(activeCheckBox, 1, row);
 
         // Tenant specific section
         GridPane tenantGrid = new GridPane();
@@ -380,7 +418,7 @@ public class AdminDashboardController {
         tenantGrid.add(new Label("Emergency Contact:"), 0, tRow);
         tenantGrid.add(emergencyContactField, 1, tRow++);
         tenantGrid.add(new Label("Emergency Phone:"), 0, tRow);
-        tenantGrid.add(emergencyPhoneField, 1, tRow++);
+        tenantGrid.add(emergencyPhoneField, 1, tRow);
 
         VBox tenantSection = new VBox(8, new Label("Tenant Details"), tenantGrid);
         tenantSection.setPadding(new Insets(10, 0, 0, 0));
@@ -404,7 +442,7 @@ public class AdminDashboardController {
         staffGrid.add(new Label("Specializations:"), 0, sRow);
         staffGrid.add(specializationsField, 1, sRow++);
         staffGrid.add(new Label("Max Capacity:"), 0, sRow);
-        staffGrid.add(maxCapacitySpinner, 1, sRow++);
+        staffGrid.add(maxCapacitySpinner, 1, sRow);
 
         VBox staffSection = new VBox(8, new Label("Staff Details"), staffGrid);
         staffSection.setPadding(new Insets(10, 0, 0, 0));
@@ -429,7 +467,7 @@ public class AdminDashboardController {
         managerGrid.add(new Label("Department:"), 0, mRow);
         managerGrid.add(departmentField, 1, mRow++);
         managerGrid.add(new Label("Access Level:"), 0, mRow);
-        managerGrid.add(accessLevelField, 1, mRow++);
+        managerGrid.add(accessLevelField, 1, mRow);
 
         VBox managerSection = new VBox(8, new Label("Manager Details"), managerGrid);
         managerSection.setPadding(new Insets(10, 0, 0, 0));
@@ -603,7 +641,6 @@ public class AdminDashboardController {
         if (customUserId != null && !customUserId.isBlank()) {
             userId = customUserId;
         } else {
-//            userId = UUID.randomUUID().toString();
             userId = IDGenerator.generateUserId();
         }
 
@@ -699,6 +736,149 @@ public class AdminDashboardController {
                 System.err.println("Error resetting autoCommit: " + e.getMessage());
             }
         }
+    }
+
+    /**
+     * View User dialog: shows full user info.
+     * Base fields from users table + extra per-type fields from tenants / maintenance_staff / building_managers.
+     */
+    private void showUserDetailsDialog(UserRow row) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("User Details");
+        dialog.setHeaderText(row.getFullName() + " (" + row.getUserType() + ")");
+
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(12);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+
+        int r = 0;
+
+        addUserDetailRow(grid, r++, "User ID:", row.getUserId());
+        addUserDetailRow(grid, r++, "Username:", row.getUsername());
+        addUserDetailRow(grid, r++, "Full Name:", row.getFullName());
+        addUserDetailRow(grid, r++, "Email:", row.getEmail());
+        addUserDetailRow(grid, r++, "Phone:", row.getPhoneNumber());
+        addUserDetailRow(grid, r++, "Type:", row.getUserType());
+        addUserDetailRow(grid, r++, "Active:", row.getActiveText());
+        addUserDetailRow(grid, r++, "Created:", row.getDateCreated());
+
+        String userType = row.getUserType();
+        Connection conn = dbManager.getConnection();
+        DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
+        if (conn != null) {
+            try {
+                if ("TENANT".equalsIgnoreCase(userType)) {
+                    String sql = "SELECT apartment_number, lease_start_date, lease_end_date, " +
+                            "emergency_contact, emergency_phone FROM tenants WHERE user_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setString(1, row.getUserId());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                String apt = rs.getString("apartment_number");
+                                Date leaseStart = rs.getDate("lease_start_date");
+                                Date leaseEnd = rs.getDate("lease_end_date");
+                                String emContact = rs.getString("emergency_contact");
+                                String emPhone = rs.getString("emergency_phone");
+
+                                addSectionLabel(grid, r++, "Tenant Details");
+                                addUserDetailRow(grid, r++, "Apartment:", apt);
+                                addUserDetailRow(grid, r++, "Lease Start:",
+                                        leaseStart != null ? leaseStart.toLocalDate().format(dateFmt) : "");
+                                addUserDetailRow(grid, r++, "Lease End:",
+                                        leaseEnd != null ? leaseEnd.toLocalDate().format(dateFmt) : "");
+                                addUserDetailRow(grid, r++, "Emergency Contact:", emContact);
+                                addUserDetailRow(grid, r, "Emergency Phone:", emPhone);
+                            }
+                        }
+                    }
+                } else if ("STAFF".equalsIgnoreCase(userType)) {
+                    String sql = "SELECT staff_id, specializations, max_capacity, is_available " +
+                            "FROM maintenance_staff WHERE user_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setString(1, row.getUserId());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                String staffId = rs.getString("staff_id");
+                                String specs = rs.getString("specializations");
+                                int capacity = rs.getInt("max_capacity");
+                                boolean available = rs.getBoolean("is_available");
+
+                                int activeWorkload = 0;
+                                if (staffId != null && !staffId.isBlank()) {
+                                    List<MaintenanceRequest> staffRequests =
+                                            requestDAO.getRequestsByStaff(staffId);
+                                    activeWorkload = (int) staffRequests.stream()
+                                            .filter(rq ->
+                                                    rq.getStatus() != RequestStatus.COMPLETED
+                                                            && rq.getStatus() != RequestStatus.CANCELLED
+                                            )
+                                            .count();
+                                }
+
+                                addSectionLabel(grid, r++, "Staff Details");
+                                addUserDetailRow(grid, r++, "Staff ID:", staffId);
+                                addUserDetailRow(grid, r++, "Specializations:", specs);
+                                addUserDetailRow(grid, r++, "Current Workload:",
+                                        activeWorkload + " / " + capacity);
+                                addUserDetailRow(grid, r, "Available:",
+                                        available ? "Yes" : "No");
+                            }
+                        }
+                    }
+                } else if ("MANAGER".equalsIgnoreCase(userType)) {
+                    String sql = "SELECT employee_id, department, access_level " +
+                            "FROM building_managers WHERE user_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setString(1, row.getUserId());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                String empId = rs.getString("employee_id");
+                                String dept = rs.getString("department");
+                                String access = rs.getString("access_level");
+
+                                addSectionLabel(grid, r++, "Manager Details");
+                                addUserDetailRow(grid, r++, "Employee ID:", empId);
+                                addUserDetailRow(grid, r++, "Department:", dept);
+                                addUserDetailRow(grid, r, "Access Level:", access);
+                            }
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                System.err.println("Error loading user details for dialog: " + e.getMessage());
+            }
+        }
+
+        ScrollPane scrollPane = new ScrollPane(grid);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefViewportHeight(450);
+
+        dialog.getDialogPane().setContent(scrollPane);
+        dialog.showAndWait();
+    }
+
+    private void addUserDetailRow(GridPane grid, int row, String label, String value) {
+        Label l = new Label(label);
+        l.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+
+        Label v = new Label(value == null ? "" : value);
+        v.setFont(Font.font("Arial", 12));
+        v.setWrapText(true);
+
+        grid.add(l, 0, row);
+        grid.add(v, 1, row);
+    }
+
+    private void addSectionLabel(GridPane grid, int row, String text) {
+        Label section = new Label(text);
+        section.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        section.setUnderline(true);
+        GridPane.setColumnSpan(section, 2);
+        grid.add(section, 0, row);
     }
 
     public static class UserRow {
