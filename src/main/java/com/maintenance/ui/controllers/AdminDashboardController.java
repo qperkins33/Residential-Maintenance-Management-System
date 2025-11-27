@@ -201,7 +201,7 @@ public class AdminDashboardController {
         actionCol.setCellFactory(col -> new TableCell<>() {
             private final Button viewBtn = new Button("View");
             private final Button editBtn = new Button("Edit");
-            private final HBox box = new HBox(5, viewBtn, editBtn);
+            private final HBox box = new HBox(5, editBtn, viewBtn);
 
             {
                 box.setAlignment(Pos.CENTER);
