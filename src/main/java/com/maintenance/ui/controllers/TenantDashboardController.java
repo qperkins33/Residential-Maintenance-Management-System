@@ -30,6 +30,7 @@ public class TenantDashboardController {
     private final MaintenanceRequestDAO requestDAO;
     private final PhotoDAO photoDAO;
     private TableView<MaintenanceRequest> requestTable;
+    private HBox statsBox;
 
     public TenantDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
@@ -105,7 +106,7 @@ public class TenantDashboardController {
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
         Button requestsBtn = DashboardUIHelper.createSidebarButton("📝 My Requests", false);
         Button newRequestBtn = DashboardUIHelper.createSidebarButton("➕ New Request", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false); //TODO: Add functionality
+        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn, requestsBtn, newRequestBtn, settingsBtn);
         return sidebar;
@@ -116,16 +117,25 @@ public class TenantDashboardController {
         content.setPadding(new Insets(30));
         content.setFillWidth(true);
 
-        HBox statsBox = createStatsCards();
+        statsBox = new HBox(20);
+
         VBox requestsSection = createRequestsSection();
         VBox.setVgrow(requestsSection, Priority.ALWAYS);
 
         content.getChildren().addAll(statsBox, requestsSection);
+
+        // Initial stats render
+        refreshStats();
+
         return content;
     }
 
-    private HBox createStatsCards() {
-        HBox statsBox = new HBox(20);
+    private void refreshStats() {
+        if (statsBox == null) {
+            return;
+        }
+
+        statsBox.getChildren().clear();
 
         Tenant tenant = (Tenant) authService.getCurrentUser();
         List<MaintenanceRequest> requests = requestDAO.getRequestsByTenant(tenant.getUserId());
@@ -135,14 +145,44 @@ public class TenantDashboardController {
         long completed = requests.stream().filter(this::isCompleted).count();
         long cancelled = requests.stream().filter(this::isCancelled).count();
 
-        VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(requests.size()), "#667eea", "📋");
-        VBox pendingCard = DashboardUIHelper.createStatCard("Not Started", String.valueOf(notStarted), "#2196f3", "⏸️");
-        VBox inProgressCard = DashboardUIHelper.createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "👷");
-        VBox completedCard = DashboardUIHelper.createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
-        VBox cancelledCard = DashboardUIHelper.createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
+        VBox totalCard = DashboardUIHelper.createStatCard(
+                "Total Requests",
+                String.valueOf(requests.size()),
+                "#667eea",
+                "📋"
+        );
+        VBox pendingCard = DashboardUIHelper.createStatCard(
+                "Not Started",
+                String.valueOf(notStarted),
+                "#2196f3",
+                "⏸️"
+        );
+        VBox inProgressCard = DashboardUIHelper.createStatCard(
+                "In Progress",
+                String.valueOf(inProgress),
+                "#ff9800",
+                "👷"
+        );
+        VBox completedCard = DashboardUIHelper.createStatCard(
+                "Completed",
+                String.valueOf(completed),
+                "#4caf50",
+                "✅"
+        );
+        VBox cancelledCard = DashboardUIHelper.createStatCard(
+                "Cancelled",
+                String.valueOf(cancelled),
+                "#f44336",
+                "❌"
+        );
 
-        statsBox.getChildren().addAll(totalCard, pendingCard, inProgressCard, completedCard, cancelledCard);
-        return statsBox;
+        statsBox.getChildren().addAll(
+                totalCard,
+                pendingCard,
+                inProgressCard,
+                completedCard,
+                cancelledCard
+        );
     }
 
     private VBox createRequestsSection() {
@@ -236,7 +276,7 @@ public class TenantDashboardController {
             private final HBox buttonBox = new HBox(5);
 
             {
-                String btnStyle = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ";
+                String btnStyle = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand;";
                 editBtn.setStyle(btnStyle);
                 viewBtn.setStyle(btnStyle);
 
@@ -270,6 +310,7 @@ public class TenantDashboardController {
         ObservableList<MaintenanceRequest> requests =
                 FXCollections.observableArrayList(requestDAO.getRequestsByTenant(tenant.getUserId()));
         requestTable.setItems(requests);
+        refreshStats();
     }
 
     private void filterRequests(String filter) {

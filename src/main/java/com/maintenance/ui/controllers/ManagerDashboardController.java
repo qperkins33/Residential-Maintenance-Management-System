@@ -27,6 +27,7 @@ public class ManagerDashboardController {
     private final MaintenanceRequestDAO requestDAO;
     private final UserDAO userDAO;
     private TableView<MaintenanceRequest> requestTable;
+    private HBox statsBox;
 
     public ManagerDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
@@ -102,7 +103,7 @@ public class ManagerDashboardController {
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
         Button allRequestsBtn = DashboardUIHelper.createSidebarButton("📋 All Requests", false);
         Button reportsBtn = DashboardUIHelper.createSidebarButton("📈 Reports", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false); //TODO: Add functionality
+        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn, allRequestsBtn, reportsBtn, settingsBtn);
         return sidebar;
@@ -113,16 +114,25 @@ public class ManagerDashboardController {
         content.setPadding(new Insets(30));
         content.setFillWidth(true);
 
-        HBox statsBox = createStatsCards();
+        statsBox = new HBox(20);
+
         VBox requestsSection = createRequestsSection();
         VBox.setVgrow(requestsSection, Priority.ALWAYS);
 
         content.getChildren().addAll(statsBox, requestsSection);
+
+        // Initial stats render
+        refreshStats();
+
         return content;
     }
 
-    private HBox createStatsCards() {
-        HBox statsBox = new HBox(20);
+    private void refreshStats() {
+        if (statsBox == null) {
+            return;
+        }
+
+        statsBox.getChildren().clear();
 
         List<MaintenanceRequest> allRequests = requestDAO.getAllRequests();
 
@@ -134,14 +144,44 @@ public class ManagerDashboardController {
         long completed = allRequests.stream().filter(this::isCompleted).count();
         long cancelled = allRequests.stream().filter(this::isCancelled).count();
 
-        VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(allRequests.size()), "#667eea", "📋");
-        VBox unassignedCard = DashboardUIHelper.createStatCard("Unassigned", String.valueOf(unassigned), "#2196f3", "👀");
-        VBox inProgressCard = DashboardUIHelper.createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "👷️");
-        VBox completedCard = DashboardUIHelper.createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
-        VBox cancelledCard = DashboardUIHelper.createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
+        VBox totalCard = DashboardUIHelper.createStatCard(
+                "Total Requests",
+                String.valueOf(allRequests.size()),
+                "#667eea",
+                "📋"
+        );
+        VBox unassignedCard = DashboardUIHelper.createStatCard(
+                "Unassigned",
+                String.valueOf(unassigned),
+                "#2196f3",
+                "👀"
+        );
+        VBox inProgressCard = DashboardUIHelper.createStatCard(
+                "In Progress",
+                String.valueOf(inProgress),
+                "#ff9800",
+                "👷️"
+        );
+        VBox completedCard = DashboardUIHelper.createStatCard(
+                "Completed",
+                String.valueOf(completed),
+                "#4caf50",
+                "✅"
+        );
+        VBox cancelledCard = DashboardUIHelper.createStatCard(
+                "Cancelled",
+                String.valueOf(cancelled),
+                "#f44336",
+                "❌"
+        );
 
-        statsBox.getChildren().addAll(totalCard, unassignedCard, inProgressCard, completedCard, cancelledCard);
-        return statsBox;
+        statsBox.getChildren().addAll(
+                totalCard,
+                unassignedCard,
+                inProgressCard,
+                completedCard,
+                cancelledCard
+        );
     }
 
     private VBox createRequestsSection() {
@@ -202,7 +242,6 @@ public class ManagerDashboardController {
 
                 MaintenanceRequest req = getTableView().getItems().get(getIndex());
 
-                // Blank if unassigned / submitted
                 if (req.getStatus() == RequestStatus.SUBMITTED || staffId == null || staffId.isBlank()) {
                     setText("");
                     return;
@@ -289,6 +328,7 @@ public class ManagerDashboardController {
 
     private void loadRequests() {
         requestTable.setItems(FXCollections.observableArrayList(requestDAO.getAllRequests()));
+        refreshStats();
     }
 
     private void filterRequests(String filter) {
