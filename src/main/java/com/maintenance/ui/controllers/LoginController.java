@@ -42,7 +42,7 @@ public class LoginController {
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 5);"
         );
 
-        //Load apartment icon image
+        // Load apartment icon image
         Image appIcon = new Image(getClass().getResource("/images/apartment.png").toExternalForm());
         ImageView appIconView = new ImageView(appIcon);
         appIconView.setFitWidth(30);
@@ -158,11 +158,20 @@ public class LoginController {
             }
 
             if (authService.login(username, password)) {
+                User currentUser = authService.getCurrentUser();
+
+                // Only allow active users to log in
+                if (currentUser != null && !currentUser.isActive()) {
+                    errorLabel.setText("Your account is inactive. Contact an administrator.");
+                    errorLabel.setVisible(true);
+                    authService.logout();
+                    return;
+                }
+
                 Stage currentStage = (Stage) loginButton.getScene().getWindow();
                 viewFactory.closeStage(currentStage);
 
                 Stage newStage = new Stage();
-                User currentUser = authService.getCurrentUser();
 
                 if (currentUser instanceof Tenant) {
                     viewFactory.showTenantDashboard(newStage);
