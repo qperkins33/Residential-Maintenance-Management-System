@@ -9,6 +9,7 @@ import com.maintenance.service.AuthenticationService;
 import com.maintenance.ui.views.ViewFactory;
 import com.maintenance.util.IDGenerator;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -193,24 +194,34 @@ public class AdminDashboardController {
         dateCol.setCellValueFactory(new PropertyValueFactory<>("dateCreated"));
         dateCol.setPrefWidth(120);
 
-        // New Actions column with "View User" button
+        // Actions column with View + Edit buttons
         TableColumn<UserRow, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(140);
+        actionCol.setPrefWidth(210);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(col -> new TableCell<>() {
-            private final Button viewBtn = new Button("View User");
-            private final HBox box = new HBox(viewBtn);
+            private final Button viewBtn = new Button("View");
+            private final Button editBtn = new Button("Edit");
+            private final HBox box = new HBox(5, viewBtn, editBtn);
 
             {
                 box.setAlignment(Pos.CENTER);
-                viewBtn.setStyle(
+                String btnStyle =
                         "-fx-background-color: #667eea; -fx-text-fill: white; " +
-                                "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand;"
-                );
+                                "-fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand;";
+                viewBtn.setStyle(btnStyle);
+                editBtn.setStyle(btnStyle);
+
                 viewBtn.setOnAction(e -> {
                     UserRow row = getTableView().getItems().get(getIndex());
                     if (row != null) {
                         showUserDetailsDialog(row);
+                    }
+                });
+
+                editBtn.setOnAction(e -> {
+                    UserRow row = getTableView().getItems().get(getIndex());
+                    if (row != null) {
+                        showEditUserDialog(row);
                     }
                 });
             }
@@ -735,6 +746,102 @@ public class AdminDashboardController {
             } catch (SQLException e) {
                 System.err.println("Error resetting autoCommit: " + e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Edit User dialog: only activate/deactivate toggle.
+     */
+    private void showEditUserDialog(UserRow row) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Edit User");
+        dialog.setHeaderText("Update status for " + row.getFullName());
+
+        ButtonType saveBtnType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+
+        Label statusLabel = new Label("Account status:");
+
+        CheckBox toggle = new CheckBox();
+        boolean originalActive = row.isActive();
+        final boolean[] targetActive = {originalActive};
+
+        if (originalActive) {
+            toggle.setText("Deactivate user");
+            DashboardUIHelper.styleActionToggleButton(toggle,
+                    "#e53935", "#d32f2f", "#c62828");
+        } else {
+            toggle.setText("Activate user");
+            DashboardUIHelper.styleActionToggleButton(toggle,
+                    "#4caf50", "#43a047", "#388e3c");
+        }
+
+        toggle.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+            if (originalActive) {
+                // Originally active: checked means deactivate
+                targetActive[0] = !isSelected;
+            } else {
+                // Originally inactive: checked means activate
+                targetActive[0] = isSelected;
+            }
+        });
+
+        grid.add(statusLabel, 0, 0);
+        grid.add(toggle, 1, 0);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtnType);
+        final boolean[] updated = {false};
+
+        saveButton.addEventFilter(ActionEvent.ACTION, event -> {
+            // If nothing changed, just close
+            if (targetActive[0] == originalActive) {
+                return;
+            }
+
+            boolean success = updateUserActiveFlag(row.getUserId(), targetActive[0]);
+            if (!success) {
+                new Alert(Alert.AlertType.ERROR,
+                        "Unable to update user status. Please try again.")
+                        .showAndWait();
+                event.consume();
+            } else {
+                updated[0] = true;
+            }
+        });
+
+        dialog.showAndWait();
+
+        if (updated[0]) {
+            loadUsers();
+            new Alert(Alert.AlertType.INFORMATION,
+                    "User status updated successfully.")
+                    .showAndWait();
+        }
+    }
+
+    private boolean updateUserActiveFlag(String userId, boolean active) {
+        Connection conn = dbManager.getConnection();
+        if (conn == null) {
+            System.err.println("Database connection is null in updateUserActiveFlag");
+            return false;
+        }
+
+        String sql = "UPDATE users SET is_active = ? WHERE user_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBoolean(1, active);
+            ps.setString(2, userId);
+            int updated = ps.executeUpdate();
+            return updated == 1;
+        } catch (SQLException e) {
+            System.err.println("Error updating user active flag: " + e.getMessage());
+            return false;
         }
     }
 

@@ -1,5 +1,6 @@
 package com.maintenance.ui.controllers;
 
+import com.maintenance.database.DatabaseManager;
 import com.maintenance.models.*;
 import com.maintenance.service.AuthenticationService;
 import com.maintenance.ui.views.ViewFactory;
@@ -13,14 +14,20 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class LoginController {
     private final ViewFactory viewFactory;
     private final AuthenticationService authService;
+    private final DatabaseManager dbManager;
 
     public LoginController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
         this.authService = AuthenticationService.getInstance();
+        this.dbManager = DatabaseManager.getInstance();
     }
 
     public void createLoginUI(AnchorPane root) {
@@ -42,7 +49,7 @@ public class LoginController {
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 5);"
         );
 
-        //Load apartment icon image
+        // Load apartment icon image
         Image appIcon = new Image(getClass().getResource("/images/apartment.png").toExternalForm());
         ImageView appIconView = new ImageView(appIcon);
         appIconView.setFitWidth(30);
@@ -157,12 +164,24 @@ public class LoginController {
                 return;
             }
 
+            // Clear previous error on new attempt
+            errorLabel.setVisible(false);
+
             if (authService.login(username, password)) {
+                User currentUser = authService.getCurrentUser();
+
+                // Defensive check: only allow active users
+                if (currentUser != null && !currentUser.isActive()) {
+                    errorLabel.setText("Your account is inactive. Contact an administrator.");
+                    errorLabel.setVisible(true);
+                    authService.logout();
+                    return;
+                }
+
                 Stage currentStage = (Stage) loginButton.getScene().getWindow();
                 viewFactory.closeStage(currentStage);
 
                 Stage newStage = new Stage();
-                User currentUser = authService.getCurrentUser();
 
                 if (currentUser instanceof Tenant) {
                     viewFactory.showTenantDashboard(newStage);
@@ -174,7 +193,12 @@ public class LoginController {
                     viewFactory.showAdminDashboard(newStage);
                 }
             } else {
-                errorLabel.setText("Invalid username or password");
+                // Login failed. Distinguish inactive vs bad credentials.
+                if (isInactiveUser(username, password)) {
+                    errorLabel.setText("Your account is inactive. Contact an administrator.");
+                } else {
+                    errorLabel.setText("Invalid username or password");
+                }
                 errorLabel.setVisible(true);
             }
         });
@@ -208,5 +232,32 @@ public class LoginController {
         AnchorPane.setRightAnchor(outer, 0.0);
 
         root.getChildren().add(outer);
+    }
+
+    /**
+     * Check if credentials match an inactive user.
+     * Used so we can show a specific message instead of generic invalid-credentials.
+     */
+    private boolean isInactiveUser(String username, String password) {
+        Connection conn = dbManager.getConnection();
+        if (conn == null) {
+            System.err.println("Database connection is null in isInactiveUser");
+            return false;
+        }
+
+        String sql = "SELECT is_active FROM users WHERE username = ? AND password = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, password);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    boolean active = rs.getBoolean("is_active");
+                    return !active;
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("Error checking inactive user during login: " + ex.getMessage());
+        }
+        return false;
     }
 }
