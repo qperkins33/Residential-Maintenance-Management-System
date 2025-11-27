@@ -27,8 +27,8 @@ public class StaffDashboardController {
     private final AuthenticationService authService;
     private final MaintenanceRequestDAO requestDAO;
     private TableView<MaintenanceRequest> requestTable;
-
     private Label workloadLabel;
+    private HBox statsBox;
 
     public StaffDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
@@ -103,7 +103,7 @@ public class StaffDashboardController {
         Button assignedBtn = DashboardUIHelper.createSidebarButton("📋 Assigned Tasks", false);
         Button historyBtn = DashboardUIHelper.createSidebarButton("📜 History", false);
         Button profileBtn = DashboardUIHelper.createSidebarButton("👤 Profile", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false); //TODO: Add functionality
+        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -161,11 +161,15 @@ public class StaffDashboardController {
         content.setFillWidth(true);
 
         VBox welcomeBox = createWelcomeSection();
-        HBox statsBox = createStatsCards();
+        statsBox = new HBox(20);
         VBox requestsSection = createRequestsSection();
         VBox.setVgrow(requestsSection, Priority.ALWAYS);
 
         content.getChildren().addAll(welcomeBox, statsBox, requestsSection);
+
+        // Initial stats render
+        refreshStats();
+
         return content;
     }
 
@@ -187,8 +191,12 @@ public class StaffDashboardController {
         return welcomeBox;
     }
 
-    private HBox createStatsCards() {
-        HBox statsBox = new HBox(20);
+    private void refreshStats() {
+        if (statsBox == null) {
+            return;
+        }
+
+        statsBox.getChildren().clear();
 
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
         List<MaintenanceRequest> myRequests = requestDAO.getRequestsByStaff(staff.getStaffId());
@@ -207,14 +215,56 @@ public class StaffDashboardController {
                 )
                 .count();
 
-        VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(myRequests.size()), "#667eea", "📋");
-        VBox urgentCard = DashboardUIHelper.createStatCard("Urgent (Active)", String.valueOf(urgent), "#f44336", "🚨");
-        VBox inProgressCard = DashboardUIHelper.createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "👷");
-        VBox pendingCard = DashboardUIHelper.createStatCard("Not Started", String.valueOf(notStarted), "#2196f3", "⏸️");
-        VBox completedCard = DashboardUIHelper.createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
-        VBox cancelledCard = DashboardUIHelper.createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
+        VBox totalCard = DashboardUIHelper.createStatCard(
+                "Total Requests",
+                String.valueOf(myRequests.size()),
+                "#667eea",
+                "📋"
+        );
+        VBox urgentCard = DashboardUIHelper.createStatCard(
+                "Urgent (Active)",
+                String.valueOf(urgent),
+                "#f44336",
+                "🚨"
+        );
+        VBox inProgressCard = DashboardUIHelper.createStatCard(
+                "In Progress",
+                String.valueOf(inProgress),
+                "#ff9800",
+                "👷"
+        );
+        VBox pendingCard = DashboardUIHelper.createStatCard(
+                "Not Started",
+                String.valueOf(notStarted),
+                "#2196f3",
+                "⏸️"
+        );
+        VBox completedCard = DashboardUIHelper.createStatCard(
+                "Completed",
+                String.valueOf(completed),
+                "#4caf50",
+                "✅"
+        );
+        VBox cancelledCard = DashboardUIHelper.createStatCard(
+                "Cancelled",
+                String.valueOf(cancelled),
+                "#f44336",
+                "❌"
+        );
 
-        statsBox.getChildren().addAll(totalCard, urgentCard, inProgressCard, pendingCard, completedCard, cancelledCard);
+        statsBox.getChildren().addAll(
+                totalCard,
+                urgentCard,
+                inProgressCard,
+                pendingCard,
+                completedCard,
+                cancelledCard
+        );
+    }
+
+    private HBox createStatsCards() {
+        // no longer used, kept only if you still reference it somewhere else
+        // but you can delete this method entirely if unused
         return statsBox;
     }
 
@@ -237,7 +287,7 @@ public class StaffDashboardController {
                 "Assigned",
                 "In Progress",
                 "Urgent Only",
-                "Cancelled"   // added
+                "Cancelled"
         );
         filterBox.setValue("All Tasks");
         filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
@@ -292,7 +342,7 @@ public class StaffDashboardController {
             private final HBox buttonBox = new HBox(5);
 
             {
-                String btnStyle = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand; ";
+                String btnStyle = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand;";
                 updateBtn.setStyle(btnStyle);
                 startBtn.setStyle(btnStyle);
                 completeBtn.setStyle(btnStyle);
@@ -370,6 +420,7 @@ public class StaffDashboardController {
         List<MaintenanceRequest> requests = requestDAO.getRequestsByStaff(staff.getStaffId());
         requestTable.setItems(FXCollections.observableArrayList(requests));
         refreshWorkload();
+        refreshStats();
     }
 
     private void filterRequests(String filter) {
