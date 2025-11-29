@@ -469,8 +469,10 @@ public class AdminDashboardController {
         TextField departmentField = new TextField();
         departmentField.setPromptText("Operations");
 
-        TextField accessLevelField = new TextField();
-        accessLevelField.setPromptText("MANAGER");
+        ComboBox<String> accessLevelField = new ComboBox<>();
+        accessLevelField.getItems().addAll("MANAGER", "ASSISTANT-MANAGER");
+        accessLevelField.setPromptText("Select access level");
+        accessLevelField.setValue("MANAGER");
 
         int mRow = 0;
         managerGrid.add(new Label("Employee ID:"), 0, mRow);
@@ -546,6 +548,40 @@ public class AdminDashboardController {
                 return;
             }
 
+            // Email required + basic format check
+            if (email.isEmpty()) {
+                new Alert(Alert.AlertType.WARNING,
+                        "Email is required.")
+                        .showAndWait();
+                event.consume();
+                return;
+            }
+            // Very simple email pattern: some text, @, some text, dot, some text
+            if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+                new Alert(Alert.AlertType.WARNING,
+                        "Please enter a valid email address.")
+                        .showAndWait();
+                event.consume();
+                return;
+            }
+
+            // Phone required + basic numeric/format check
+            if (phone.isEmpty()) {
+                new Alert(Alert.AlertType.WARNING,
+                        "Phone number is required.")
+                        .showAndWait();
+                event.consume();
+                return;
+            }
+            // Allow digits, spaces, +, -, parentheses; length 7–20
+            if (!phone.matches("^[0-9()+\\-\\s]{7,20}$")) {
+                new Alert(Alert.AlertType.WARNING,
+                        "Please enter a valid phone number (digits and basic punctuation only).")
+                        .showAndWait();
+                event.consume();
+                return;
+            }
+
             // Type specific validation
             switch (userType) {
                 case "TENANT" -> {
@@ -574,6 +610,13 @@ public class AdminDashboardController {
                         event.consume();
                         return;
                     }
+                    if (accessLevelField.getValue() == null || accessLevelField.getValue().trim().isEmpty()) {
+                        new Alert(Alert.AlertType.WARNING,
+                                "Access level is required for managers.")
+                                .showAndWait();
+                        event.consume();
+                        return;
+                    }
                 }
             }
 
@@ -597,7 +640,7 @@ public class AdminDashboardController {
                     maxCapacitySpinner.getValue(),
                     employeeIdField.getText().trim(),
                     departmentField.getText().trim(),
-                    accessLevelField.getText().trim()
+                    accessLevelField.getValue() != null ? accessLevelField.getValue().trim() : null
             );
 
             if (!success) {
@@ -755,7 +798,7 @@ public class AdminDashboardController {
     private void showEditUserDialog(UserRow row) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Edit User");
-        dialog.setHeaderText("Update status for " + row.getFullName());
+        dialog.setHeaderText("Edit user: " + row.getFullName());
 
         ButtonType saveBtnType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);
@@ -765,34 +808,102 @@ public class AdminDashboardController {
         grid.setVgap(10);
         grid.setPadding(new Insets(20));
 
+        // Status toggle
         Label statusLabel = new Label("Account status:");
 
         CheckBox toggle = new CheckBox();
         boolean originalActive = row.isActive();
         final boolean[] targetActive = {originalActive};
 
+        Admin currentAdmin = (Admin) authService.getCurrentUser();
+        final String currentUserId = currentAdmin != null ? currentAdmin.getUserId() : null;
+
         if (originalActive) {
             toggle.setText("Deactivate user");
-            DashboardUIHelper.styleActionToggleButton(toggle,
-                    "#e53935", "#d32f2f", "#c62828");
+            DashboardUIHelper.styleActionToggleButton(
+                    toggle,
+                    "#e53935",
+                    "#d32f2f",
+                    "#c62828"
+            );
         } else {
             toggle.setText("Activate user");
-            DashboardUIHelper.styleActionToggleButton(toggle,
-                    "#4caf50", "#43a047", "#388e3c");
+            DashboardUIHelper.styleActionToggleButton(
+                    toggle,
+                    "#4caf50",
+                    "#43a047",
+                    "#388e3c"
+            );
         }
 
+        final boolean[] internalChange = {false};
+
         toggle.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+            if (internalChange[0]) {
+                return;
+            }
+
+            // Do not allow changing your own active status
+            if (row.getUserId().equals(currentUserId)) {
+                new Alert(
+                        Alert.AlertType.WARNING,
+                        "You cannot change your own active status from this screen."
+                ).showAndWait();
+
+                internalChange[0] = true;
+                toggle.setSelected(wasSelected);
+                internalChange[0] = false;
+                return;
+            }
+
             if (originalActive) {
-                // Originally active: checked means deactivate
+                // Checked means we will deactivate
                 targetActive[0] = !isSelected;
             } else {
-                // Originally inactive: checked means activate
+                // Checked means we will activate
                 targetActive[0] = isSelected;
             }
         });
 
-        grid.add(statusLabel, 0, 0);
-        grid.add(toggle, 1, 0);
+        // Basic fields
+        String existingFullName = row.getFullName() != null ? row.getFullName() : "";
+        String[] nameParts = existingFullName.split(" ", 2);
+
+        TextField firstNameField = new TextField(
+                nameParts.length > 0 ? nameParts[0] : ""
+        );
+        firstNameField.setPromptText("First Name");
+
+        TextField lastNameField = new TextField(
+                nameParts.length > 1 ? nameParts[1] : ""
+        );
+        lastNameField.setPromptText("Last Name");
+
+        TextField emailField = new TextField(
+                row.getEmail() != null ? row.getEmail() : ""
+        );
+        emailField.setPromptText("Email");
+
+        TextField phoneField = new TextField(
+                row.getPhoneNumber() != null ? row.getPhoneNumber() : ""
+        );
+        phoneField.setPromptText("Phone");
+
+        int r = 0;
+        grid.add(statusLabel,     0, r);
+        grid.add(toggle,          1, r++);
+
+        grid.add(new Label("First Name"), 0, r);
+        grid.add(firstNameField,          1, r++);
+
+        grid.add(new Label("Last Name"),  0, r);
+        grid.add(lastNameField,           1, r++);
+
+        grid.add(new Label("Email"),      0, r);
+        grid.add(emailField,              1, r++);
+
+        grid.add(new Label("Phone"),      0, r);
+        grid.add(phoneField,              1, r);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -800,16 +911,71 @@ public class AdminDashboardController {
         final boolean[] updated = {false};
 
         saveButton.addEventFilter(ActionEvent.ACTION, event -> {
-            // If nothing changed, just close
-            if (targetActive[0] == originalActive) {
+            String newFirst = firstNameField.getText().trim();
+            String newLast  = lastNameField.getText().trim();
+            String newEmail = emailField.getText().trim();
+            String newPhone = phoneField.getText().trim();
+
+            // Basic validation similar to create dialog
+            if (newFirst.isEmpty() || newLast.isEmpty()) {
+                new Alert(
+                        Alert.AlertType.WARNING,
+                        "First and last name are required."
+                ).showAndWait();
+                event.consume();
                 return;
             }
 
-            boolean success = updateUserActiveFlag(row.getUserId(), targetActive[0]);
+            if (newEmail.isEmpty()) {
+                new Alert(
+                        Alert.AlertType.WARNING,
+                        "Email is required."
+                ).showAndWait();
+                event.consume();
+                return;
+            }
+
+            if (!newEmail.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+                new Alert(
+                        Alert.AlertType.WARNING,
+                        "Please enter a valid email address."
+                ).showAndWait();
+                event.consume();
+                return;
+            }
+
+            if (newPhone.isEmpty()) {
+                new Alert(
+                        Alert.AlertType.WARNING,
+                        "Phone number is required."
+                ).showAndWait();
+                event.consume();
+                return;
+            }
+
+            if (!newPhone.matches("^[0-9()+\\-\\s]{7,20}$")) {
+                new Alert(
+                        Alert.AlertType.WARNING,
+                        "Please enter a valid phone number (digits and basic punctuation only)."
+                ).showAndWait();
+                event.consume();
+                return;
+            }
+
+            boolean success = updateUserInfo(
+                    row.getUserId(),
+                    newFirst,
+                    newLast,
+                    newEmail,
+                    newPhone,
+                    targetActive[0]
+            );
+
             if (!success) {
-                new Alert(Alert.AlertType.ERROR,
-                        "Unable to update user status. Please try again.")
-                        .showAndWait();
+                new Alert(
+                        Alert.AlertType.ERROR,
+                        "Unable to update user. Please try again."
+                ).showAndWait();
                 event.consume();
             } else {
                 updated[0] = true;
@@ -820,30 +986,69 @@ public class AdminDashboardController {
 
         if (updated[0]) {
             loadUsers();
-            new Alert(Alert.AlertType.INFORMATION,
-                    "User status updated successfully.")
-                    .showAndWait();
+            new Alert(
+                    Alert.AlertType.INFORMATION,
+                    "User details updated successfully."
+            ).showAndWait();
         }
     }
 
-    private boolean updateUserActiveFlag(String userId, boolean active) {
+    private boolean updateUserInfo(
+            String userId,
+            String firstName,
+            String lastName,
+            String email,
+            String phone,
+            boolean active
+    ) {
         Connection conn = dbManager.getConnection();
         if (conn == null) {
-            System.err.println("Database connection is null in updateUserActiveFlag");
+            System.err.println("Database connection is null in updateUserInfo");
             return false;
         }
 
-        String sql = "UPDATE users SET is_active = ? WHERE user_id = ?";
+        String sql = "UPDATE users " +
+                "SET first_name = ?, " +
+                "    last_name = ?, " +
+                "    email = ?, " +
+                "    phone_number = ?, " +
+                "    is_active = ? " +
+                "WHERE user_id = ?";
+
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setBoolean(1, active);
-            ps.setString(2, userId);
+            ps.setString(1, firstName);
+            ps.setString(2, lastName);
+            ps.setString(3, email);
+            ps.setString(4, phone);
+            ps.setBoolean(5, active);
+            ps.setString(6, userId);
+
             int updated = ps.executeUpdate();
             return updated == 1;
         } catch (SQLException e) {
-            System.err.println("Error updating user active flag: " + e.getMessage());
+            System.err.println("Error updating user info: " + e.getMessage());
             return false;
         }
     }
+
+//    private boolean updateUserActiveFlag(String userId, boolean active) {
+//        Connection conn = dbManager.getConnection();
+//        if (conn == null) {
+//            System.err.println("Database connection is null in updateUserActiveFlag");
+//            return false;
+//        }
+//
+//        String sql = "UPDATE users SET is_active = ? WHERE user_id = ?";
+//        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+//            ps.setBoolean(1, active);
+//            ps.setString(2, userId);
+//            int updated = ps.executeUpdate();
+//            return updated == 1;
+//        } catch (SQLException e) {
+//            System.err.println("Error updating user active flag: " + e.getMessage());
+//            return false;
+//        }
+//    }
 
     /**
      * View User dialog: shows full user info.
