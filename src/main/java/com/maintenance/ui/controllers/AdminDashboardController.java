@@ -548,6 +548,40 @@ public class AdminDashboardController {
                 return;
             }
 
+            // Email required + basic format check
+            if (email.isEmpty()) {
+                new Alert(Alert.AlertType.WARNING,
+                        "Email is required.")
+                        .showAndWait();
+                event.consume();
+                return;
+            }
+            // Very simple email pattern: some text, @, some text, dot, some text
+            if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+                new Alert(Alert.AlertType.WARNING,
+                        "Please enter a valid email address.")
+                        .showAndWait();
+                event.consume();
+                return;
+            }
+
+            // Phone required + basic numeric/format check
+            if (phone.isEmpty()) {
+                new Alert(Alert.AlertType.WARNING,
+                        "Phone number is required.")
+                        .showAndWait();
+                event.consume();
+                return;
+            }
+            // Allow digits, spaces, +, -, parentheses; length 7–20
+            if (!phone.matches("^[0-9()+\\-\\s]{7,20}$")) {
+                new Alert(Alert.AlertType.WARNING,
+                        "Please enter a valid phone number (digits and basic punctuation only).")
+                        .showAndWait();
+                event.consume();
+                return;
+            }
+
             // Type specific validation
             switch (userType) {
                 case "TENANT" -> {
