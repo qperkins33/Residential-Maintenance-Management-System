@@ -22,6 +22,10 @@ import javafx.stage.Stage;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+// added
+import com.maintenance.notification.Email;
+import java.util.concurrent.CompletableFuture;
+
 public class StaffDashboardController {
     private final ViewFactory viewFactory;
     private final AuthenticationService authService;
@@ -167,9 +171,7 @@ public class StaffDashboardController {
 
         content.getChildren().addAll(welcomeBox, statsBox, requestsSection);
 
-        // Initial stats render
         refreshStats();
-
         return content;
     }
 
@@ -192,9 +194,7 @@ public class StaffDashboardController {
     }
 
     private void refreshStats() {
-        if (statsBox == null) {
-            return;
-        }
+        if (statsBox == null) return;
 
         statsBox.getChildren().clear();
 
@@ -207,59 +207,18 @@ public class StaffDashboardController {
         long cancelled = myRequests.stream().filter(this::isCancelled).count();
 
         long urgent = myRequests.stream()
-                .filter(r ->
-                        (r.getPriority() == PriorityLevel.URGENT
-                                || r.getPriority() == PriorityLevel.EMERGENCY)
-                                && !isCompleted(r)
-                                && !isCancelled(r)
-                )
+                .filter(r -> (r.getPriority() == PriorityLevel.URGENT || r.getPriority() == PriorityLevel.EMERGENCY)
+                        && !isCompleted(r) && !isCancelled(r))
                 .count();
 
-        VBox totalCard = DashboardUIHelper.createStatCard(
-                "Total Requests",
-                String.valueOf(myRequests.size()),
-                "#667eea",
-                "📋"
-        );
-        VBox urgentCard = DashboardUIHelper.createStatCard(
-                "Urgent (Active)",
-                String.valueOf(urgent),
-                "#f44336",
-                "🚨"
-        );
-        VBox inProgressCard = DashboardUIHelper.createStatCard(
-                "In Progress",
-                String.valueOf(inProgress),
-                "#ff9800",
-                "👷"
-        );
-        VBox pendingCard = DashboardUIHelper.createStatCard(
-                "Not Started",
-                String.valueOf(notStarted),
-                "#2196f3",
-                "⏸️"
-        );
-        VBox completedCard = DashboardUIHelper.createStatCard(
-                "Completed",
-                String.valueOf(completed),
-                "#4caf50",
-                "✅"
-        );
-        VBox cancelledCard = DashboardUIHelper.createStatCard(
-                "Cancelled",
-                String.valueOf(cancelled),
-                "#f44336",
-                "❌"
-        );
+        VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(myRequests.size()), "#667eea", "📋");
+        VBox urgentCard = DashboardUIHelper.createStatCard("Urgent (Active)", String.valueOf(urgent), "#f44336", "🚨");
+        VBox inProgressCard = DashboardUIHelper.createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "👷");
+        VBox pendingCard = DashboardUIHelper.createStatCard("Not Started", String.valueOf(notStarted), "#2196f3", "⏸️");
+        VBox completedCard = DashboardUIHelper.createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
+        VBox cancelledCard = DashboardUIHelper.createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
 
-        statsBox.getChildren().addAll(
-                totalCard,
-                urgentCard,
-                inProgressCard,
-                pendingCard,
-                completedCard,
-                cancelledCard
-        );
+        statsBox.getChildren().addAll(totalCard, urgentCard, inProgressCard, pendingCard, completedCard, cancelledCard);
     }
 
     private HBox createStatsCards() {
@@ -282,20 +241,13 @@ public class StaffDashboardController {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         ComboBox<String> filterBox = new ComboBox<>();
-        filterBox.getItems().addAll(
-                "All Tasks",
-                "Assigned",
-                "In Progress",
-                "Urgent Only",
-                "Cancelled"
-        );
+        filterBox.getItems().addAll("All Tasks", "Assigned", "In Progress", "Urgent Only", "Cancelled");
         filterBox.setValue("All Tasks");
         filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
         filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
 
         Button refreshBtn = new Button("🔄 Refresh");
-        refreshBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                "-fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        refreshBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
         refreshBtn.setOnAction(e -> loadRequests());
 
         headerBox.getChildren().addAll(sectionTitle, spacer, filterBox, refreshBtn);
@@ -428,24 +380,14 @@ public class StaffDashboardController {
         List<MaintenanceRequest> requests = requestDAO.getRequestsByStaff(staff.getStaffId());
 
         switch (filter) {
-            case "Assigned" -> requests = requests.stream()
-                    .filter(r -> r.getStatus() == RequestStatus.ASSIGNED)
-                    .toList();
-            case "In Progress" -> requests = requests.stream()
-                    .filter(this::isInProgress)
-                    .toList();
+            case "Assigned" -> requests = requests.stream().filter(r -> r.getStatus() == RequestStatus.ASSIGNED).toList();
+            case "In Progress" -> requests = requests.stream().filter(this::isInProgress).toList();
             case "Urgent Only" -> requests = requests.stream()
-                    .filter(r -> (r.getPriority() == PriorityLevel.URGENT
-                            || r.getPriority() == PriorityLevel.EMERGENCY)
-                            && !isCompleted(r)
-                            && !isCancelled(r))
+                    .filter(r -> (r.getPriority() == PriorityLevel.URGENT || r.getPriority() == PriorityLevel.EMERGENCY)
+                            && !isCompleted(r) && !isCancelled(r))
                     .toList();
-            case "Cancelled" -> requests = requests.stream()
-                    .filter(this::isCancelled)
-                    .toList();
-            default -> {
-                // "All Tasks"
-            }
+            case "Cancelled" -> requests = requests.stream().filter(this::isCancelled).toList();
+            default -> { }
         }
 
         requestTable.setItems(FXCollections.observableArrayList(requests));
@@ -453,14 +395,10 @@ public class StaffDashboardController {
     }
 
     private void refreshWorkload() {
-        if (workloadLabel == null) {
-            return;
-        }
+        if (workloadLabel == null) return;
 
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
-        if (staff == null) {
-            return;
-        }
+        if (staff == null) return;
 
         long activeWorkload = requestDAO.getRequestsByStaff(staff.getStaffId()).stream()
                 .filter(r -> !isCompleted(r) && !isCancelled(r))
@@ -482,6 +420,17 @@ public class StaffDashboardController {
                 request.setLastUpdated(java.time.LocalDateTime.now());
 
                 if (requestDAO.updateRequest(request)) {
+                    // email tenant asynchronously
+                    requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
+                            CompletableFuture.runAsync(() ->
+                                    Email.send(
+                                            to,
+                                            "Request " + request.getRequestId() + " updated to IN_PROGRESS",
+                                            "Status for your request " + request.getRequestId() + " is now IN_PROGRESS."
+                                    )
+                            )
+                    );
+
                     Alert success = new Alert(Alert.AlertType.INFORMATION);
                     success.setTitle("Success");
                     success.setHeaderText("Work Started");
@@ -558,11 +507,21 @@ public class StaffDashboardController {
             request.close(resolution);
 
             if (requestDAO.updateRequest(request)) {
+                // email tenant asynchronously
+                requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
+                        CompletableFuture.runAsync(() ->
+                                Email.send(
+                                        to,
+                                        "Request " + request.getRequestId() + " updated to COMPLETED",
+                                        "Status for your request " + request.getRequestId() + " is now COMPLETED."
+                                )
+                        )
+                );
+
                 Alert success = new Alert(Alert.AlertType.INFORMATION);
                 success.setTitle("Success");
                 success.setHeaderText("Request Completed");
-                success.setContentText("Request #" + request.getRequestId() +
-                        " has been marked as completed successfully.");
+                success.setContentText("Request #" + request.getRequestId() + " has been marked as completed successfully.");
                 success.showAndWait();
                 loadRequests();
             } else {
@@ -579,15 +538,12 @@ public class StaffDashboardController {
         alert.showAndWait();
     }
 
-    // Shared status grouping helpers (same across controllers)
     private boolean isNotStarted(MaintenanceRequest r) {
-        return r.getStatus() == RequestStatus.SUBMITTED
-                || r.getStatus() == RequestStatus.ASSIGNED;
+        return r.getStatus() == RequestStatus.SUBMITTED || r.getStatus() == RequestStatus.ASSIGNED;
     }
 
     private boolean isInProgress(MaintenanceRequest r) {
-        return r.getStatus() == RequestStatus.IN_PROGRESS
-                || r.getStatus() == RequestStatus.REOPENED;
+        return r.getStatus() == RequestStatus.IN_PROGRESS || r.getStatus() == RequestStatus.REOPENED;
     }
 
     private boolean isCompleted(MaintenanceRequest r) {

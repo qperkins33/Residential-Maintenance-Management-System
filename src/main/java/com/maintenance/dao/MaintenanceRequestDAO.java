@@ -6,8 +6,28 @@ import com.maintenance.models.MaintenanceRequest;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class MaintenanceRequestDAO {
+
+    public Optional<String> findTenantEmailByRequestId(String requestId) {
+        String sql = """
+        SELECT u.email
+        FROM maintenance_requests mr
+        JOIN users u ON u.user_id = mr.tenant_id
+        WHERE mr.request_id = ?
+    """;
+        try (PreparedStatement ps = dbManager.getConnection().prepareStatement(sql)) {
+            ps.setString(1, requestId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.ofNullable(rs.getString(1));
+                return Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to fetch tenant email for request " + requestId, e);
+        }
+    }
+
     private final DatabaseManager dbManager;
 
     public MaintenanceRequestDAO() {
