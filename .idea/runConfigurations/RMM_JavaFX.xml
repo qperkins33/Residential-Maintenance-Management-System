@@ -1,5 +1,20 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="RMM JavaFX" type="Application" factoryName="Application">
+    <envs>
+      <env name="SMTP_HOST" value="smtp.gmail.com"/>
+      <env name="SMTP_PORT" value="587"/>
+      <!-- Local-only vars (set in your personal, non-shared run config):
+           SMTP_USERNAME=you@example.com
+           SMTP_PASSWORD=app-password
+           SMTP_FROM=Your Name <you@example.com>
+           SMTP_REPLY_TO=support@example.com (optional)
+      -->
+      <!-- Example (DO NOT UNCOMMENT IN VCS):
+      <env name="SMTP_USERNAME" value="you@example.com"/>
+      <env name="SMTP_PASSWORD" value="xxxx xxxx xxxx xxxx"/>
+      <env name="SMTP_FROM" value="Your Name &lt;you@example.com&gt;"/>
+      -->
+    </envs>
     <option name="MAIN_CLASS_NAME" value="com.maintenance.MainApplication" />
     <module name="Residential-Maintenance-Management-System" />
     <option name="VM_PARAMETERS" value="--add-modules=javafx.controls,javafx.fxml --module-path $MAVEN_REPOSITORY$/org/openjfx/javafx-base/21.0.1/javafx-base-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/21.0.1/javafx-graphics-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/21.0.1/javafx-controls-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/21.0.1/javafx-fxml-21.0.1.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-base/21.0.1/javafx-base-21.0.1-mac.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/21.0.1/javafx-graphics-21.0.1-mac.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/21.0.1/javafx-controls-21.0.1-mac.jar:$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/21.0.1/javafx-fxml-21.0.1-mac.jar " />
