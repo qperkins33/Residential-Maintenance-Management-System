@@ -1,8 +1,36 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+
 # Editor-based HTTP Client requests
 /httpRequests/
+
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+
+# Personal (non-shared) run configs — name yours with 'Local'
+/runConfigurations/*Local*.xml
+
+# Build output
+/target/
+/out/
+
+# IntelliJ/Java metadata outside .idea
+*.iml
+.DS_Store
+
+# Keep the runConfigurations directory tracked,
+# but ignore personal 'Local' variants (shared configs remain)
+!.idea/runConfigurations/
+.idea/runConfigurations/*Local*.xml
+
+# Env/secrets (keep the example tracked)
+.env
+.env.local
+.env.*.local
+!/.env.example
+
+# Local helper scripts (examples are OK to commit)
+run-dev.sh
+run-dev.bat
