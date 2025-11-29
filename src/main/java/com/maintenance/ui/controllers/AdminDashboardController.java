@@ -771,6 +771,9 @@ public class AdminDashboardController {
         boolean originalActive = row.isActive();
         final boolean[] targetActive = {originalActive};
 
+        Admin currentAdmin = (Admin) authService.getCurrentUser();
+        final String currentUserId = currentAdmin != null ? currentAdmin.getUserId() : null;
+
         if (originalActive) {
             toggle.setText("Deactivate user");
             DashboardUIHelper.styleActionToggleButton(toggle,
@@ -781,12 +784,30 @@ public class AdminDashboardController {
                     "#4caf50", "#43a047", "#388e3c");
         }
 
+        // Guard flag to avoid re-entrancy
+        final boolean[] internalChange = {false};
+
         toggle.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+            if (internalChange[0]) {
+                return;
+            }
+
+            // Block changing your own status
+            if (row.getUserId().equals(currentUserId)) {
+                new Alert(Alert.AlertType.WARNING,
+                        "You cannot change your own active status from this screen.")
+                        .showAndWait();
+
+                internalChange[0] = true;
+                // revert to previous state instead of hardcoding false
+                toggle.setSelected(wasSelected);
+                internalChange[0] = false;
+                return;
+            }
+
             if (originalActive) {
-                // Originally active: checked means deactivate
                 targetActive[0] = !isSelected;
             } else {
-                // Originally inactive: checked means activate
                 targetActive[0] = isSelected;
             }
         });
@@ -800,7 +821,6 @@ public class AdminDashboardController {
         final boolean[] updated = {false};
 
         saveButton.addEventFilter(ActionEvent.ACTION, event -> {
-            // If nothing changed, just close
             if (targetActive[0] == originalActive) {
                 return;
             }
