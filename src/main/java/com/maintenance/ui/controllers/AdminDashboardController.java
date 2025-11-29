@@ -469,8 +469,10 @@ public class AdminDashboardController {
         TextField departmentField = new TextField();
         departmentField.setPromptText("Operations");
 
-        TextField accessLevelField = new TextField();
-        accessLevelField.setPromptText("MANAGER");
+        ComboBox<String> accessLevelField = new ComboBox<>();
+        accessLevelField.getItems().addAll("MANAGER", "ASSISTANT-MANAGER");
+        accessLevelField.setPromptText("Select access level");
+        accessLevelField.setValue("MANAGER");
 
         int mRow = 0;
         managerGrid.add(new Label("Employee ID:"), 0, mRow);
@@ -574,6 +576,13 @@ public class AdminDashboardController {
                         event.consume();
                         return;
                     }
+                    if (accessLevelField.getValue() == null || accessLevelField.getValue().trim().isEmpty()) {
+                        new Alert(Alert.AlertType.WARNING,
+                                "Access level is required for managers.")
+                                .showAndWait();
+                        event.consume();
+                        return;
+                    }
                 }
             }
 
@@ -597,7 +606,7 @@ public class AdminDashboardController {
                     maxCapacitySpinner.getValue(),
                     employeeIdField.getText().trim(),
                     departmentField.getText().trim(),
-                    accessLevelField.getText().trim()
+                    accessLevelField.getValue() != null ? accessLevelField.getValue().trim() : null
             );
 
             if (!success) {
