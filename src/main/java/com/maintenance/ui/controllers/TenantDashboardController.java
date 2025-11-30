@@ -248,8 +248,14 @@ public class TenantDashboardController {
 
         TableColumn<MaintenanceRequest, Void> actionCol = getMaintenanceRequestVoidTableColumn();
 
-        requestTable.getColumns().setAll(java.util.Arrays.asList(
-                idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol
+        requestTable.getColumns().setAll(java.util.List.of(
+                idCol,
+                categoryCol,
+                descCol,
+                priorityCol,
+                statusCol,
+                dateCol,
+                actionCol
         ));
 
         Label emptyLabel = new Label("No requests yet");
