@@ -415,16 +415,16 @@ public class StaffDashboardController {
 
                     requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                             CompletableFuture.runAsync(() -> {
-                                String subject = "Request " + request.getRequestId() + " updated to IN_PROGRESS";
+                                String subject = "Request " + request.getRequestId() + " status updated: In progress";
                                 String body =
                                         "Hello,\n\n" +
-                                                "Your maintenance request has an update.\n\n" +
+                                                "Your maintenance request was updated.\n\n" +
                                                 "Request ID: " + request.getRequestId() + "\n" +
-                                                "Status:     IN_PROGRESS\n" +
+                                                "Status:     In progress\n" +
                                                 "Apartment:  " + nullToDash(request.getApartmentNumber()) + "\n" +
                                                 "Technician: " + tech + "\n\n" +
-                                                "If you have questions, reply to this email.\n" +
-                                                "Residential Maintenance System";
+                                                "Reply to this email if you have questions.\n" +
+                                                "Residential Maintenance";
                                 Email.send(to, subject, body);
                             })
                     );
@@ -507,17 +507,17 @@ public class StaffDashboardController {
 
                 requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                         CompletableFuture.runAsync(() -> {
-                            String subject = "Request " + request.getRequestId() + " updated to COMPLETED";
+                            String subject = "Request " + request.getRequestId() + " status updated: Completed";
                             String body =
                                     "Hello,\n\n" +
-                                            "Your maintenance request has an update.\n\n" +
+                                            "Your maintenance request is now completed.\n\n" +
                                             "Request ID: " + request.getRequestId() + "\n" +
-                                            "Status:     COMPLETED\n" +
+                                            "Status:     Completed\n" +
                                             "Apartment:  " + nullToDash(request.getApartmentNumber()) + "\n" +
                                             "Technician: " + tech + "\n\n" +
-                                            "Resolution:\n" + resolution + "\n\n" +
-                                            "If you have questions, reply to this email.\n" +
-                                            "Residential Maintenance System";
+                                            "Resolution: " + resolution + "\n\n" +
+                                            "Reply to this email if you have questions.\n" +
+                                            "Residential Maintenance";
                             Email.send(to, subject, body);
                         })
                 );
