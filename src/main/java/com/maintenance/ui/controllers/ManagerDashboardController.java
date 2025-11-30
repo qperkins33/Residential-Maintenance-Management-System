@@ -329,10 +329,13 @@ public class ManagerDashboardController {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     if (request.getStatus() == RequestStatus.SUBMITTED) {
                         assignBtn.setText("Assign");
-                    } else {
+                        box.getChildren().setAll(assignBtn, viewBtn);
+                    } else if (request.getStatus() != RequestStatus.COMPLETED){
                         assignBtn.setText("Reassign");
+                        box.getChildren().setAll(assignBtn, viewBtn);
+                    } else {
+                        box.getChildren().setAll(viewBtn);
                     }
-                    box.getChildren().setAll(assignBtn, viewBtn);
                     setGraphic(box);
                 }
             }
