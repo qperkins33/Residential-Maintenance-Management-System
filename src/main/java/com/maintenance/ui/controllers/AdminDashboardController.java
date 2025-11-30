@@ -195,6 +195,24 @@ public class AdminDashboardController {
         dateCol.setPrefWidth(120);
 
         // Actions column with View + Edit buttons
+        TableColumn<UserRow, Void> actionCol = getUserRowVoidTableColumn();
+
+        userTable.getColumns().setAll(
+                idCol, usernameCol, nameCol, emailCol,
+                phoneCol, typeCol, activeCol, dateCol, actionCol
+        );
+
+        Label emptyLabel = new Label("No users found");
+        emptyLabel.setFont(Font.font("Arial", 14));
+        emptyLabel.setTextFill(javafx.scene.paint.Color.GRAY);
+        userTable.setPlaceholder(emptyLabel);
+
+        section.getChildren().addAll(headerBox, userTable);
+        VBox.setVgrow(userTable, Priority.ALWAYS);
+        return section;
+    }
+
+    private TableColumn<UserRow, Void> getUserRowVoidTableColumn() {
         TableColumn<UserRow, Void> actionCol = new TableColumn<>("Actions");
         actionCol.setPrefWidth(210);
         actionCol.setStyle("-fx-alignment: CENTER;");
@@ -236,20 +254,7 @@ public class AdminDashboardController {
                 }
             }
         });
-
-        userTable.getColumns().setAll(
-                idCol, usernameCol, nameCol, emailCol,
-                phoneCol, typeCol, activeCol, dateCol, actionCol
-        );
-
-        Label emptyLabel = new Label("No users found");
-        emptyLabel.setFont(Font.font("Arial", 14));
-        emptyLabel.setTextFill(javafx.scene.paint.Color.GRAY);
-        userTable.setPlaceholder(emptyLabel);
-
-        section.getChildren().addAll(headerBox, userTable);
-        VBox.setVgrow(userTable, Priority.ALWAYS);
-        return section;
+        return actionCol;
     }
 
     private void loadUsers() {
@@ -768,9 +773,8 @@ public class AdminDashboardController {
                             : "MANAGER");
                     mgrStmt.executeUpdate();
                 }
-            } else if ("ADMIN".equals(userType)) {
-                // no extra table for admins
-            }
+            }  // no extra table for admins
+
 
             conn.commit();
             return true;
@@ -1030,25 +1034,6 @@ public class AdminDashboardController {
             return false;
         }
     }
-
-//    private boolean updateUserActiveFlag(String userId, boolean active) {
-//        Connection conn = dbManager.getConnection();
-//        if (conn == null) {
-//            System.err.println("Database connection is null in updateUserActiveFlag");
-//            return false;
-//        }
-//
-//        String sql = "UPDATE users SET is_active = ? WHERE user_id = ?";
-//        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-//            ps.setBoolean(1, active);
-//            ps.setString(2, userId);
-//            int updated = ps.executeUpdate();
-//            return updated == 1;
-//        } catch (SQLException e) {
-//            System.err.println("Error updating user active flag: " + e.getMessage());
-//            return false;
-//        }
-//    }
 
     /**
      * View User dialog: shows full user info.
