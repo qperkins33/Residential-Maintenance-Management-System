@@ -101,11 +101,11 @@ public class ManagerDashboardController {
         menuLabel.setTextFill(Color.web("#95a5a6"));
 
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
-        Button allRequestsBtn = DashboardUIHelper.createSidebarButton("📋 All Requests", false);
-        Button reportsBtn = DashboardUIHelper.createSidebarButton("📈 Reports", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
+//        Button allRequestsBtn = DashboardUIHelper.createSidebarButton("📋 All Requests", false);
+//        Button reportsBtn = DashboardUIHelper.createSidebarButton("📈 Reports", false);
+//        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
-        sidebar.getChildren().addAll(menuLabel, dashboardBtn, allRequestsBtn, reportsBtn, settingsBtn);
+        sidebar.getChildren().addAll(menuLabel, dashboardBtn);
         return sidebar;
     }
 
@@ -143,6 +143,7 @@ public class ManagerDashboardController {
         long inProgress = allRequests.stream().filter(this::isInProgress).count();
         long completed = allRequests.stream().filter(this::isCompleted).count();
         long cancelled = allRequests.stream().filter(this::isCancelled).count();
+        long notStarted = allRequests.stream().filter(this::isNotStarted).count();
 
         VBox totalCard = DashboardUIHelper.createStatCard(
                 "Total Requests",
@@ -155,6 +156,12 @@ public class ManagerDashboardController {
                 String.valueOf(unassigned),
                 "#2196f3",
                 "👀"
+        );
+        VBox pendingCard = DashboardUIHelper.createStatCard(
+                "Not Started",
+                String.valueOf(notStarted),
+                "#2196f3",
+                "⏸️"
         );
         VBox inProgressCard = DashboardUIHelper.createStatCard(
                 "In Progress",
@@ -178,6 +185,7 @@ public class ManagerDashboardController {
         statsBox.getChildren().addAll(
                 totalCard,
                 unassignedCard,
+                pendingCard,
                 inProgressCard,
                 completedCard,
                 cancelledCard
@@ -202,6 +210,7 @@ public class ManagerDashboardController {
                 "All Requests",
                 "Unassigned",
                 "In Progress",
+                "Not Started",
                 "Completed",
                 "Cancelled"
         );
@@ -226,6 +235,42 @@ public class ManagerDashboardController {
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
         idCol.setPrefWidth(100);
 
+        TableColumn<MaintenanceRequest, String> staffCol = getMaintenanceRequestStringTableColumn();
+
+        TableColumn<MaintenanceRequest, String> categoryCol = new TableColumn<>("Category");
+        categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
+        categoryCol.setPrefWidth(110);
+
+        TableColumn<MaintenanceRequest, String> descCol = new TableColumn<>("Description");
+        descCol.setCellValueFactory(new PropertyValueFactory<>("description"));
+        descCol.setPrefWidth(240);
+        descCol.setStyle("-fx-wrap-text: true;");
+
+        TableColumn<MaintenanceRequest, ?> priorityCol = DashboardUIHelper.createPriorityColumn();
+        TableColumn<MaintenanceRequest, ?> statusCol = DashboardUIHelper.createStatusColumn();
+        TableColumn<MaintenanceRequest, ?> dateCol = DashboardUIHelper.createSubmittedDateColumn();
+
+        TableColumn<MaintenanceRequest, Void> actionCol = getMaintenanceRequestVoidTableColumn();
+
+        requestTable.getColumns().setAll(java.util.List.of(
+                idCol,
+                staffCol,
+                categoryCol,
+                descCol,
+                priorityCol,
+                statusCol,
+                dateCol,
+                actionCol
+        ));
+
+        loadRequests();
+
+        section.getChildren().addAll(headerBox, requestTable);
+        VBox.setVgrow(requestTable, Priority.ALWAYS);
+        return section;
+    }
+
+    private TableColumn<MaintenanceRequest, String> getMaintenanceRequestStringTableColumn() {
         TableColumn<MaintenanceRequest, String> staffCol = new TableColumn<>("Assigned Staff");
         staffCol.setCellValueFactory(new PropertyValueFactory<>("assignedStaffId"));
         staffCol.setPrefWidth(140);
@@ -251,31 +296,7 @@ public class ManagerDashboardController {
                 setText(staff != null ? staff.getFullName() : "");
             }
         });
-
-        TableColumn<MaintenanceRequest, String> categoryCol = new TableColumn<>("Category");
-        categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
-        categoryCol.setPrefWidth(110);
-
-        TableColumn<MaintenanceRequest, String> descCol = new TableColumn<>("Description");
-        descCol.setCellValueFactory(new PropertyValueFactory<>("description"));
-        descCol.setPrefWidth(240);
-        descCol.setStyle("-fx-wrap-text: true;");
-
-        TableColumn<MaintenanceRequest, ?> priorityCol = DashboardUIHelper.createPriorityColumn();
-        TableColumn<MaintenanceRequest, ?> statusCol = DashboardUIHelper.createStatusColumn();
-        TableColumn<MaintenanceRequest, ?> dateCol = DashboardUIHelper.createSubmittedDateColumn();
-
-        TableColumn<MaintenanceRequest, Void> actionCol = getMaintenanceRequestVoidTableColumn();
-
-        requestTable.getColumns().setAll(java.util.Arrays.asList(
-                idCol, staffCol, categoryCol, descCol,
-                priorityCol, statusCol, dateCol, actionCol));
-
-        loadRequests();
-
-        section.getChildren().addAll(headerBox, requestTable);
-        VBox.setVgrow(requestTable, Priority.ALWAYS);
-        return section;
+        return staffCol;
     }
 
     private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {
@@ -315,10 +336,13 @@ public class ManagerDashboardController {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     if (request.getStatus() == RequestStatus.SUBMITTED) {
                         assignBtn.setText("Assign");
-                    } else {
+                        box.getChildren().setAll(assignBtn, viewBtn);
+                    } else if (request.getStatus() != RequestStatus.COMPLETED){
                         assignBtn.setText("Reassign");
+                        box.getChildren().setAll(assignBtn, viewBtn);
+                    } else {
+                        box.getChildren().setAll(viewBtn);
                     }
-                    box.getChildren().setAll(assignBtn, viewBtn);
                     setGraphic(box);
                 }
             }
@@ -340,6 +364,9 @@ public class ManagerDashboardController {
                     .toList();
             case "In Progress" -> requests = requests.stream()
                     .filter(this::isInProgress)
+                    .toList();
+            case "Not Started" -> requests = requests.stream()
+                    .filter(this::isNotStarted)
                     .toList();
             case "Completed" -> requests = requests.stream()
                     .filter(this::isCompleted)

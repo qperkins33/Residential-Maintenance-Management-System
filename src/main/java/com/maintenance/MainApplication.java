@@ -18,7 +18,6 @@ public class MainApplication extends Application {
             viewFactory.showLoginWindow();
 
         } catch (Exception e) {
-            e.printStackTrace();
             System.err.println("Error starting application: " + e.getMessage());
         }
     }
@@ -29,7 +28,7 @@ public class MainApplication extends Application {
         try {
             com.maintenance.database.DatabaseManager.getInstance().disconnect();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Exception: " + e.getMessage());
         }
     }
 

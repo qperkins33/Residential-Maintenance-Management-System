@@ -142,7 +142,6 @@ public class DatabaseInitializer {
 
         } catch (Exception e) {
             System.err.println("Error initializing database: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 

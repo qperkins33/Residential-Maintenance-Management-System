@@ -102,17 +102,17 @@ public class StaffDashboardController {
         menuLabel.setTextFill(Color.web("#95a5a6"));
 
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
-        Button assignedBtn = DashboardUIHelper.createSidebarButton("📋 Assigned Tasks", false);
-        Button historyBtn = DashboardUIHelper.createSidebarButton("📜 History", false);
-        Button profileBtn = DashboardUIHelper.createSidebarButton("👤 Profile", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
+//        Button assignedBtn = DashboardUIHelper.createSidebarButton("📋 Assigned Tasks", false);
+//        Button historyBtn = DashboardUIHelper.createSidebarButton("📜 History", false);
+//        Button profileBtn = DashboardUIHelper.createSidebarButton("👤 Profile", false);
+//        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
         VBox availabilityBox = createAvailabilityToggle();
 
-        sidebar.getChildren().addAll(menuLabel, dashboardBtn, assignedBtn, historyBtn, profileBtn, settingsBtn, spacer, availabilityBox);
+        sidebar.getChildren().addAll(menuLabel, dashboardBtn, spacer, availabilityBox);
         return sidebar;
     }
 
@@ -125,6 +125,19 @@ public class StaffDashboardController {
         statusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         statusLabel.setTextFill(Color.web("#ecf0f1"));
 
+        CheckBox availableCheck = getCheckBox();
+
+        workloadLabel = new Label();
+        workloadLabel.setFont(Font.font("Arial", 11));
+        workloadLabel.setTextFill(Color.web("#bdc3c7"));
+
+        refreshWorkload();
+
+        box.getChildren().addAll(statusLabel, availableCheck, workloadLabel);
+        return box;
+    }
+
+    private CheckBox getCheckBox() {
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
 
         CheckBox availableCheck = new CheckBox("Available for assignments");
@@ -136,15 +149,7 @@ public class StaffDashboardController {
             staff.updateAvailability(availableCheck.isSelected());
             showStatusNotification(availableCheck.isSelected());
         });
-
-        workloadLabel = new Label();
-        workloadLabel.setFont(Font.font("Arial", 11));
-        workloadLabel.setTextFill(Color.web("#bdc3c7"));
-
-        refreshWorkload();
-
-        box.getChildren().addAll(statusLabel, availableCheck, workloadLabel);
-        return box;
+        return availableCheck;
     }
 
     private void showStatusNotification(boolean available) {
@@ -215,10 +220,6 @@ public class StaffDashboardController {
         statsBox.getChildren().addAll(totalCard, urgentCard, inProgressCard, pendingCard, completedCard, cancelledCard);
     }
 
-    private HBox createStatsCards() {
-        return statsBox;
-    }
-
     private VBox createRequestsSection() {
         VBox section = new VBox(15);
         section.setFillWidth(true);
@@ -273,6 +274,36 @@ public class StaffDashboardController {
         TableColumn<MaintenanceRequest, ?> statusCol = DashboardUIHelper.createStatusColumn();
         TableColumn<MaintenanceRequest, ?> dateCol = DashboardUIHelper.createSubmittedDateColumn();
 
+        TableColumn<MaintenanceRequest, Void> actionCol = getMaintenanceRequestVoidTableColumn();
+
+        requestTable.getColumns().setAll(java.util.List.of(
+                idCol,
+                aptCol,
+                categoryCol,
+                descCol,
+                priorityCol,
+                statusCol,
+                dateCol,
+                actionCol
+        ));
+
+        loadRequests();
+
+        Label emptyLabel = new Label("No requests assigned yet");
+        emptyLabel.setFont(Font.font("Arial", 14));
+        emptyLabel.setTextFill(Color.GRAY);
+        requestTable.setPlaceholder(emptyLabel);
+
+        requestTable.setMaxHeight(Double.MAX_VALUE);
+        VBox.setVgrow(requestTable, Priority.ALWAYS);
+
+        section.getChildren().addAll(headerBox, requestTable);
+        VBox.setVgrow(requestTable, Priority.ALWAYS);
+
+        return section;
+    }
+
+    private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
         actionCol.setPrefWidth(260);
         actionCol.setMinWidth(260);
@@ -338,25 +369,7 @@ public class StaffDashboardController {
                 }
             }
         });
-
-        requestTable.getColumns().setAll(java.util.Arrays.asList(
-                idCol, aptCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol
-        ));
-
-        loadRequests();
-
-        Label emptyLabel = new Label("No requests assigned yet");
-        emptyLabel.setFont(Font.font("Arial", 14));
-        emptyLabel.setTextFill(Color.GRAY);
-        requestTable.setPlaceholder(emptyLabel);
-
-        requestTable.setMaxHeight(Double.MAX_VALUE);
-        VBox.setVgrow(requestTable, Priority.ALWAYS);
-
-        section.getChildren().addAll(headerBox, requestTable);
-        VBox.setVgrow(requestTable, Priority.ALWAYS);
-
-        return section;
+        return actionCol;
     }
 
     private void loadRequests() {

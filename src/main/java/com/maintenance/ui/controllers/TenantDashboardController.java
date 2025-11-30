@@ -104,11 +104,11 @@ public class TenantDashboardController {
         menuLabel.setTextFill(Color.web("#95a5a6"));
 
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
-        Button requestsBtn = DashboardUIHelper.createSidebarButton("📝 My Requests", false);
-        Button newRequestBtn = DashboardUIHelper.createSidebarButton("➕ New Request", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
+//        Button requestsBtn = DashboardUIHelper.createSidebarButton("📝 My Requests", false);
+//        Button newRequestBtn = DashboardUIHelper.createSidebarButton("➕ New Request", false);
+//        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
-        sidebar.getChildren().addAll(menuLabel, dashboardBtn, requestsBtn, newRequestBtn, settingsBtn);
+        sidebar.getChildren().addAll(menuLabel, dashboardBtn);
         return sidebar;
     }
 
@@ -248,8 +248,14 @@ public class TenantDashboardController {
 
         TableColumn<MaintenanceRequest, Void> actionCol = getMaintenanceRequestVoidTableColumn();
 
-        requestTable.getColumns().setAll(java.util.Arrays.asList(
-                idCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol
+        requestTable.getColumns().setAll(java.util.List.of(
+                idCol,
+                categoryCol,
+                descCol,
+                priorityCol,
+                statusCol,
+                dateCol,
+                actionCol
         ));
 
         Label emptyLabel = new Label("No requests yet");

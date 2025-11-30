@@ -139,24 +139,6 @@ public class MaintenanceRequestDAO {
         return requests;
     }
 
-    public List<MaintenanceRequest> getRequestsByStatus(RequestStatus status) {
-        List<MaintenanceRequest> requests = new ArrayList<>();
-        String sql = "SELECT * FROM maintenance_requests WHERE status = ? ORDER BY submission_date DESC";
-
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
-            pstmt.setString(1, status.name());
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                requests.add(mapResultSetToRequest(rs));
-            }
-        } catch (SQLException e) {
-            System.err.println("Error loading requests by status: " + e.getMessage());
-        }
-
-        return requests;
-    }
-
     private MaintenanceRequest mapResultSetToRequest(ResultSet rs) throws SQLException {
         MaintenanceRequest request = new MaintenanceRequest();
         request.setRequestId(rs.getString("request_id"));
