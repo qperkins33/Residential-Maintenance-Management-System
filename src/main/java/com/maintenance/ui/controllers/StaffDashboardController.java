@@ -102,17 +102,17 @@ public class StaffDashboardController {
         menuLabel.setTextFill(Color.web("#95a5a6"));
 
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
-        Button assignedBtn = DashboardUIHelper.createSidebarButton("📋 Assigned Tasks", false);
-        Button historyBtn = DashboardUIHelper.createSidebarButton("📜 History", false);
-        Button profileBtn = DashboardUIHelper.createSidebarButton("👤 Profile", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
+//        Button assignedBtn = DashboardUIHelper.createSidebarButton("📋 Assigned Tasks", false);
+//        Button historyBtn = DashboardUIHelper.createSidebarButton("📜 History", false);
+//        Button profileBtn = DashboardUIHelper.createSidebarButton("👤 Profile", false);
+//        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
         VBox availabilityBox = createAvailabilityToggle();
 
-        sidebar.getChildren().addAll(menuLabel, dashboardBtn, assignedBtn, historyBtn, profileBtn, settingsBtn, spacer, availabilityBox);
+        sidebar.getChildren().addAll(menuLabel, dashboardBtn, spacer, availabilityBox);
         return sidebar;
     }
 

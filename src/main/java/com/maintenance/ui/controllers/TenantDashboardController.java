@@ -104,11 +104,11 @@ public class TenantDashboardController {
         menuLabel.setTextFill(Color.web("#95a5a6"));
 
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
-        Button requestsBtn = DashboardUIHelper.createSidebarButton("📝 My Requests", false);
-        Button newRequestBtn = DashboardUIHelper.createSidebarButton("➕ New Request", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
+//        Button requestsBtn = DashboardUIHelper.createSidebarButton("📝 My Requests", false);
+//        Button newRequestBtn = DashboardUIHelper.createSidebarButton("➕ New Request", false);
+//        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
-        sidebar.getChildren().addAll(menuLabel, dashboardBtn, requestsBtn, newRequestBtn, settingsBtn);
+        sidebar.getChildren().addAll(menuLabel, dashboardBtn);
         return sidebar;
     }
 

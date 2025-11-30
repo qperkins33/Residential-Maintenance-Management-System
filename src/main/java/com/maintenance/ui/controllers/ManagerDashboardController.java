@@ -101,11 +101,11 @@ public class ManagerDashboardController {
         menuLabel.setTextFill(Color.web("#95a5a6"));
 
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
-        Button allRequestsBtn = DashboardUIHelper.createSidebarButton("📋 All Requests", false);
-        Button reportsBtn = DashboardUIHelper.createSidebarButton("📈 Reports", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
+//        Button allRequestsBtn = DashboardUIHelper.createSidebarButton("📋 All Requests", false);
+//        Button reportsBtn = DashboardUIHelper.createSidebarButton("📈 Reports", false);
+//        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
-        sidebar.getChildren().addAll(menuLabel, dashboardBtn, allRequestsBtn, reportsBtn, settingsBtn);
+        sidebar.getChildren().addAll(menuLabel, dashboardBtn);
         return sidebar;
     }
 

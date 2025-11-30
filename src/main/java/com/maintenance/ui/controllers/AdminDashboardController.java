@@ -110,10 +110,10 @@ public class AdminDashboardController {
         menuLabel.setTextFill(javafx.scene.paint.Color.web("#95a5a6"));
 
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
-        Button usersBtn = DashboardUIHelper.createSidebarButton("👥 Users", false);
-        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false); // TODO: Add functionality
+//        Button usersBtn = DashboardUIHelper.createSidebarButton("👥 Users", false);
+//        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
-        sidebar.getChildren().addAll(menuLabel, dashboardBtn, usersBtn, settingsBtn);
+        sidebar.getChildren().addAll(menuLabel, dashboardBtn);
         return sidebar;
     }
 
