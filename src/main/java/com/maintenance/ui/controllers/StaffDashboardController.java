@@ -276,9 +276,17 @@ public class StaffDashboardController {
 
         TableColumn<MaintenanceRequest, Void> actionCol = getMaintenanceRequestVoidTableColumn();
 
-        requestTable.getColumns().setAll(java.util.Arrays.asList(
-                idCol, aptCol, categoryCol, descCol, priorityCol, statusCol, dateCol, actionCol
+        requestTable.getColumns().setAll(java.util.List.of(
+                idCol,
+                aptCol,
+                categoryCol,
+                descCol,
+                priorityCol,
+                statusCol,
+                dateCol,
+                actionCol
         ));
+
 
         loadRequests();
 
