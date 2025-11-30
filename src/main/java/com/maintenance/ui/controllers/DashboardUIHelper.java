@@ -243,12 +243,13 @@ public final class DashboardUIHelper {
     }
 
     // Internal helper that actually builds the dialog UI. Used when user clicks 'View'
-// Internal helper that actually builds the dialog UI. Used when user clicks 'View'
+    // Internal helper that actually builds the dialog UI. Used when user clicks 'View'
     private static void showRequestDetailsDialog(MaintenanceRequest request, String photoUri) {
         // Look up tenant and staff info using the IDs on the request
         String tenantName = null;
         String tenantPhone = null;
         String tenantEmail = null;
+        String staffPhone = null;
         String staffEmail = null;
         String staffName = null;
 
@@ -267,6 +268,7 @@ public final class DashboardUIHelper {
             MaintenanceStaff staff = USER_DAO.getStaffByStaffId(request.getAssignedStaffId());
             if (staff != null) {
                 staffName = staff.getFullName();
+                staffPhone = staff.getPhoneNumber();
                 staffEmail = staff.getEmail();
             }
         }
@@ -315,6 +317,9 @@ public final class DashboardUIHelper {
         // assigned staff info
         if (staffName != null && !staffName.isBlank()) {
             addDetailRow(grid, row++, "Assigned Staff:", staffName);
+        }
+        if (staffPhone != null && !staffPhone.isBlank()) {
+            addDetailRow(grid, row++, "Staff Phone:", staffPhone);
         }
         if (staffEmail != null && !staffEmail.isBlank()) {
             addDetailRow(grid, row++, "Assigned Staff Email:", staffEmail);
