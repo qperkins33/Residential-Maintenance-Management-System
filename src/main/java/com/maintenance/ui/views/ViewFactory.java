@@ -5,6 +5,8 @@ import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
+import java.util.Objects;
+
 public class ViewFactory {
 
     public void showLoginWindow() {
@@ -16,14 +18,14 @@ public class ViewFactory {
             controller.createLoginUI(root);
 
             Scene scene = new Scene(root, 1200, 700);
-            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+            scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
 
             stage.setTitle("Residential Maintenance System - Login");
             stage.setScene(scene);
             stage.setMaximized(true);
             stage.show();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Exception: " + e.getMessage());
         }
     }
 
@@ -35,14 +37,14 @@ public class ViewFactory {
             controller.createDashboardUI(root);
 
             Scene scene = new Scene(root, 1200, 700);
-            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+            scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
 
             stage.setTitle("Tenant Dashboard");
             stage.setScene(scene);
             stage.setMaximized(true);
             stage.show();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Exception: " + e.getMessage());
         }
     }
 
@@ -54,14 +56,14 @@ public class ViewFactory {
             controller.createDashboardUI(root);
 
             Scene scene = new Scene(root, 1200, 700);
-            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+            scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
 
             stage.setTitle("Manager Dashboard");
             stage.setScene(scene);
             stage.setMaximized(true);
             stage.show();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Exception: " + e.getMessage());
         }
     }
 
@@ -73,14 +75,14 @@ public class ViewFactory {
             controller.createDashboardUI(root);
 
             Scene scene = new Scene(root, 1200, 700);
-            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+            scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
 
             stage.setTitle("Staff Dashboard");
             stage.setScene(scene);
             stage.setMaximized(true);
             stage.show();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Exception: " + e.getMessage());
         }
     }
 
@@ -92,14 +94,14 @@ public class ViewFactory {
             controller.createDashboardUI(root);
 
             Scene scene = new Scene(root, 1200, 700);
-            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+            scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
 
             stage.setTitle("Admin Dashboard");
             stage.setScene(scene);
             stage.setMaximized(true);
             stage.show();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Exception: " + e.getMessage());
         }
     }
 
