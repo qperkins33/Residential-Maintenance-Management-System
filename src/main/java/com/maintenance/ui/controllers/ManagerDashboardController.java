@@ -252,9 +252,16 @@ public class ManagerDashboardController {
 
         TableColumn<MaintenanceRequest, Void> actionCol = getMaintenanceRequestVoidTableColumn();
 
-        requestTable.getColumns().setAll(java.util.Arrays.asList(
-                idCol, staffCol, categoryCol, descCol,
-                priorityCol, statusCol, dateCol, actionCol));
+        requestTable.getColumns().setAll(java.util.List.of(
+                idCol,
+                staffCol,
+                categoryCol,
+                descCol,
+                priorityCol,
+                statusCol,
+                dateCol,
+                actionCol
+        ));
 
         loadRequests();
 
