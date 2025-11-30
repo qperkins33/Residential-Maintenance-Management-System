@@ -43,7 +43,6 @@ public class PhotoDAO {
             }
         } catch (Exception e) {
             System.err.println("Error saving photo metadata: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -69,7 +68,6 @@ public class PhotoDAO {
             }
         } catch (Exception e) {
             System.err.println("Error loading photo metadata: " + e.getMessage());
-            e.printStackTrace();
         }
         return null;
     }
