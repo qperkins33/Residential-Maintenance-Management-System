@@ -287,7 +287,6 @@ public class StaffDashboardController {
                 actionCol
         ));
 
-
         loadRequests();
 
         Label emptyLabel = new Label("No requests assigned yet");
