@@ -1,10 +1,12 @@
 package com.maintenance.ui.controllers;
 
 import com.maintenance.dao.MaintenanceRequestDAO;
+import com.maintenance.dao.UserDAO;
 import com.maintenance.enums.PriorityLevel;
 import com.maintenance.enums.RequestStatus;
 import com.maintenance.models.MaintenanceRequest;
 import com.maintenance.models.MaintenanceStaff;
+import com.maintenance.notification.Email;
 import com.maintenance.service.AuthenticationService;
 import com.maintenance.ui.views.ViewFactory;
 import javafx.collections.FXCollections;
@@ -21,9 +23,6 @@ import javafx.stage.Stage;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
-// added
-import com.maintenance.notification.Email;
 import java.util.concurrent.CompletableFuture;
 
 public class StaffDashboardController {
@@ -80,8 +79,7 @@ public class StaffDashboardController {
         userLabel.setFont(Font.font("Arial", 14));
 
         Button logoutButton = new Button("Logout");
-        logoutButton.setStyle("-fx-background-color: #ff5252; -fx-text-fill: white; " +
-                "-fx-padding: 8 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        logoutButton.setStyle("-fx-background-color: #ff5252; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5; -fx-cursor: hand;");
         logoutButton.setOnAction(e -> {
             authService.logout();
             Stage stage = (Stage) logoutButton.getScene().getWindow();
@@ -114,8 +112,7 @@ public class StaffDashboardController {
 
         VBox availabilityBox = createAvailabilityToggle();
 
-        sidebar.getChildren().addAll(menuLabel, dashboardBtn, assignedBtn, historyBtn,
-                profileBtn, settingsBtn, spacer, availabilityBox);
+        sidebar.getChildren().addAll(menuLabel, dashboardBtn, assignedBtn, historyBtn, profileBtn, settingsBtn, spacer, availabilityBox);
         return sidebar;
     }
 
@@ -154,8 +151,7 @@ public class StaffDashboardController {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Status Updated");
         alert.setHeaderText(null);
-        alert.setContentText("Availability status updated to: " +
-                (available ? "Available" : "Unavailable"));
+        alert.setContentText("Availability status updated to: " + (available ? "Available" : "Unavailable"));
         alert.showAndWait();
     }
 
@@ -184,8 +180,7 @@ public class StaffDashboardController {
         welcomeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         welcomeLabel.setTextFill(Color.web("#2c3e50"));
 
-        Label dateLabel = new Label("Today: " +
-                java.time.LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy")));
+        Label dateLabel = new Label("Today: " + java.time.LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy")));
         dateLabel.setFont(Font.font("Arial", 13));
         dateLabel.setTextFill(Color.GRAY);
 
@@ -207,8 +202,7 @@ public class StaffDashboardController {
         long cancelled = myRequests.stream().filter(this::isCancelled).count();
 
         long urgent = myRequests.stream()
-                .filter(r -> (r.getPriority() == PriorityLevel.URGENT || r.getPriority() == PriorityLevel.EMERGENCY)
-                        && !isCompleted(r) && !isCancelled(r))
+                .filter(r -> (r.getPriority() == PriorityLevel.URGENT || r.getPriority() == PriorityLevel.EMERGENCY) && !isCompleted(r) && !isCancelled(r))
                 .count();
 
         VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(myRequests.size()), "#667eea", "📋");
@@ -222,8 +216,6 @@ public class StaffDashboardController {
     }
 
     private HBox createStatsCards() {
-        // no longer used, kept only if you still reference it somewhere else
-        // but you can delete this method entirely if unused
         return statsBox;
     }
 
@@ -383,8 +375,7 @@ public class StaffDashboardController {
             case "Assigned" -> requests = requests.stream().filter(r -> r.getStatus() == RequestStatus.ASSIGNED).toList();
             case "In Progress" -> requests = requests.stream().filter(this::isInProgress).toList();
             case "Urgent Only" -> requests = requests.stream()
-                    .filter(r -> (r.getPriority() == PriorityLevel.URGENT || r.getPriority() == PriorityLevel.EMERGENCY)
-                            && !isCompleted(r) && !isCancelled(r))
+                    .filter(r -> (r.getPriority() == PriorityLevel.URGENT || r.getPriority() == PriorityLevel.EMERGENCY) && !isCompleted(r) && !isCancelled(r))
                     .toList();
             case "Cancelled" -> requests = requests.stream().filter(this::isCancelled).toList();
             default -> { }
@@ -420,15 +411,22 @@ public class StaffDashboardController {
                 request.setLastUpdated(java.time.LocalDateTime.now());
 
                 if (requestDAO.updateRequest(request)) {
-                    // email tenant asynchronously
+                    String tech = resolveTechnicianName(request);
+
                     requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
-                            CompletableFuture.runAsync(() ->
-                                    Email.send(
-                                            to,
-                                            "Request " + request.getRequestId() + " updated to IN_PROGRESS",
-                                            "Status for your request " + request.getRequestId() + " is now IN_PROGRESS."
-                                    )
-                            )
+                            CompletableFuture.runAsync(() -> {
+                                String subject = "Request status updated: In progress";
+                                String body =
+                                        "Hello,\n\n" +
+                                                "Your maintenance request was updated.\n\n" +
+                                                "Request ID: " + request.getRequestId() + "\n" +
+                                                "Status:     In progress\n" +
+                                                "Apartment:  " + nullToDash(request.getApartmentNumber()) + "\n" +
+                                                "Technician: " + tech + "\n\n" +
+                                                "Reply to this email if you have questions.\n" +
+                                                "Residential Maintenance";
+                                Email.send(to, subject, body);
+                            })
                     );
 
                     Alert success = new Alert(Alert.AlertType.INFORMATION);
@@ -500,22 +498,28 @@ public class StaffDashboardController {
                     double cost = Double.parseDouble(costField.getText());
                     request.setActualCost(cost);
                 }
-            } catch (NumberFormatException e) {
-                // ignore parse error
-            }
+            } catch (NumberFormatException ignored) { }
 
             request.close(resolution);
 
             if (requestDAO.updateRequest(request)) {
-                // email tenant asynchronously
+                String tech = resolveTechnicianName(request);
+
                 requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
-                        CompletableFuture.runAsync(() ->
-                                Email.send(
-                                        to,
-                                        "Request " + request.getRequestId() + " updated to COMPLETED",
-                                        "Status for your request " + request.getRequestId() + " is now COMPLETED."
-                                )
-                        )
+                        CompletableFuture.runAsync(() -> {
+                            String subject = "Request status updated: Completed";
+                            String body =
+                                    "Hello,\n\n" +
+                                            "Your maintenance request is now completed.\n\n" +
+                                            "Request ID: " + request.getRequestId() + "\n" +
+                                            "Status:     Completed\n" +
+                                            "Apartment:  " + nullToDash(request.getApartmentNumber()) + "\n" +
+                                            "Technician: " + tech + "\n\n" +
+                                            "Resolution: " + resolution + "\n\n" +
+                                            "Reply to this email if you have questions.\n" +
+                                            "Residential Maintenance";
+                            Email.send(to, subject, body);
+                        })
                 );
 
                 Alert success = new Alert(Alert.AlertType.INFORMATION);
@@ -528,6 +532,27 @@ public class StaffDashboardController {
                 showError("Failed to update request");
             }
         });
+    }
+
+    private String resolveTechnicianName(MaintenanceRequest r) {
+        var u = authService.getCurrentUser();
+        if (u instanceof MaintenanceStaff ms && ms.getFullName() != null && !ms.getFullName().isBlank()) {
+            return ms.getFullName();
+        }
+        // fallback to DB by assigned staff id if available
+        String staffId = r.getAssignedStaffId();
+        if (staffId != null && !staffId.isBlank()) {
+            var userDAO = new UserDAO();
+            var staff = userDAO.getStaffByStaffId(staffId);
+            if (staff != null && staff.getFullName() != null && !staff.getFullName().isBlank()) {
+                return staff.getFullName();
+            }
+        }
+        return "Maintenance Staff";
+    }
+
+    private static String nullToDash(String s) {
+        return s == null ? "-" : s;
     }
 
     private void showError(String message) {
