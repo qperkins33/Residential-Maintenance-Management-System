@@ -194,13 +194,19 @@ public class AdminDashboardController {
         dateCol.setCellValueFactory(new PropertyValueFactory<>("dateCreated"));
         dateCol.setPrefWidth(120);
 
-        // Actions column with View + Edit buttons
         TableColumn<UserRow, Void> actionCol = getUserRowVoidTableColumn();
 
-        userTable.getColumns().setAll(
-                idCol, usernameCol, nameCol, emailCol,
-                phoneCol, typeCol, activeCol, dateCol, actionCol
-        );
+        userTable.getColumns().setAll(List.of(
+                idCol,
+                usernameCol,
+                nameCol,
+                emailCol,
+                phoneCol,
+                typeCol,
+                activeCol,
+                dateCol,
+                actionCol
+        ));
 
         Label emptyLabel = new Label("No users found");
         emptyLabel.setFont(Font.font("Arial", 14));
@@ -553,7 +559,6 @@ public class AdminDashboardController {
                 return;
             }
 
-            // Email required + basic format check
             if (email.isEmpty()) {
                 new Alert(Alert.AlertType.WARNING,
                         "Email is required.")
@@ -561,7 +566,6 @@ public class AdminDashboardController {
                 event.consume();
                 return;
             }
-            // Very simple email pattern: some text, @, some text, dot, some text
             if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
                 new Alert(Alert.AlertType.WARNING,
                         "Please enter a valid email address.")
@@ -570,7 +574,6 @@ public class AdminDashboardController {
                 return;
             }
 
-            // Phone required + basic numeric/format check
             if (phone.isEmpty()) {
                 new Alert(Alert.AlertType.WARNING,
                         "Phone number is required.")
@@ -578,7 +581,6 @@ public class AdminDashboardController {
                 event.consume();
                 return;
             }
-            // Allow digits, spaces, +, -, parentheses; length 7–20
             if (!phone.matches("^[0-9()+\\-\\s]{7,20}$")) {
                 new Alert(Alert.AlertType.WARNING,
                         "Please enter a valid phone number (digits and basic punctuation only).")
@@ -587,7 +589,6 @@ public class AdminDashboardController {
                 return;
             }
 
-            // Type specific validation
             switch (userType) {
                 case "TENANT" -> {
                     if (aptField.getText().trim().isEmpty()) {
@@ -812,7 +813,6 @@ public class AdminDashboardController {
         grid.setVgap(10);
         grid.setPadding(new Insets(20));
 
-        // Status toggle
         Label statusLabel = new Label("Account status:");
 
         CheckBox toggle = new CheckBox();
@@ -847,7 +847,6 @@ public class AdminDashboardController {
                 return;
             }
 
-            // Do not allow changing your own active status
             if (row.getUserId().equals(currentUserId)) {
                 new Alert(
                         Alert.AlertType.WARNING,
@@ -861,15 +860,12 @@ public class AdminDashboardController {
             }
 
             if (originalActive) {
-                // Checked means we will deactivate
                 targetActive[0] = !isSelected;
             } else {
-                // Checked means we will activate
                 targetActive[0] = isSelected;
             }
         });
 
-        // Basic fields
         String existingFullName = row.getFullName() != null ? row.getFullName() : "";
         String[] nameParts = existingFullName.split(" ", 2);
 
@@ -894,20 +890,20 @@ public class AdminDashboardController {
         phoneField.setPromptText("Phone");
 
         int r = 0;
-        grid.add(statusLabel,     0, r);
-        grid.add(toggle,          1, r++);
+        grid.add(statusLabel, 0, r);
+        grid.add(toggle, 1, r++);
 
         grid.add(new Label("First Name"), 0, r);
-        grid.add(firstNameField,          1, r++);
+        grid.add(firstNameField, 1, r++);
 
-        grid.add(new Label("Last Name"),  0, r);
-        grid.add(lastNameField,           1, r++);
+        grid.add(new Label("Last Name"), 0, r);
+        grid.add(lastNameField, 1, r++);
 
-        grid.add(new Label("Email"),      0, r);
-        grid.add(emailField,              1, r++);
+        grid.add(new Label("Email"), 0, r);
+        grid.add(emailField, 1, r++);
 
-        grid.add(new Label("Phone"),      0, r);
-        grid.add(phoneField,              1, r);
+        grid.add(new Label("Phone"), 0, r);
+        grid.add(phoneField, 1, r);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -916,11 +912,10 @@ public class AdminDashboardController {
 
         saveButton.addEventFilter(ActionEvent.ACTION, event -> {
             String newFirst = firstNameField.getText().trim();
-            String newLast  = lastNameField.getText().trim();
+            String newLast = lastNameField.getText().trim();
             String newEmail = emailField.getText().trim();
             String newPhone = phoneField.getText().trim();
 
-            // Basic validation similar to create dialog
             if (newFirst.isEmpty() || newLast.isEmpty()) {
                 new Alert(
                         Alert.AlertType.WARNING,
@@ -1035,10 +1030,6 @@ public class AdminDashboardController {
         }
     }
 
-    /**
-     * View User dialog: shows full user info.
-     * Base fields from users table + extra per-type fields from tenants / maintenance_staff / building_managers.
-     */
     private void showUserDetailsDialog(UserRow row) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("User Details");
