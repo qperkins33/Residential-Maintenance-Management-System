@@ -18,6 +18,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 public class LoginController {
     private final ViewFactory viewFactory;
@@ -50,7 +51,7 @@ public class LoginController {
         );
 
         // Load apartment icon image
-        Image appIcon = new Image(getClass().getResource("/images/apartment.png").toExternalForm());
+        Image appIcon = new Image(Objects.requireNonNull(getClass().getResource("/images/apartment.png")).toExternalForm());
         ImageView appIconView = new ImageView(appIcon);
         appIconView.setFitWidth(30);
         appIconView.setFitHeight(30);
@@ -93,8 +94,8 @@ public class LoginController {
         visiblePasswordField.textProperty().bindBidirectional(passwordField.textProperty());
 
         // Load eye icons
-        Image eyeOpen = new Image(getClass().getResource("/images/eye-open.png").toExternalForm());
-        Image eyeClosed = new Image(getClass().getResource("/images/eye-closed.png").toExternalForm());
+        Image eyeOpen = new Image(Objects.requireNonNull(getClass().getResource("/images/eye-open.png")).toExternalForm());
+        Image eyeClosed = new Image(Objects.requireNonNull(getClass().getResource("/images/eye-closed.png")).toExternalForm());
 
         ImageView eyeIconView = new ImageView(eyeClosed);
         eyeIconView.setFitWidth(20);
@@ -133,6 +134,40 @@ public class LoginController {
         errorLabel.setVisible(false);
 
         // Login button
+        Button loginButton = getButton(usernameField, passwordField, errorLabel);
+
+        // Demo credentials info
+        Label infoLabel = new Label("Demo: admin1/pass123, tenant1/pass123, manager1/pass123, staff1/pass123");
+        infoLabel.setFont(Font.font("Arial", 10));
+        infoLabel.setTextFill(Color.GRAY);
+        infoLabel.setWrapText(true);
+        infoLabel.setAlignment(Pos.CENTER);
+
+        // Group inputs
+        VBox userBox = new VBox(5, usernameLabel, usernameField);
+        VBox passBox = new VBox(5, passwordLabel, passwordFieldContainer);
+        userBox.setMaxWidth(Double.MAX_VALUE);
+        passBox.setMaxWidth(Double.MAX_VALUE);
+
+        mainContainer.getChildren().addAll(
+                titleLabel, subtitleLabel,
+                userBox, passBox,
+                errorLabel, loginButton, infoLabel
+        );
+
+        // Put card into outer container
+        outer.getChildren().add(mainContainer);
+
+        // Anchor outer to fill the root
+        AnchorPane.setTopAnchor(outer, 0.0);
+        AnchorPane.setBottomAnchor(outer, 0.0);
+        AnchorPane.setLeftAnchor(outer, 0.0);
+        AnchorPane.setRightAnchor(outer, 0.0);
+
+        root.getChildren().add(outer);
+    }
+
+    private Button getButton(TextField usernameField, PasswordField passwordField, Label errorLabel) {
         Button loginButton = new Button("LOGIN");
         loginButton.setDefaultButton(true); // Enter key submits
         loginButton.setMaxWidth(Double.MAX_VALUE);
@@ -202,36 +237,7 @@ public class LoginController {
                 errorLabel.setVisible(true);
             }
         });
-
-        // Demo credentials info
-        Label infoLabel = new Label("Demo: admin1/pass123, tenant1/pass123, manager1/pass123, staff1/pass123");
-        infoLabel.setFont(Font.font("Arial", 10));
-        infoLabel.setTextFill(Color.GRAY);
-        infoLabel.setWrapText(true);
-        infoLabel.setAlignment(Pos.CENTER);
-
-        // Group inputs
-        VBox userBox = new VBox(5, usernameLabel, usernameField);
-        VBox passBox = new VBox(5, passwordLabel, passwordFieldContainer);
-        userBox.setMaxWidth(Double.MAX_VALUE);
-        passBox.setMaxWidth(Double.MAX_VALUE);
-
-        mainContainer.getChildren().addAll(
-                titleLabel, subtitleLabel,
-                userBox, passBox,
-                errorLabel, loginButton, infoLabel
-        );
-
-        // Put card into outer container
-        outer.getChildren().add(mainContainer);
-
-        // Anchor outer to fill the root
-        AnchorPane.setTopAnchor(outer, 0.0);
-        AnchorPane.setBottomAnchor(outer, 0.0);
-        AnchorPane.setLeftAnchor(outer, 0.0);
-        AnchorPane.setRightAnchor(outer, 0.0);
-
-        root.getChildren().add(outer);
+        return loginButton;
     }
 
     /**
