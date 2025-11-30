@@ -143,6 +143,7 @@ public class ManagerDashboardController {
         long inProgress = allRequests.stream().filter(this::isInProgress).count();
         long completed = allRequests.stream().filter(this::isCompleted).count();
         long cancelled = allRequests.stream().filter(this::isCancelled).count();
+        long notStarted = allRequests.stream().filter(this::isNotStarted).count();
 
         VBox totalCard = DashboardUIHelper.createStatCard(
                 "Total Requests",
@@ -155,6 +156,12 @@ public class ManagerDashboardController {
                 String.valueOf(unassigned),
                 "#2196f3",
                 "👀"
+        );
+        VBox pendingCard = DashboardUIHelper.createStatCard(
+                "Not Started",
+                String.valueOf(notStarted),
+                "#2196f3",
+                "⏸️"
         );
         VBox inProgressCard = DashboardUIHelper.createStatCard(
                 "In Progress",
@@ -178,6 +185,7 @@ public class ManagerDashboardController {
         statsBox.getChildren().addAll(
                 totalCard,
                 unassignedCard,
+                pendingCard,
                 inProgressCard,
                 completedCard,
                 cancelledCard
@@ -202,6 +210,7 @@ public class ManagerDashboardController {
                 "All Requests",
                 "Unassigned",
                 "In Progress",
+                "Not Started",
                 "Completed",
                 "Cancelled"
         );
@@ -226,31 +235,7 @@ public class ManagerDashboardController {
         idCol.setCellValueFactory(new PropertyValueFactory<>("requestId"));
         idCol.setPrefWidth(100);
 
-        TableColumn<MaintenanceRequest, String> staffCol = new TableColumn<>("Assigned Staff");
-        staffCol.setCellValueFactory(new PropertyValueFactory<>("assignedStaffId"));
-        staffCol.setPrefWidth(140);
-
-        staffCol.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String staffId, boolean empty) {
-                super.updateItem(staffId, empty);
-
-                if (empty) {
-                    setText(null);
-                    return;
-                }
-
-                MaintenanceRequest req = getTableView().getItems().get(getIndex());
-
-                if (req.getStatus() == RequestStatus.SUBMITTED || staffId == null || staffId.isBlank()) {
-                    setText("");
-                    return;
-                }
-
-                MaintenanceStaff staff = userDAO.getStaffByStaffId(staffId);
-                setText(staff != null ? staff.getFullName() : "");
-            }
-        });
+        TableColumn<MaintenanceRequest, String> staffCol = getMaintenanceRequestStringTableColumn();
 
         TableColumn<MaintenanceRequest, String> categoryCol = new TableColumn<>("Category");
         categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
@@ -276,6 +261,35 @@ public class ManagerDashboardController {
         section.getChildren().addAll(headerBox, requestTable);
         VBox.setVgrow(requestTable, Priority.ALWAYS);
         return section;
+    }
+
+    private TableColumn<MaintenanceRequest, String> getMaintenanceRequestStringTableColumn() {
+        TableColumn<MaintenanceRequest, String> staffCol = new TableColumn<>("Assigned Staff");
+        staffCol.setCellValueFactory(new PropertyValueFactory<>("assignedStaffId"));
+        staffCol.setPrefWidth(140);
+
+        staffCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String staffId, boolean empty) {
+                super.updateItem(staffId, empty);
+
+                if (empty) {
+                    setText(null);
+                    return;
+                }
+
+                MaintenanceRequest req = getTableView().getItems().get(getIndex());
+
+                if (req.getStatus() == RequestStatus.SUBMITTED || staffId == null || staffId.isBlank()) {
+                    setText("");
+                    return;
+                }
+
+                MaintenanceStaff staff = userDAO.getStaffByStaffId(staffId);
+                setText(staff != null ? staff.getFullName() : "");
+            }
+        });
+        return staffCol;
     }
 
     private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {
@@ -340,6 +354,9 @@ public class ManagerDashboardController {
                     .toList();
             case "In Progress" -> requests = requests.stream()
                     .filter(this::isInProgress)
+                    .toList();
+            case "Not Started" -> requests = requests.stream()
+                    .filter(this::isNotStarted)
                     .toList();
             case "Completed" -> requests = requests.stream()
                     .filter(this::isCompleted)
