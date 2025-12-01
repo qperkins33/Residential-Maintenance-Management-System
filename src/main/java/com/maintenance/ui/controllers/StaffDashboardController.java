@@ -426,9 +426,31 @@ public class StaffDashboardController {
                         "Unable to save staff update. Please try again.").showAndWait();
                 event.consume();
             } else {
+                // Notify tenant by email about the new staff update
+                String tech = resolveTechnicianName(request);
+                final String updateText = text;
+
+                requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
+                        CompletableFuture.runAsync(() -> {
+                            String subject = "Maintenance request update: Staff message";
+                            String body =
+                                    "Hello,\n\n" +
+                                            "There is a new update on your maintenance request.\n\n" +
+                                            "Request ID: " + request.getRequestId() + "\n" +
+                                            "Status: " + request.getStatus() + "\n" +
+                                            "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
+                                            "Technician: " + tech + "\n\n" +
+                                            "Update from technician:\n" +
+                                            updateText + "\n\n" +
+                                            "Reply to this email if you have questions.\n" +
+                                            "Residential Maintenance";
+                            Email.send(to, subject, body);
+                        })
+                );
+
                 loadRequests();
                 new Alert(Alert.AlertType.INFORMATION,
-                        "Staff update saved successfully.").showAndWait();
+                        "Staff update saved and emailed to tenant.").showAndWait();
             }
         });
 
@@ -496,7 +518,7 @@ public class StaffDashboardController {
 
                     requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                             CompletableFuture.runAsync(() -> {
-                                String subject = "Request status updated: " + previousStatusText + " -> In Progress";
+                                String subject = "Maintenance request status: " + previousStatusText + " -> In Progress";
                                 String body =
                                         "Hello,\n\n" +
                                                 "Your maintenance request was updated.\n\n" +
@@ -597,7 +619,7 @@ public class StaffDashboardController {
 
                 requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                         CompletableFuture.runAsync(() -> {
-                            String subject = "Request status updated: " + previousStatusText + " -> Completed";
+                            String subject = "Maintenance request status: " + previousStatusText + " -> Completed";
                             String body =
                                     "Hello,\n\n" +
                                             "Your maintenance request is now completed.\n\n" +
