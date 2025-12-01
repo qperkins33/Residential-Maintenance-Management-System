@@ -535,8 +535,8 @@ public class StaffDashboardController {
                 String tech = resolveTechnicianName(request);
 
                 // Use the captured previous status here
-                String previousStatusText = previousStatus.toString(); // or formatStatus(previousStatus)
-                final double emailCost = cost;
+                String previousStatusText = previousStatus.toString();
+                final String formattedCost = String.format("%.2f", cost);
 
                 requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                         CompletableFuture.runAsync(() -> {
@@ -549,7 +549,7 @@ public class StaffDashboardController {
                                             "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
                                             "Technician: " + tech + "\n\n" +
                                             "Resolution: " + resolution + "\n\n" +
-                                            "Cost: $" + emailCost + "\n\n" +
+                                            "Cost: $" + formattedCost + "\n\n" +
                                             "Reply to this email if you have questions.\n" +
                                             "Residential Maintenance";
                             Email.send(to, subject, body);
