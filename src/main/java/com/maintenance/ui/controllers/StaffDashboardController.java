@@ -111,54 +111,29 @@ public class StaffDashboardController {
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        VBox availabilityBox = createAvailabilityToggle();
+        VBox availabilityBox = createActiveRequestStatus();
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn, spacer, availabilityBox);
         return sidebar;
     }
 
-    private VBox createAvailabilityToggle() {
+    private VBox createActiveRequestStatus() {
         VBox box = new VBox(10);
         box.setPadding(new Insets(15));
         box.setStyle("-fx-background-color: #34495e; -fx-background-radius: 8;");
 
-        Label statusLabel = new Label("Availability Status");
+        Label statusLabel = new Label("Active Request Status");
         statusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         statusLabel.setTextFill(Color.web("#ecf0f1"));
 
-        CheckBox availableCheck = getCheckBox();
-
         workloadLabel = new Label();
-        workloadLabel.setFont(Font.font("Arial", 11));
+        workloadLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         workloadLabel.setTextFill(Color.web("#bdc3c7"));
 
         refreshWorkload();
 
-        box.getChildren().addAll(statusLabel, availableCheck, workloadLabel);
+        box.getChildren().addAll(statusLabel, workloadLabel);
         return box;
-    }
-
-    private CheckBox getCheckBox() {
-        MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
-
-        CheckBox availableCheck = new CheckBox("Available for assignments");
-        availableCheck.setTextFill(Color.WHITE);
-        availableCheck.setSelected(staff.isAvailable());
-        availableCheck.setStyle("-fx-font-size: 12px;");
-
-        availableCheck.setOnAction(e -> {
-            staff.updateAvailability(availableCheck.isSelected());
-            showStatusNotification(availableCheck.isSelected());
-        });
-        return availableCheck;
-    }
-
-    private void showStatusNotification(boolean available) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Status Updated");
-        alert.setHeaderText(null);
-        alert.setContentText("Availability status updated to: " + (available ? "Available" : "Unavailable"));
-        alert.showAndWait();
     }
 
     private VBox createCenterContent() {

@@ -410,7 +410,7 @@ public class ManagerDashboardController {
         ComboBox<MaintenanceStaff> staffBox = new ComboBox<>();
 
         // Start from all available staff (based on your existing DAO logic)
-        List<MaintenanceStaff> availableStaff = userDAO.getAllAvailableStaff();
+        List<MaintenanceStaff> availableStaff = userDAO.getAllActiveStaff();
 
         // If reassigning, remove the staff member who is already assigned to this request
         if (isReassign) {
