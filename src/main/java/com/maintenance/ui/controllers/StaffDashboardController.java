@@ -21,6 +21,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -325,7 +326,7 @@ public class StaffDashboardController {
 
                 updateBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
-                    DashboardUIHelper.showStaffUpdateDialog(request, requestDAO, StaffDashboardController.this::loadRequests);
+                    showStaffUpdateDialog(request);
                 });
 
                 startBtn.setOnAction((ActionEvent event) -> {
@@ -370,6 +371,68 @@ public class StaffDashboardController {
             }
         });
         return actionCol;
+    }
+
+    private void showStaffUpdateDialog(MaintenanceRequest request) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Staff Update");
+        dialog.setHeaderText("Add update for Request #" + request.getRequestId());
+
+        ButtonType saveBtnType = new ButtonType("Save Update", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+
+        TextArea descArea = new TextArea(request.getDescription());
+        descArea.setEditable(false);
+        descArea.setWrapText(true);
+        descArea.setPrefRowCount(4);
+
+        TextArea updateArea = new TextArea();
+        updateArea.setWrapText(true);
+        updateArea.setPrefRowCount(4);
+        updateArea.setPromptText("Add a staff update for this request...");
+
+        String existing = request.getStaffUpdateNotes();
+        if (existing != null && !existing.isBlank()) {
+            updateArea.setText(existing);
+        }
+
+        grid.add(new Label("Original Description:"), 0, 0);
+        grid.add(descArea, 1, 0);
+        grid.add(new Label("Staff Update:"), 0, 1);
+        grid.add(updateArea, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtnType);
+        saveButton.addEventFilter(ActionEvent.ACTION, event -> {
+            String text = updateArea.getText().trim();
+            if (text.isEmpty()) {
+                new Alert(Alert.AlertType.WARNING,
+                        "Please enter an update or cancel.").showAndWait();
+                event.consume();
+                return;
+            }
+
+            request.setStaffUpdateNotes(text);
+            request.setLastUpdated(LocalDateTime.now());
+
+            if (!requestDAO.updateRequest(request)) {
+                new Alert(Alert.AlertType.ERROR,
+                        "Unable to save staff update. Please try again.").showAndWait();
+                event.consume();
+            } else {
+                loadRequests();
+                new Alert(Alert.AlertType.INFORMATION,
+                        "Staff update saved successfully.").showAndWait();
+            }
+        });
+
+        dialog.showAndWait();
     }
 
     private void loadRequests() {
@@ -461,7 +524,6 @@ public class StaffDashboardController {
     }
 
     private void showCompleteDialog(MaintenanceRequest request) {
-        // Capture previous status before any changes
         RequestStatus previousStatus = request.getStatus();
 
         Dialog<String> dialog = new Dialog<>();
@@ -514,7 +576,6 @@ public class StaffDashboardController {
         });
 
         dialog.showAndWait().ifPresent(resolution -> {
-            // Cost scoped outside try so we can reuse it
             double cost = 0.0;
             try {
                 String costText = costField.getText().trim();
@@ -522,19 +583,15 @@ public class StaffDashboardController {
                     cost = Double.parseDouble(costText);
                 }
             } catch (NumberFormatException ignored) {
-                // If parsing fails, cost stays 0.0
             }
 
-            // Persist cost on the request
             request.setActualCost(cost);
 
-            // This will set status = COMPLETED internally
             request.close(resolution);
 
             if (requestDAO.updateRequest(request)) {
                 String tech = resolveTechnicianName(request);
 
-                // Use the captured previous status here
                 String previousStatusText = previousStatus.toString();
                 final String formattedCost = String.format("%.2f", cost);
 
@@ -573,7 +630,6 @@ public class StaffDashboardController {
         if (u instanceof MaintenanceStaff ms && ms.getFullName() != null && !ms.getFullName().isBlank()) {
             return ms.getFullName();
         }
-        // fallback to DB by assigned staff id if available
         String staffId = r.getAssignedStaffId();
         if (staffId != null && !staffId.isBlank()) {
             var userDAO = new UserDAO();
