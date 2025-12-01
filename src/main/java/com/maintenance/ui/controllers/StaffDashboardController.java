@@ -567,7 +567,7 @@ public class StaffDashboardController {
         resolutionArea.setWrapText(true);
 
         TextField hoursField = new TextField();
-        hoursField.setPromptText("Hours spent");
+        hoursField.setPromptText("Hours Spent");
 
         TextField costField = new TextField();
         costField.setPromptText("Cost (if applicable)");
@@ -584,15 +584,44 @@ public class StaffDashboardController {
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == completeButtonType) {
-                if (!resolutionArea.getText().isEmpty()) {
-                    return resolutionArea.getText();
-                } else {
+                String resolutionText = resolutionArea.getText().trim();
+                String hoursText = hoursField.getText().trim();
+                String costText = costField.getText().trim();
+
+                // Required: resolution + hours
+                if (resolutionText.isEmpty() || hoursText.isEmpty()) {
                     Alert alert = new Alert(Alert.AlertType.WARNING);
                     alert.setTitle("Missing Information");
-                    alert.setContentText("Please provide resolution notes");
+                    alert.setContentText("Please provide resolution notes and hours spent.");
                     alert.showAndWait();
                     return null;
                 }
+
+                // Validate hours numeric
+                try {
+                    Double.parseDouble(hoursText);
+                } catch (NumberFormatException e) {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Invalid Hours");
+                    alert.setContentText("Hours spent must be a valid number.");
+                    alert.showAndWait();
+                    return null;
+                }
+
+                // Validate cost numeric if provided (optional)
+                if (!costText.isEmpty()) {
+                    try {
+                        Double.parseDouble(costText);
+                    } catch (NumberFormatException e) {
+                        Alert alert = new Alert(Alert.AlertType.WARNING);
+                        alert.setTitle("Invalid Cost");
+                        alert.setContentText("Cost must be a valid number or left blank.");
+                        alert.showAndWait();
+                        return null;
+                    }
+                }
+
+                return resolutionText;
             }
             return null;
         });
