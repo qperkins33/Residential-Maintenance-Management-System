@@ -438,8 +438,8 @@ public class StaffDashboardController {
                                         "Hello,\n\n" +
                                                 "Your maintenance request was updated.\n\n" +
                                                 "Request ID: " + request.getRequestId() + "\n" +
-                                                "Status:        In Progress\n" +
-                                                "Apartment:  " + nullToDash(request.getApartmentNumber()) + "\n" +
+                                                "Status: In Progress\n" +
+                                                "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
                                                 "Technician: " + tech + "\n\n" +
                                                 "Reply to this email if you have questions.\n" +
                                                 "Residential Maintenance";
@@ -514,12 +514,19 @@ public class StaffDashboardController {
         });
 
         dialog.showAndWait().ifPresent(resolution -> {
+            // Cost scoped outside try so we can reuse it
+            double cost = 0.0;
             try {
-                if (!costField.getText().isEmpty()) {
-                    double cost = Double.parseDouble(costField.getText());
-                    request.setActualCost(cost);
+                String costText = costField.getText().trim();
+                if (!costText.isEmpty()) {
+                    cost = Double.parseDouble(costText);
                 }
-            } catch (NumberFormatException ignored) { }
+            } catch (NumberFormatException ignored) {
+                // If parsing fails, cost stays 0.0
+            }
+
+            // Persist cost on the request
+            request.setActualCost(cost);
 
             // This will set status = COMPLETED internally
             request.close(resolution);
@@ -528,7 +535,8 @@ public class StaffDashboardController {
                 String tech = resolveTechnicianName(request);
 
                 // Use the captured previous status here
-                String previousStatusText = previousStatus.toString(); // or map to pretty text if you want
+                String previousStatusText = previousStatus.toString(); // or formatStatus(previousStatus)
+                final double emailCost = cost;
 
                 requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                         CompletableFuture.runAsync(() -> {
@@ -537,10 +545,11 @@ public class StaffDashboardController {
                                     "Hello,\n\n" +
                                             "Your maintenance request is now completed.\n\n" +
                                             "Request ID: " + request.getRequestId() + "\n" +
-                                            "Status:        Completed\n" +
-                                            "Apartment:  " + nullToDash(request.getApartmentNumber()) + "\n" +
+                                            "Status: Completed\n" +
+                                            "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
                                             "Technician: " + tech + "\n\n" +
                                             "Resolution: " + resolution + "\n\n" +
+                                            "Cost: $" + emailCost + "\n\n" +
                                             "Reply to this email if you have questions.\n" +
                                             "Residential Maintenance";
                             Email.send(to, subject, body);
