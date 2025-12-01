@@ -265,6 +265,11 @@ public class StaffDashboardController {
 
         loadRequests();
 
+        // DEFAULT SORT: newest at top by submitted date
+        dateCol.setSortType(TableColumn.SortType.DESCENDING);
+        requestTable.getSortOrder().setAll(dateCol);
+        requestTable.sort();
+
         Label emptyLabel = new Label("No requests assigned yet");
         emptyLabel.setFont(Font.font("Arial", 14));
         emptyLabel.setTextFill(Color.GRAY);
@@ -444,6 +449,7 @@ public class StaffDashboardController {
         requestTable.setItems(FXCollections.observableArrayList(requests));
         refreshWorkload();
         refreshStats();
+        requestTable.sort();     // keep newest at top
     }
 
     private void filterRequests(String filter) {
@@ -462,6 +468,7 @@ public class StaffDashboardController {
 
         requestTable.setItems(FXCollections.observableArrayList(requests));
         refreshWorkload();
+        requestTable.sort();     // keep sort by date desc
     }
 
     private void refreshWorkload() {

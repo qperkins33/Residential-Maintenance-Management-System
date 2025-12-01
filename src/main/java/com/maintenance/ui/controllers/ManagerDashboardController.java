@@ -281,6 +281,11 @@ public class ManagerDashboardController {
 
         loadRequests();
 
+        // DEFAULT SORT: newest at top
+        dateCol.setSortType(TableColumn.SortType.DESCENDING);
+        requestTable.getSortOrder().setAll(dateCol);
+        requestTable.sort();
+
         section.getChildren().addAll(headerBox, requestTable);
         VBox.setVgrow(requestTable, Priority.ALWAYS);
         return section;
@@ -374,6 +379,7 @@ public class ManagerDashboardController {
     private void loadRequests() {
         requestTable.setItems(FXCollections.observableArrayList(requestDAO.getAllRequests()));
         refreshStats();
+        requestTable.sort();   // keep sort by date desc
     }
 
     private void filterRequests(String filter) {
@@ -395,12 +401,11 @@ public class ManagerDashboardController {
             case "Cancelled" -> requests = requests.stream()
                     .filter(this::isCancelled)
                     .toList();
-            default -> {
-                // "All Requests"
-            }
+            default -> { }
         }
 
         requestTable.setItems(FXCollections.observableArrayList(requests));
+        requestTable.sort();   // reapply same sort
     }
 
     private void showAssignDialog(MaintenanceRequest request) {

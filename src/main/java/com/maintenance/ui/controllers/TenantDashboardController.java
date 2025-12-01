@@ -281,6 +281,11 @@ public class TenantDashboardController {
 
         loadRequests();
 
+        // DEFAULT SORT: newest at top
+        dateCol.setSortType(TableColumn.SortType.DESCENDING);
+        requestTable.getSortOrder().setAll(dateCol);
+        requestTable.sort();
+
         section.getChildren().addAll(headerBox, requestTable);
         VBox.setVgrow(requestTable, Priority.ALWAYS);
         return section;
@@ -333,6 +338,7 @@ public class TenantDashboardController {
                 FXCollections.observableArrayList(requestDAO.getRequestsByTenant(tenant.getUserId()));
         requestTable.setItems(requests);
         refreshStats();
+        requestTable.sort();    // keep date desc
     }
 
     private void filterRequests(String filter) {
@@ -352,12 +358,11 @@ public class TenantDashboardController {
             case "Cancelled" -> requests = requests.stream()
                     .filter(this::isCancelled)
                     .toList();
-            default -> {
-                // "All Requests"
-            }
+            default -> { }
         }
 
         requestTable.setItems(FXCollections.observableArrayList(requests));
+        requestTable.sort();    // reapply sort
     }
 
     private void showNewRequestDialog() {
