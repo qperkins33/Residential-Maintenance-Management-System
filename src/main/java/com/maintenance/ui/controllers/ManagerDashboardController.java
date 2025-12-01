@@ -409,22 +409,34 @@ public class ManagerDashboardController {
 
         ComboBox<MaintenanceStaff> staffBox = new ComboBox<>();
 
+        // Start from all available staff (based on your existing DAO logic)
         List<MaintenanceStaff> availableStaff = userDAO.getAllAvailableStaff();
 
-        // Remove the staff member who is already assigned to this request
+        // If reassigning, remove the staff member who is already assigned to this request
         if (isReassign) {
             availableStaff = availableStaff.stream()
                     .filter(s -> !currentlyAssignedId.equals(s.getStaffId()))
                     .toList();
         }
 
+        // Enforce capacity cap: only include staff whose active workload < maxCapacity
+        availableStaff = availableStaff.stream()
+                .filter(staff -> {
+                    long activeWorkload = requestDAO.getRequestsByStaff(staff.getStaffId()).stream()
+                            .filter(r -> !isCompleted(r) && !isCancelled(r))
+                            .count();
+                    staff.setCurrentWorkload((int) activeWorkload);
+                    return activeWorkload < staff.getMaxCapacity();
+                })
+                .toList();
+
+        // If there is nobody with capacity, show a message and bail
         if (availableStaff.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("No Other Staff Available");
+            alert.setTitle("No Staff With Capacity");
             alert.setHeaderText(null);
             alert.setContentText(
-                    "There are no other available staff members to assign this request to.\n\n" +
-                            "You cannot reassign a request to the same staff member."
+                    "No available staff members have remaining capacity for new active requests.\n\n You cannot assign this request until a staff member completes or cancels existing work."
             );
             alert.showAndWait();
             return;
@@ -477,6 +489,23 @@ public class ManagerDashboardController {
         });
 
         dialog.showAndWait().ifPresent(staff -> {
+            // Final guard in case workload changed while dialog was open
+            long activeWorkload = requestDAO.getRequestsByStaff(staff.getStaffId()).stream()
+                    .filter(r -> !isCompleted(r) && !isCancelled(r))
+                    .count();
+            if (activeWorkload >= staff.getMaxCapacity()) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Capacity Reached");
+                alert.setHeaderText(null);
+                alert.setContentText(
+                        staff.getFullName() + " is now at full capacity (" +
+                                activeWorkload + "/" + staff.getMaxCapacity() + ").\n" +
+                                "Please choose another staff member."
+                );
+                alert.showAndWait();
+                return;
+            }
+
             request.setAssignedStaffId(staff.getStaffId());
             request.setStatus(RequestStatus.ASSIGNED);
             if (requestDAO.updateRequest(request)) {
