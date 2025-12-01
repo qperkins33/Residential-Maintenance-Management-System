@@ -292,6 +292,7 @@ public class StaffDashboardController {
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
             private final Button updateBtn = new Button("Update");
+            private final Button resolutionUpdateBtn = new Button("Resolution Update");
             private final Button startBtn = new Button("Start");
             private final Button completeBtn = new Button("Complete");
             private final Button viewBtn = new Button("View");
@@ -300,11 +301,17 @@ public class StaffDashboardController {
             {
                 String btnStyle = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand;";
                 updateBtn.setStyle(btnStyle);
+                resolutionUpdateBtn.setStyle(btnStyle);
                 startBtn.setStyle(btnStyle);
                 completeBtn.setStyle(btnStyle);
                 viewBtn.setStyle(btnStyle);
 
                 updateBtn.setOnAction(e -> {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    showStaffUpdateDialog(request);
+                });
+
+                resolutionUpdateBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     showStaffUpdateDialog(request);
                 });
@@ -341,7 +348,7 @@ public class StaffDashboardController {
                     } else if (isInProgress(request)) {
                         buttonBox.getChildren().addAll(completeBtn, updateBtn, viewBtn);
                     } else if (isCompleted(request)) {
-                        buttonBox.getChildren().addAll(updateBtn, viewBtn);
+                        buttonBox.getChildren().addAll(resolutionUpdateBtn, viewBtn);
                     } else {
                         buttonBox.getChildren().addAll(updateBtn, viewBtn);
                     }
