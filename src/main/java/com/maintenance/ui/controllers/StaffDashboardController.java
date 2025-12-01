@@ -401,20 +401,26 @@ public class StaffDashboardController {
                         "Unable to save staff update. Please try again.").showAndWait();
                 event.consume();
             } else {
-                // Notify tenant by email about the new staff update
                 String tech = resolveTechnicianName(request);
                 final String updateText = text;
 
+                // Get tenant name once, outside the async block
+                final String tenantName = requestDAO
+                        .findTenantNameByRequestId(request.getRequestId())
+                        .orElse("");
+
                 requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                         CompletableFuture.runAsync(() -> {
+                            String namePart = tenantName.isBlank() ? "" : " " + tenantName;
                             String subject = "Maintenance request update: Staff message";
                             String body =
-                                    "Hello,\n\n" +
+                                    "Hello" + namePart + ",\n\n" +
                                             "There is a new update on your maintenance request.\n\n" +
                                             "Request ID: " + request.getRequestId() + "\n" +
                                             "Status: " + request.getStatus() + "\n" +
                                             "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
                                             "Technician: " + tech + "\n\n" +
+                                            "Description: " + request.getDescription() + "\n\n" +
                                             "Update from technician:\n" +
                                             updateText + "\n\n" +
                                             "Reply to this email if you have questions.\n" +
@@ -491,16 +497,23 @@ public class StaffDashboardController {
                     // Use the captured previous status here
                     String previousStatusText = previousStatus.toString(); // or map to pretty text if you want
 
+                    // Get tenant name once, outside the async block
+                    final String tenantName = requestDAO
+                            .findTenantNameByRequestId(request.getRequestId())
+                            .orElse("");
+
                     requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                             CompletableFuture.runAsync(() -> {
+                                String namePart = tenantName.isBlank() ? "" : " " + tenantName;
                                 String subject = "Maintenance request status: " + previousStatusText + " -> In Progress";
                                 String body =
-                                        "Hello,\n\n" +
+                                        "Hello" + namePart + ",\n\n" +
                                                 "Your maintenance request was updated.\n\n" +
                                                 "Request ID: " + request.getRequestId() + "\n" +
                                                 "Status: In Progress\n" +
                                                 "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
                                                 "Technician: " + tech + "\n\n" +
+                                                "Description: " + request.getDescription() + "\n\n" +
                                                 "Reply to this email if you have questions.\n" +
                                                 "Residential Maintenance";
                                 Email.send(to, subject, body);
@@ -621,17 +634,24 @@ public class StaffDashboardController {
                 String previousStatusText = previousStatus.toString();
                 final String formattedCost = String.format("%.2f", cost);
 
+                // Get tenant name once, outside the async block
+                final String tenantName = requestDAO
+                        .findTenantNameByRequestId(request.getRequestId())
+                        .orElse("");
+
                 requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                         CompletableFuture.runAsync(() -> {
+                            String namePart = tenantName.isBlank() ? "" : " " + tenantName;
                             String subject = "Maintenance request status: " + previousStatusText + " -> Completed";
                             String body =
-                                    "Hello,\n\n" +
+                                    "Hello " + namePart + ",\n\n" +
                                             "Your maintenance request is now completed.\n\n" +
                                             "Request ID: " + request.getRequestId() + "\n" +
                                             "Status: Completed\n" +
                                             "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
                                             "Technician: " + tech + "\n\n" +
-                                            "Resolution: " + resolution + "\n\n" +
+                                            "Description: " + request.getDescription() + "\n\n" +
+                                            "Resolution: " + resolution + "\n" +
                                             "Cost: $" + formattedCost + "\n\n" +
                                             "Reply to this email if you have questions.\n" +
                                             "Residential Maintenance";

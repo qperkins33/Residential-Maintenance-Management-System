@@ -9,6 +9,33 @@ import java.util.List;
 import java.util.Optional;
 
 public class MaintenanceRequestDAO {
+    public Optional<String> findTenantNameByRequestId(String requestId) {
+        String sql = """
+        SELECT u.first_name, u.last_name
+        FROM maintenance_requests r
+        JOIN tenants t ON r.tenant_id = t.user_id
+        JOIN users u ON u.user_id = t.user_id
+        WHERE r.request_id = ?
+        """;
+
+        try (PreparedStatement ps = dbManager.getConnection().prepareStatement(sql)) {
+            ps.setString(1, requestId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String first = rs.getString("first_name");
+                    String last  = rs.getString("last_name");
+                    String full  = ((first == null ? "" : first.trim()) + " " +
+                            (last == null ? "" : last.trim())).trim();
+                    return full.isEmpty() ? Optional.empty() : Optional.of(full);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error loading tenant name by request_id: " + e.getMessage());
+        }
+
+        return Optional.empty();
+    }
 
     public Optional<String> findTenantEmailByRequestId(String requestId) {
         String sql = """
