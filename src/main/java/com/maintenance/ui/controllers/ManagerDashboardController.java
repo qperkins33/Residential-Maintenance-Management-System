@@ -436,7 +436,7 @@ public class ManagerDashboardController {
             alert.setTitle("No Staff With Capacity");
             alert.setHeaderText(null);
             alert.setContentText(
-                    "No available staff members have remaining capacity for new active requests.\n\n You cannot assign this request until a staff member completes or cancels existing work."
+                    "No available staff members have remaining capacity for new active requests.\n\nYou cannot assign this request until a staff member completes or cancels existing work."
             );
             alert.showAndWait();
             return;
