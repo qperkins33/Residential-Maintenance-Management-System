@@ -51,8 +51,8 @@ public class AdminDashboardController {
         HBox topBar = createTopBar();
         mainLayout.setTop(topBar);
 
-        VBox sidebar = createSidebar();
-        mainLayout.setLeft(sidebar);
+//        VBox sidebar = createSidebar();
+//        mainLayout.setLeft(sidebar);
 
         VBox centerContent = createCenterContent();
         VBox.setVgrow(centerContent, Priority.ALWAYS);
@@ -99,23 +99,23 @@ public class AdminDashboardController {
         return topBar;
     }
 
-    private VBox createSidebar() {
-        VBox sidebar = new VBox(15);
-        sidebar.setPadding(new Insets(20));
-        sidebar.setStyle("-fx-background-color: #2c3e50;");
-        sidebar.setPrefWidth(250);
-
-        Label menuLabel = new Label("MENU");
-        menuLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        menuLabel.setTextFill(javafx.scene.paint.Color.web("#95a5a6"));
-
-        Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
-//        Button usersBtn = DashboardUIHelper.createSidebarButton("👥 Users", false);
-//        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
-
-        sidebar.getChildren().addAll(menuLabel, dashboardBtn);
-        return sidebar;
-    }
+//    private VBox createSidebar() {
+//        VBox sidebar = new VBox(15);
+//        sidebar.setPadding(new Insets(20));
+//        sidebar.setStyle("-fx-background-color: #2c3e50;");
+//        sidebar.setPrefWidth(250);
+//
+//        Label menuLabel = new Label("MENU");
+//        menuLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+//        menuLabel.setTextFill(javafx.scene.paint.Color.web("#95a5a6"));
+//
+//        Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
+////        Button usersBtn = DashboardUIHelper.createSidebarButton("👥 Users", false);
+////        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
+//
+//        sidebar.getChildren().addAll(menuLabel, dashboardBtn);
+//        return sidebar;
+//    }
 
     private VBox createCenterContent() {
         VBox content = new VBox(20);
