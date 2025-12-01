@@ -22,6 +22,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class TenantDashboardController {
@@ -117,17 +118,32 @@ public class TenantDashboardController {
         content.setPadding(new Insets(30));
         content.setFillWidth(true);
 
+        VBox welcomeBox = createWelcomeSection();
         statsBox = new HBox(20);
-
         VBox requestsSection = createRequestsSection();
         VBox.setVgrow(requestsSection, Priority.ALWAYS);
 
-        content.getChildren().addAll(statsBox, requestsSection);
+        content.getChildren().addAll(welcomeBox, statsBox, requestsSection);
 
-        // Initial stats render
         refreshStats();
-
         return content;
+    }
+
+    private VBox createWelcomeSection() {
+        VBox welcomeBox = new VBox(5);
+
+        Tenant tenant = (Tenant) authService.getCurrentUser();
+
+        Label welcomeLabel = new Label("Welcome back, " + tenant.getFirstName() + "!");
+        welcomeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        welcomeLabel.setTextFill(Color.web("#2c3e50"));
+
+        Label dateLabel = new Label("Today: " + java.time.LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy")));
+        dateLabel.setFont(Font.font("Arial", 13));
+        dateLabel.setTextFill(Color.GRAY);
+
+        welcomeBox.getChildren().addAll(welcomeLabel, dateLabel);
+        return welcomeBox;
     }
 
     private void refreshStats() {
@@ -265,6 +281,11 @@ public class TenantDashboardController {
 
         loadRequests();
 
+        // DEFAULT SORT: newest at top
+        dateCol.setSortType(TableColumn.SortType.DESCENDING);
+        requestTable.getSortOrder().setAll(dateCol);
+        requestTable.sort();
+
         section.getChildren().addAll(headerBox, requestTable);
         VBox.setVgrow(requestTable, Priority.ALWAYS);
         return section;
@@ -317,6 +338,7 @@ public class TenantDashboardController {
                 FXCollections.observableArrayList(requestDAO.getRequestsByTenant(tenant.getUserId()));
         requestTable.setItems(requests);
         refreshStats();
+        requestTable.sort();    // keep date desc
     }
 
     private void filterRequests(String filter) {
@@ -336,12 +358,11 @@ public class TenantDashboardController {
             case "Cancelled" -> requests = requests.stream()
                     .filter(this::isCancelled)
                     .toList();
-            default -> {
-                // "All Requests"
-            }
+            default -> { }
         }
 
         requestTable.setItems(FXCollections.observableArrayList(requests));
+        requestTable.sort();    // reapply sort
     }
 
     private void showNewRequestDialog() {

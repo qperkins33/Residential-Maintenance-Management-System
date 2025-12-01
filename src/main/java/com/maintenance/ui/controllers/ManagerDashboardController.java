@@ -19,6 +19,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class ManagerDashboardController {
@@ -114,17 +115,32 @@ public class ManagerDashboardController {
         content.setPadding(new Insets(30));
         content.setFillWidth(true);
 
+        VBox welcomeBox = createWelcomeSection();
         statsBox = new HBox(20);
-
         VBox requestsSection = createRequestsSection();
         VBox.setVgrow(requestsSection, Priority.ALWAYS);
 
-        content.getChildren().addAll(statsBox, requestsSection);
+        content.getChildren().addAll(welcomeBox, statsBox, requestsSection);
 
-        // Initial stats render
         refreshStats();
-
         return content;
+    }
+
+    private VBox createWelcomeSection() {
+        VBox welcomeBox = new VBox(5);
+
+        BuildingManager manager = (BuildingManager) authService.getCurrentUser();
+
+        Label welcomeLabel = new Label("Welcome back, " + manager.getFirstName() + "!");
+        welcomeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        welcomeLabel.setTextFill(Color.web("#2c3e50"));
+
+        Label dateLabel = new Label("Today: " + java.time.LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy")));
+        dateLabel.setFont(Font.font("Arial", 13));
+        dateLabel.setTextFill(Color.GRAY);
+
+        welcomeBox.getChildren().addAll(welcomeLabel, dateLabel);
+        return welcomeBox;
     }
 
     private void refreshStats() {
@@ -265,6 +281,11 @@ public class ManagerDashboardController {
 
         loadRequests();
 
+        // DEFAULT SORT: newest at top
+        dateCol.setSortType(TableColumn.SortType.DESCENDING);
+        requestTable.getSortOrder().setAll(dateCol);
+        requestTable.sort();
+
         section.getChildren().addAll(headerBox, requestTable);
         VBox.setVgrow(requestTable, Priority.ALWAYS);
         return section;
@@ -358,6 +379,7 @@ public class ManagerDashboardController {
     private void loadRequests() {
         requestTable.setItems(FXCollections.observableArrayList(requestDAO.getAllRequests()));
         refreshStats();
+        requestTable.sort();   // keep sort by date desc
     }
 
     private void filterRequests(String filter) {
@@ -379,12 +401,11 @@ public class ManagerDashboardController {
             case "Cancelled" -> requests = requests.stream()
                     .filter(this::isCancelled)
                     .toList();
-            default -> {
-                // "All Requests"
-            }
+            default -> { }
         }
 
         requestTable.setItems(FXCollections.observableArrayList(requests));
+        requestTable.sort();   // reapply same sort
     }
 
     private void showAssignDialog(MaintenanceRequest request) {
@@ -410,7 +431,7 @@ public class ManagerDashboardController {
         ComboBox<MaintenanceStaff> staffBox = new ComboBox<>();
 
         // Start from all available staff (based on your existing DAO logic)
-        List<MaintenanceStaff> availableStaff = userDAO.getAllAvailableStaff();
+        List<MaintenanceStaff> availableStaff = userDAO.getAllActiveStaff();
 
         // If reassigning, remove the staff member who is already assigned to this request
         if (isReassign) {

@@ -111,54 +111,29 @@ public class StaffDashboardController {
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        VBox availabilityBox = createAvailabilityToggle();
+        VBox availabilityBox = createActiveRequestStatus();
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn, spacer, availabilityBox);
         return sidebar;
     }
 
-    private VBox createAvailabilityToggle() {
+    private VBox createActiveRequestStatus() {
         VBox box = new VBox(10);
         box.setPadding(new Insets(15));
         box.setStyle("-fx-background-color: #34495e; -fx-background-radius: 8;");
 
-        Label statusLabel = new Label("Availability Status");
+        Label statusLabel = new Label("Active Request Status");
         statusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         statusLabel.setTextFill(Color.web("#ecf0f1"));
 
-        CheckBox availableCheck = getCheckBox();
-
         workloadLabel = new Label();
-        workloadLabel.setFont(Font.font("Arial", 11));
+        workloadLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         workloadLabel.setTextFill(Color.web("#bdc3c7"));
 
         refreshWorkload();
 
-        box.getChildren().addAll(statusLabel, availableCheck, workloadLabel);
+        box.getChildren().addAll(statusLabel, workloadLabel);
         return box;
-    }
-
-    private CheckBox getCheckBox() {
-        MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
-
-        CheckBox availableCheck = new CheckBox("Available for assignments");
-        availableCheck.setTextFill(Color.WHITE);
-        availableCheck.setSelected(staff.isAvailable());
-        availableCheck.setStyle("-fx-font-size: 12px;");
-
-        availableCheck.setOnAction(e -> {
-            staff.updateAvailability(availableCheck.isSelected());
-            showStatusNotification(availableCheck.isSelected());
-        });
-        return availableCheck;
-    }
-
-    private void showStatusNotification(boolean available) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Status Updated");
-        alert.setHeaderText(null);
-        alert.setContentText("Availability status updated to: " + (available ? "Available" : "Unavailable"));
-        alert.showAndWait();
     }
 
     private VBox createCenterContent() {
@@ -290,6 +265,11 @@ public class StaffDashboardController {
 
         loadRequests();
 
+        // DEFAULT SORT: newest at top by submitted date
+        dateCol.setSortType(TableColumn.SortType.DESCENDING);
+        requestTable.getSortOrder().setAll(dateCol);
+        requestTable.sort();
+
         Label emptyLabel = new Label("No requests assigned yet");
         emptyLabel.setFont(Font.font("Arial", 14));
         emptyLabel.setTextFill(Color.GRAY);
@@ -312,6 +292,7 @@ public class StaffDashboardController {
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
             private final Button updateBtn = new Button("Update");
+            private final Button resolutionUpdateBtn = new Button("Resolution Update");
             private final Button startBtn = new Button("Start");
             private final Button completeBtn = new Button("Complete");
             private final Button viewBtn = new Button("View");
@@ -320,11 +301,17 @@ public class StaffDashboardController {
             {
                 String btnStyle = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand;";
                 updateBtn.setStyle(btnStyle);
+                resolutionUpdateBtn.setStyle(btnStyle);
                 startBtn.setStyle(btnStyle);
                 completeBtn.setStyle(btnStyle);
                 viewBtn.setStyle(btnStyle);
 
                 updateBtn.setOnAction(e -> {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    showStaffUpdateDialog(request);
+                });
+
+                resolutionUpdateBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     showStaffUpdateDialog(request);
                 });
@@ -361,7 +348,7 @@ public class StaffDashboardController {
                     } else if (isInProgress(request)) {
                         buttonBox.getChildren().addAll(completeBtn, updateBtn, viewBtn);
                     } else if (isCompleted(request)) {
-                        buttonBox.getChildren().addAll(updateBtn, viewBtn);
+                        buttonBox.getChildren().addAll(resolutionUpdateBtn, viewBtn);
                     } else {
                         buttonBox.getChildren().addAll(updateBtn, viewBtn);
                     }
@@ -426,20 +413,26 @@ public class StaffDashboardController {
                         "Unable to save staff update. Please try again.").showAndWait();
                 event.consume();
             } else {
-                // Notify tenant by email about the new staff update
                 String tech = resolveTechnicianName(request);
                 final String updateText = text;
 
+                // Get tenant name once, outside the async block
+                final String tenantName = requestDAO
+                        .findTenantNameByRequestId(request.getRequestId())
+                        .orElse("");
+
                 requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                         CompletableFuture.runAsync(() -> {
+                            String namePart = tenantName.isBlank() ? "" : " " + tenantName;
                             String subject = "Maintenance request update: Staff message";
                             String body =
-                                    "Hello,\n\n" +
+                                    "Hello" + namePart + ",\n\n" +
                                             "There is a new update on your maintenance request.\n\n" +
                                             "Request ID: " + request.getRequestId() + "\n" +
                                             "Status: " + request.getStatus() + "\n" +
                                             "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
                                             "Technician: " + tech + "\n\n" +
+                                            "Description: " + request.getDescription() + "\n\n" +
                                             "Update from technician:\n" +
                                             updateText + "\n\n" +
                                             "Reply to this email if you have questions.\n" +
@@ -463,6 +456,7 @@ public class StaffDashboardController {
         requestTable.setItems(FXCollections.observableArrayList(requests));
         refreshWorkload();
         refreshStats();
+        requestTable.sort();     // keep newest at top
     }
 
     private void filterRequests(String filter) {
@@ -481,6 +475,7 @@ public class StaffDashboardController {
 
         requestTable.setItems(FXCollections.observableArrayList(requests));
         refreshWorkload();
+        requestTable.sort();     // keep sort by date desc
     }
 
     private void refreshWorkload() {
@@ -516,16 +511,23 @@ public class StaffDashboardController {
                     // Use the captured previous status here
                     String previousStatusText = previousStatus.toString(); // or map to pretty text if you want
 
+                    // Get tenant name once, outside the async block
+                    final String tenantName = requestDAO
+                            .findTenantNameByRequestId(request.getRequestId())
+                            .orElse("");
+
                     requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                             CompletableFuture.runAsync(() -> {
+                                String namePart = tenantName.isBlank() ? "" : " " + tenantName;
                                 String subject = "Maintenance request status: " + previousStatusText + " -> In Progress";
                                 String body =
-                                        "Hello,\n\n" +
+                                        "Hello" + namePart + ",\n\n" +
                                                 "Your maintenance request was updated.\n\n" +
                                                 "Request ID: " + request.getRequestId() + "\n" +
                                                 "Status: In Progress\n" +
                                                 "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
                                                 "Technician: " + tech + "\n\n" +
+                                                "Description: " + request.getDescription() + "\n\n" +
                                                 "Reply to this email if you have questions.\n" +
                                                 "Residential Maintenance";
                                 Email.send(to, subject, body);
@@ -646,17 +648,24 @@ public class StaffDashboardController {
                 String previousStatusText = previousStatus.toString();
                 final String formattedCost = String.format("%.2f", cost);
 
+                // Get tenant name once, outside the async block
+                final String tenantName = requestDAO
+                        .findTenantNameByRequestId(request.getRequestId())
+                        .orElse("");
+
                 requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                         CompletableFuture.runAsync(() -> {
+                            String namePart = tenantName.isBlank() ? "" : " " + tenantName;
                             String subject = "Maintenance request status: " + previousStatusText + " -> Completed";
                             String body =
-                                    "Hello,\n\n" +
+                                    "Hello " + namePart + ",\n\n" +
                                             "Your maintenance request is now completed.\n\n" +
                                             "Request ID: " + request.getRequestId() + "\n" +
                                             "Status: Completed\n" +
                                             "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
                                             "Technician: " + tech + "\n\n" +
-                                            "Resolution: " + resolution + "\n\n" +
+                                            "Description: " + request.getDescription() + "\n\n" +
+                                            "Resolution: " + resolution + "\n" +
                                             "Cost: $" + formattedCost + "\n\n" +
                                             "Reply to this email if you have questions.\n" +
                                             "Residential Maintenance";

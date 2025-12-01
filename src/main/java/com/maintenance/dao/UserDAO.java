@@ -144,26 +144,30 @@ public class UserDAO {
         }
     }
 
-    public List<MaintenanceStaff> getAllAvailableStaff() {
+    public List<MaintenanceStaff> getAllActiveStaff() {
         List<MaintenanceStaff> staffList = new ArrayList<>();
-        String sql = "SELECT u.*, s.* FROM users u " +
-                "JOIN maintenance_staff s ON u.user_id = s.user_id " +
-                "WHERE s.is_available = true";
 
-        try (Statement stmt = dbManager.getConnection().createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+        String sql = "SELECT u.*, s.* " +
+                "FROM users u " +
+                "JOIN maintenance_staff s ON u.user_id = s.user_id " +
+                "WHERE u.is_active = TRUE";
+
+        try (PreparedStatement ps = dbManager.getConnection().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 MaintenanceStaff staff = new MaintenanceStaff();
-                populateUserFields(staff, rs);
+                populateUserFields(staff, rs);  // fills common user fields
+
                 staff.setStaffId(rs.getString("staff_id"));
                 staff.setCurrentWorkload(rs.getInt("current_workload"));
                 staff.setMaxCapacity(rs.getInt("max_capacity"));
                 staff.setAvailable(rs.getBoolean("is_available"));
+
                 staffList.add(staff);
             }
         } catch (SQLException e) {
-            System.err.println("Error loading staff: " + e.getMessage());
+            System.err.println("Error loading active staff: " + e.getMessage());
         }
 
         return staffList;
