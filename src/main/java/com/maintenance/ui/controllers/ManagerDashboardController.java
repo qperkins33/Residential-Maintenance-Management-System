@@ -307,7 +307,7 @@ public class ManagerDashboardController {
         actionCol.setStyle("-fx-alignment: CENTER;");
 
         actionCol.setCellFactory(param -> new TableCell<>() {
-            private final Button assignBtn = new Button();
+            private final Button assignBtn = new Button("Assign");
             private final Button viewBtn = new Button("View");
             private final HBox box = new HBox(8);
 
@@ -334,15 +334,20 @@ public class ManagerDashboardController {
                     setGraphic(null);
                 } else {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
+
                     if (request.getStatus() == RequestStatus.SUBMITTED) {
+                        // Explicitly reset text for new / unassigned rows
                         assignBtn.setText("Assign");
                         box.getChildren().setAll(assignBtn, viewBtn);
-                    } else if (request.getStatus() != RequestStatus.COMPLETED){
+                    } else if (request.getStatus() != RequestStatus.COMPLETED) {
+                        // Anything active but not completed
                         assignBtn.setText("Reassign");
                         box.getChildren().setAll(assignBtn, viewBtn);
                     } else {
+                        // Completed: only view
                         box.getChildren().setAll(viewBtn);
                     }
+
                     setGraphic(box);
                 }
             }
@@ -383,18 +388,48 @@ public class ManagerDashboardController {
     }
 
     private void showAssignDialog(MaintenanceRequest request) {
-        Dialog<MaintenanceStaff> dialog = new Dialog<>();
-        dialog.setTitle("Assign Staff");
-        dialog.setHeaderText("Assign maintenance staff to request #" + request.getRequestId());
+        String currentlyAssignedId = request.getAssignedStaffId();
+        boolean isReassign = currentlyAssignedId != null && !currentlyAssignedId.isBlank();
 
-        ButtonType assignButtonType = new ButtonType("Assign", ButtonBar.ButtonData.OK_DONE);
+        Dialog<MaintenanceStaff> dialog = new Dialog<>();
+        dialog.setTitle(isReassign ? "Reassign Staff" : "Assign Staff");
+        dialog.setHeaderText(
+                (isReassign ? "Reassign" : "Assign") +
+                        " maintenance staff for request #" + request.getRequestId()
+        );
+
+        ButtonType assignButtonType = new ButtonType(
+                isReassign ? "Reassign" : "Assign",
+                ButtonBar.ButtonData.OK_DONE
+        );
         dialog.getDialogPane().getButtonTypes().addAll(assignButtonType, ButtonType.CANCEL);
 
         VBox content = new VBox(10);
         content.setPadding(new Insets(20));
 
         ComboBox<MaintenanceStaff> staffBox = new ComboBox<>();
+
         List<MaintenanceStaff> availableStaff = userDAO.getAllAvailableStaff();
+
+        // Remove the staff member who is already assigned to this request
+        if (isReassign) {
+            availableStaff = availableStaff.stream()
+                    .filter(s -> !currentlyAssignedId.equals(s.getStaffId()))
+                    .toList();
+        }
+
+        if (availableStaff.isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("No Other Staff Available");
+            alert.setHeaderText(null);
+            alert.setContentText(
+                    "There are no other available staff members to assign this request to.\n\n" +
+                            "You cannot reassign a request to the same staff member."
+            );
+            alert.showAndWait();
+            return;
+        }
+
         staffBox.getItems().addAll(availableStaff);
         staffBox.setPromptText("Select staff member");
 
@@ -447,8 +482,10 @@ public class ManagerDashboardController {
             if (requestDAO.updateRequest(request)) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Success");
-                alert.setHeaderText("Request Assigned");
-                alert.setContentText("Request has been assigned to " + staff.getFullName());
+                alert.setHeaderText(isReassign ? "Request Reassigned" : "Request Assigned");
+                alert.setContentText("Request has been " +
+                        (isReassign ? "reassigned to " : "assigned to ") +
+                        staff.getFullName());
                 alert.showAndWait();
                 loadRequests();
             }
