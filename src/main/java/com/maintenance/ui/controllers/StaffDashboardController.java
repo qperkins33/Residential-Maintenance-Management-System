@@ -438,7 +438,7 @@ public class StaffDashboardController {
                                         "Hello,\n\n" +
                                                 "Your maintenance request was updated.\n\n" +
                                                 "Request ID: " + request.getRequestId() + "\n" +
-                                                "Status:     In Progress\n" +
+                                                "Status:        In Progress\n" +
                                                 "Apartment:  " + nullToDash(request.getApartmentNumber()) + "\n" +
                                                 "Technician: " + tech + "\n\n" +
                                                 "Reply to this email if you have questions.\n" +
@@ -537,7 +537,7 @@ public class StaffDashboardController {
                                     "Hello,\n\n" +
                                             "Your maintenance request is now completed.\n\n" +
                                             "Request ID: " + request.getRequestId() + "\n" +
-                                            "Status:     Completed\n" +
+                                            "Status:        Completed\n" +
                                             "Apartment:  " + nullToDash(request.getApartmentNumber()) + "\n" +
                                             "Technician: " + tech + "\n\n" +
                                             "Resolution: " + resolution + "\n\n" +
