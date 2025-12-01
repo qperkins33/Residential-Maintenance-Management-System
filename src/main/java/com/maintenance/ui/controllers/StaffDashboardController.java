@@ -21,6 +21,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -325,7 +326,7 @@ public class StaffDashboardController {
 
                 updateBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
-                    DashboardUIHelper.showStaffUpdateDialog(request, requestDAO, StaffDashboardController.this::loadRequests);
+                    showStaffUpdateDialog(request);
                 });
 
                 startBtn.setOnAction((ActionEvent event) -> {
@@ -370,6 +371,90 @@ public class StaffDashboardController {
             }
         });
         return actionCol;
+    }
+
+    private void showStaffUpdateDialog(MaintenanceRequest request) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Staff Update");
+        dialog.setHeaderText("Add update for Request #" + request.getRequestId());
+
+        ButtonType saveBtnType = new ButtonType("Save Update", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+
+        TextArea descArea = new TextArea(request.getDescription());
+        descArea.setEditable(false);
+        descArea.setWrapText(true);
+        descArea.setPrefRowCount(4);
+
+        TextArea updateArea = new TextArea();
+        updateArea.setWrapText(true);
+        updateArea.setPrefRowCount(4);
+        updateArea.setPromptText("Add a staff update for this request...");
+
+        String existing = request.getStaffUpdateNotes();
+        if (existing != null && !existing.isBlank()) {
+            updateArea.setText(existing);
+        }
+
+        grid.add(new Label("Original Description:"), 0, 0);
+        grid.add(descArea, 1, 0);
+        grid.add(new Label("Staff Update:"), 0, 1);
+        grid.add(updateArea, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtnType);
+        saveButton.addEventFilter(ActionEvent.ACTION, event -> {
+            String text = updateArea.getText().trim();
+            if (text.isEmpty()) {
+                new Alert(Alert.AlertType.WARNING,
+                        "Please enter an update or cancel.").showAndWait();
+                event.consume();
+                return;
+            }
+
+            request.setStaffUpdateNotes(text);
+            request.setLastUpdated(LocalDateTime.now());
+
+            if (!requestDAO.updateRequest(request)) {
+                new Alert(Alert.AlertType.ERROR,
+                        "Unable to save staff update. Please try again.").showAndWait();
+                event.consume();
+            } else {
+                // Notify tenant by email about the new staff update
+                String tech = resolveTechnicianName(request);
+                final String updateText = text;
+
+                requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
+                        CompletableFuture.runAsync(() -> {
+                            String subject = "Maintenance request update: Staff message";
+                            String body =
+                                    "Hello,\n\n" +
+                                            "There is a new update on your maintenance request.\n\n" +
+                                            "Request ID: " + request.getRequestId() + "\n" +
+                                            "Status: " + request.getStatus() + "\n" +
+                                            "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
+                                            "Technician: " + tech + "\n\n" +
+                                            "Update from technician:\n" +
+                                            updateText + "\n\n" +
+                                            "Reply to this email if you have questions.\n" +
+                                            "Residential Maintenance";
+                            Email.send(to, subject, body);
+                        })
+                );
+
+                loadRequests();
+                new Alert(Alert.AlertType.INFORMATION,
+                        "Staff update saved and emailed to tenant.").showAndWait();
+            }
+        });
+
+        dialog.showAndWait();
     }
 
     private void loadRequests() {
@@ -433,7 +518,7 @@ public class StaffDashboardController {
 
                     requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                             CompletableFuture.runAsync(() -> {
-                                String subject = "Request status updated: " + previousStatusText + " -> In Progress";
+                                String subject = "Maintenance request status: " + previousStatusText + " -> In Progress";
                                 String body =
                                         "Hello,\n\n" +
                                                 "Your maintenance request was updated.\n\n" +
@@ -461,7 +546,6 @@ public class StaffDashboardController {
     }
 
     private void showCompleteDialog(MaintenanceRequest request) {
-        // Capture previous status before any changes
         RequestStatus previousStatus = request.getStatus();
 
         Dialog<String> dialog = new Dialog<>();
@@ -483,7 +567,7 @@ public class StaffDashboardController {
         resolutionArea.setWrapText(true);
 
         TextField hoursField = new TextField();
-        hoursField.setPromptText("Hours spent");
+        hoursField.setPromptText("Hours Spent");
 
         TextField costField = new TextField();
         costField.setPromptText("Cost (if applicable)");
@@ -500,21 +584,49 @@ public class StaffDashboardController {
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == completeButtonType) {
-                if (!resolutionArea.getText().isEmpty()) {
-                    return resolutionArea.getText();
-                } else {
+                String resolutionText = resolutionArea.getText().trim();
+                String hoursText = hoursField.getText().trim();
+                String costText = costField.getText().trim();
+
+                // Required: resolution + hours
+                if (resolutionText.isEmpty() || hoursText.isEmpty()) {
                     Alert alert = new Alert(Alert.AlertType.WARNING);
                     alert.setTitle("Missing Information");
-                    alert.setContentText("Please provide resolution notes");
+                    alert.setContentText("Please provide resolution notes and hours spent.");
                     alert.showAndWait();
                     return null;
                 }
+
+                // Validate hours numeric
+                try {
+                    Double.parseDouble(hoursText);
+                } catch (NumberFormatException e) {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Invalid Hours");
+                    alert.setContentText("Hours spent must be a valid number.");
+                    alert.showAndWait();
+                    return null;
+                }
+
+                // Validate cost numeric if provided (optional)
+                if (!costText.isEmpty()) {
+                    try {
+                        Double.parseDouble(costText);
+                    } catch (NumberFormatException e) {
+                        Alert alert = new Alert(Alert.AlertType.WARNING);
+                        alert.setTitle("Invalid Cost");
+                        alert.setContentText("Cost must be a valid number or left blank.");
+                        alert.showAndWait();
+                        return null;
+                    }
+                }
+
+                return resolutionText;
             }
             return null;
         });
 
         dialog.showAndWait().ifPresent(resolution -> {
-            // Cost scoped outside try so we can reuse it
             double cost = 0.0;
             try {
                 String costText = costField.getText().trim();
@@ -522,25 +634,21 @@ public class StaffDashboardController {
                     cost = Double.parseDouble(costText);
                 }
             } catch (NumberFormatException ignored) {
-                // If parsing fails, cost stays 0.0
             }
 
-            // Persist cost on the request
             request.setActualCost(cost);
 
-            // This will set status = COMPLETED internally
             request.close(resolution);
 
             if (requestDAO.updateRequest(request)) {
                 String tech = resolveTechnicianName(request);
 
-                // Use the captured previous status here
                 String previousStatusText = previousStatus.toString();
                 final String formattedCost = String.format("%.2f", cost);
 
                 requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                         CompletableFuture.runAsync(() -> {
-                            String subject = "Request status updated: " + previousStatusText + " -> Completed";
+                            String subject = "Maintenance request status: " + previousStatusText + " -> Completed";
                             String body =
                                     "Hello,\n\n" +
                                             "Your maintenance request is now completed.\n\n" +
@@ -573,7 +681,6 @@ public class StaffDashboardController {
         if (u instanceof MaintenanceStaff ms && ms.getFullName() != null && !ms.getFullName().isBlank()) {
             return ms.getFullName();
         }
-        // fallback to DB by assigned staff id if available
         String staffId = r.getAssignedStaffId();
         if (staffId != null && !staffId.isBlank()) {
             var userDAO = new UserDAO();
