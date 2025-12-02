@@ -291,8 +291,8 @@ public class StaffDashboardController {
 
     private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(260);
-        actionCol.setMinWidth(260);
+        actionCol.setPrefWidth(280);
+        actionCol.setMinWidth(280);
         actionCol.setResizable(false);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
@@ -301,6 +301,7 @@ public class StaffDashboardController {
             private final Button startBtn = new Button("Start");
             private final Button completeBtn = new Button("Complete");
             private final Button archiveBtn = new Button("Archive");
+            private final Button unarchiveBtn = new Button("Unarchive");
             private final Button viewBtn = new Button("View");
             private final HBox buttonBox = new HBox(5);
 
@@ -311,6 +312,7 @@ public class StaffDashboardController {
                 startBtn.setStyle(btnStyle);
                 completeBtn.setStyle(btnStyle);
                 archiveBtn.setStyle(btnStyle);
+                unarchiveBtn.setStyle(btnStyle);
                 viewBtn.setStyle(btnStyle);
 
                 updateBtn.setOnAction(e -> {
@@ -338,6 +340,11 @@ public class StaffDashboardController {
                     archiveAsStaff(request);
                 });
 
+                unarchiveBtn.setOnAction(e -> {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    unarchiveAsStaff(request);
+                });
+
                 viewBtn.setOnAction((ActionEvent event) -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     DashboardUIHelper.showRequestDetailsDialog(request);
@@ -351,29 +358,76 @@ public class StaffDashboardController {
                 super.updateItem(item, empty);
                 if (empty) {
                     setGraphic(null);
-                } else {
-                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
-                    buttonBox.getChildren().clear();
-
-                    if (request.getStatus() == RequestStatus.ASSIGNED) {
-                        buttonBox.getChildren().addAll(startBtn, viewBtn);
-                    } else if (isInProgress(request)) {
-                        buttonBox.getChildren().addAll(completeBtn, updateBtn, viewBtn);
-                    } else if (isCompleted(request)) {
-                        if (!request.isStaffArchived()) {
-                            buttonBox.getChildren().addAll(archiveBtn, postUpdateBtn, viewBtn);
-                        } else {
-                            buttonBox.getChildren().addAll(postUpdateBtn, viewBtn);
-                        }
-                    } else {
-                        buttonBox.getChildren().addAll(updateBtn, viewBtn);
-                    }
-
-                    setGraphic(buttonBox);
+                    return;
                 }
+
+                MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                if (request == null) {
+                    setGraphic(null);
+                    return;
+                }
+
+                buttonBox.getChildren().clear();
+
+                // If staff archived this, prefer Unarchive + standard actions
+                if (request.isStaffArchived()) {
+                    // Realistically only COMPLETED tasks get archived, but this is safe
+                    buttonBox.getChildren().add(unarchiveBtn);
+                    if (isCompleted(request)) {
+                        buttonBox.getChildren().add(postUpdateBtn);
+                    } else {
+                        buttonBox.getChildren().add(updateBtn);
+                    }
+                    buttonBox.getChildren().add(viewBtn);
+                    setGraphic(buttonBox);
+                    return;
+                }
+
+                // Normal non-archived behavior
+                if (request.getStatus() == RequestStatus.ASSIGNED) {
+                    buttonBox.getChildren().addAll(startBtn, viewBtn);
+                } else if (isInProgress(request)) {
+                    buttonBox.getChildren().addAll(completeBtn, updateBtn, viewBtn);
+                } else if (isCompleted(request)) {
+                    buttonBox.getChildren().addAll(archiveBtn, postUpdateBtn, viewBtn);
+                } else {
+                    buttonBox.getChildren().addAll(updateBtn, viewBtn);
+                }
+
+                setGraphic(buttonBox);
             }
         });
         return actionCol;
+    }
+
+    private void unarchiveAsStaff(MaintenanceRequest request) {
+        if (request == null) {
+            return;
+        }
+
+        if (!request.isStaffArchived()) {
+            showError("This request is not archived.");
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Unarchive Request");
+        confirm.setHeaderText("Unarchive request #" + request.getRequestId() + " to your dashboard?");
+        confirm.setContentText("It will return to your main task list.");
+        confirm.showAndWait().ifPresent(response -> {
+            if (response != ButtonType.OK) {
+                return;
+            }
+
+            request.setStaffArchived(false);
+            request.setLastUpdated(LocalDateTime.now());
+
+            if (!requestDAO.updateRequest(request)) {
+                showError("Unable to unarchive request. Please try again.");
+            } else {
+                loadRequests();
+            }
+        });
     }
 
     private void showStaffUpdateDialog(MaintenanceRequest request) {
