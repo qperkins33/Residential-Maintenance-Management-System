@@ -11,6 +11,18 @@ public class DatabaseInitializer {
 
         try (Statement stmt = conn.createStatement()) {
 
+            // TESTING: Uncomment to wipe db
+//            stmt.execute("DROP TABLE IF EXISTS comments");
+//            stmt.execute("DROP TABLE IF EXISTS photos");
+//            stmt.execute("DROP TABLE IF EXISTS work_orders");
+//            stmt.execute("DROP TABLE IF EXISTS maintenance_requests");
+//            stmt.execute("DROP TABLE IF EXISTS apartments");
+//            stmt.execute("DROP TABLE IF EXISTS tenants");
+//            stmt.execute("DROP TABLE IF EXISTS maintenance_staff");
+//            stmt.execute("DROP TABLE IF EXISTS buildings");
+//            stmt.execute("DROP TABLE IF EXISTS building_managers");
+//            stmt.execute("DROP TABLE IF EXISTS users");
+
             // Create Users table
             stmt.execute("CREATE TABLE IF NOT EXISTS users (" +
                     "user_id VARCHAR(50) PRIMARY KEY," +
@@ -50,7 +62,6 @@ public class DatabaseInitializer {
                     "user_id VARCHAR(50) PRIMARY KEY," +
                     "employee_id VARCHAR(50) UNIQUE," +
                     "department VARCHAR(100)," +
-                    "access_level VARCHAR(20)," +
                     "FOREIGN KEY (user_id) REFERENCES users(user_id))");
 
             // Create Buildings table
@@ -159,8 +170,8 @@ public class DatabaseInitializer {
 //                    "VALUES ('M001', 'manager1', 'pass123', 'Jane', 'Smith', 'jane@email.com', " +
 //                    "'555-0102', 'MANAGER', CURRENT_TIMESTAMP, true)");
 //
-//            stmt.execute("MERGE INTO building_managers (user_id, employee_id, department, access_level) " +
-//                    "VALUES ('M001', 'EMP001', 'Operations', 'MANAGER')");
+//            stmt.execute("MERGE INTO building_managers (user_id, employee_id, department) " +
+//                    "VALUES ('M001', 'EMP001', 'Operations')");
 
             // Insert default maintenance staff
 //            stmt.execute("MERGE INTO users (user_id, username, password, first_name, last_name, " +
@@ -175,12 +186,12 @@ public class DatabaseInitializer {
             // Insert default building
             stmt.execute("MERGE INTO buildings (building_id, building_name, address, manager_id, " +
                     "total_units, building_type) " +
-                    "VALUES ('B001', 'Sunset Apartments', '123 Main St', 'M001', 50, 'Residential')");
+                    "VALUES ('B001', 'Sunset Apartments', '123 Main St', NULL, 50, 'Residential')");
 
             // Insert default apartment
             stmt.execute("MERGE INTO apartments (apartment_id, apartment_number, building_id, " +
                     "current_tenant_id, square_footage, monthly_rent, lease_status) " +
-                    "VALUES ('AP001', 'A101', 'B001', 'T001', 850, 1200.00, 'OCCUPIED')");
+                    "VALUES ('AP001', 'A101', 'B001', NULL, 850, 1200.00, 'OCCUPIED')");
 
             System.out.println("✓ Default users and data inserted");
 
