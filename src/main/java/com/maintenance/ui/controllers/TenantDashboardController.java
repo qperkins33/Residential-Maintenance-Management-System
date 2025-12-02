@@ -20,8 +20,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
 import java.io.File;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -105,9 +105,6 @@ public class TenantDashboardController {
         menuLabel.setTextFill(Color.web("#95a5a6"));
 
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
-//        Button requestsBtn = DashboardUIHelper.createSidebarButton("📝 My Requests", false);
-//        Button newRequestBtn = DashboardUIHelper.createSidebarButton("➕ New Request", false);
-//        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn);
         return sidebar;
@@ -154,7 +151,10 @@ public class TenantDashboardController {
         statsBox.getChildren().clear();
 
         Tenant tenant = (Tenant) authService.getCurrentUser();
-        List<MaintenanceRequest> requests = requestDAO.getRequestsByTenant(tenant.getUserId());
+        List<MaintenanceRequest> all = requestDAO.getRequestsByTenant(tenant.getUserId());
+        List<MaintenanceRequest> requests = all.stream()
+                .filter(r -> !r.isTenantArchived())
+                .toList();
 
         long notStarted = requests.stream().filter(this::isNotStarted).count();
         long inProgress = requests.stream().filter(this::isInProgress).count();
@@ -220,7 +220,8 @@ public class TenantDashboardController {
                 "Not Started",
                 "In Progress",
                 "Completed",
-                "Cancelled"
+                "Cancelled",
+                "Archived"
         );
         filterBox.setValue("All Requests");
         filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
@@ -281,7 +282,6 @@ public class TenantDashboardController {
 
         loadRequests();
 
-        // DEFAULT SORT: newest at top
         dateCol.setSortType(TableColumn.SortType.DESCENDING);
         requestTable.getSortOrder().setAll(dateCol);
         requestTable.sort();
@@ -293,28 +293,39 @@ public class TenantDashboardController {
 
     private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setPrefWidth(195);
-        actionCol.setMinWidth(195);
+        actionCol.setPrefWidth(210);
+        actionCol.setMinWidth(210);
         actionCol.setResizable(false);
         actionCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setCellFactory(param -> new TableCell<>() {
             private final Button editBtn = new Button("Edit");
+            private final Button archiveBtn = new Button("Archive");
             private final Button viewBtn = new Button("View");
             private final HBox buttonBox = new HBox(5);
 
             {
                 String btnStyle = "-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 5 12; -fx-background-radius: 3; -fx-cursor: hand;";
                 editBtn.setStyle(btnStyle);
+                archiveBtn.setStyle(btnStyle);
                 viewBtn.setStyle(btnStyle);
 
                 editBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
-                    DashboardUIHelper.showEditRequestDialog(request, requestDAO, TenantDashboardController.this::loadRequests);
+                    DashboardUIHelper.showEditRequestDialog(
+                            request,
+                            requestDAO,
+                            TenantDashboardController.this::loadRequests
+                    );
+                });
+                archiveBtn.setOnAction(e -> {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    archiveAsTenant(request);
                 });
                 viewBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     DashboardUIHelper.showRequestDetailsDialog(request);
                 });
+
                 buttonBox.setAlignment(Pos.CENTER);
             }
 
@@ -324,7 +335,15 @@ public class TenantDashboardController {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    buttonBox.getChildren().setAll(editBtn, viewBtn);
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    buttonBox.getChildren().clear();
+                    buttonBox.getChildren().add(editBtn);
+                    if (request != null &&
+                            isCompleted(request) &&
+                            !request.isTenantArchived()) {
+                        buttonBox.getChildren().add(archiveBtn);
+                    }
+                    buttonBox.getChildren().add(viewBtn);
                     setGraphic(buttonBox);
                 }
             }
@@ -334,35 +353,93 @@ public class TenantDashboardController {
 
     private void loadRequests() {
         Tenant tenant = (Tenant) authService.getCurrentUser();
+        List<MaintenanceRequest> allRequests =
+                requestDAO.getRequestsByTenant(tenant.getUserId());
+        List<MaintenanceRequest> visible =
+                allRequests.stream()
+                        .filter(r -> !r.isTenantArchived())
+                        .toList();
+
         ObservableList<MaintenanceRequest> requests =
-                FXCollections.observableArrayList(requestDAO.getRequestsByTenant(tenant.getUserId()));
+                FXCollections.observableArrayList(visible);
         requestTable.setItems(requests);
         refreshStats();
-        requestTable.sort();    // keep date desc
+        requestTable.sort();
     }
 
     private void filterRequests(String filter) {
         Tenant tenant = (Tenant) authService.getCurrentUser();
-        List<MaintenanceRequest> requests = requestDAO.getRequestsByTenant(tenant.getUserId());
+        List<MaintenanceRequest> all = requestDAO.getRequestsByTenant(tenant.getUserId());
+        List<MaintenanceRequest> filtered;
 
-        switch (filter) {
-            case "Not Started" -> requests = requests.stream()
-                    .filter(this::isNotStarted)
+        if ("Archived".equals(filter)) {
+            filtered = all.stream()
+                    .filter(MaintenanceRequest::isTenantArchived)
                     .toList();
-            case "In Progress" -> requests = requests.stream()
-                    .filter(this::isInProgress)
+        } else {
+            filtered = all.stream()
+                    .filter(r -> !r.isTenantArchived())
                     .toList();
-            case "Completed" -> requests = requests.stream()
-                    .filter(this::isCompleted)
-                    .toList();
-            case "Cancelled" -> requests = requests.stream()
-                    .filter(this::isCancelled)
-                    .toList();
-            default -> { }
+
+            switch (filter) {
+                case "Not Started" -> filtered = filtered.stream()
+                        .filter(this::isNotStarted)
+                        .toList();
+                case "In Progress" -> filtered = filtered.stream()
+                        .filter(this::isInProgress)
+                        .toList();
+                case "Completed" -> filtered = filtered.stream()
+                        .filter(this::isCompleted)
+                        .toList();
+                case "Cancelled" -> filtered = filtered.stream()
+                        .filter(this::isCancelled)
+                        .toList();
+                default -> {
+                }
+            }
         }
 
-        requestTable.setItems(FXCollections.observableArrayList(requests));
-        requestTable.sort();    // reapply sort
+        requestTable.setItems(FXCollections.observableArrayList(filtered));
+        requestTable.sort();
+    }
+
+    private void archiveAsTenant(MaintenanceRequest request) {
+        if (request == null) {
+            return;
+        }
+
+        if (!isCompleted(request)) {
+            new Alert(Alert.AlertType.INFORMATION,
+                    "Only completed requests can be archived.").showAndWait();
+            return;
+        }
+
+        if (request.isTenantArchived()) {
+            new Alert(Alert.AlertType.INFORMATION,
+                    "This request is already archived.").showAndWait();
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Archive Request");
+        confirm.setHeaderText("Archive request #" + request.getRequestId() + "?");
+        confirm.setContentText("Archived requests are hidden from your main list. " +
+                "You can still view them by changing the filter to Archived.");
+        confirm.showAndWait().ifPresent(response -> {
+            if (response != ButtonType.OK) {
+                return;
+            }
+
+            request.setTenantArchived(true);
+            request.setLastUpdated(LocalDateTime.now());
+
+            if (!requestDAO.updateRequest(request)) {
+                new Alert(Alert.AlertType.ERROR,
+                        "Unable to archive request. Please try again.").showAndWait();
+            } else {
+                loadRequests();
+            }
+        });
     }
 
     private void showNewRequestDialog() {
@@ -454,13 +531,13 @@ public class TenantDashboardController {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Success");
             alert.setHeaderText("Request Submitted");
-            alert.setContentText("Your request #" + request.getRequestId() + " has been submitted successfully!");
+            alert.setContentText("Your request #" + request.getRequestId() +
+                    " has been submitted successfully!");
             alert.showAndWait();
             loadRequests();
         });
     }
 
-    // Shared status grouping helpers (same across controllers)
     private boolean isNotStarted(MaintenanceRequest r) {
         return r.getStatus() == RequestStatus.SUBMITTED
                 || r.getStatus() == RequestStatus.ASSIGNED;

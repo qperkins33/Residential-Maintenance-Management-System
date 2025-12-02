@@ -9,14 +9,21 @@ import java.util.List;
 import java.util.Optional;
 
 public class MaintenanceRequestDAO {
+
+    private final DatabaseManager dbManager;
+
+    public MaintenanceRequestDAO() {
+        this.dbManager = DatabaseManager.getInstance();
+    }
+
     public Optional<String> findTenantNameByRequestId(String requestId) {
         String sql = """
-        SELECT u.first_name, u.last_name
-        FROM maintenance_requests r
-        JOIN tenants t ON r.tenant_id = t.user_id
-        JOIN users u ON u.user_id = t.user_id
-        WHERE r.request_id = ?
-        """;
+                SELECT u.first_name, u.last_name
+                FROM maintenance_requests r
+                JOIN tenants t ON r.tenant_id = t.user_id
+                JOIN users u ON u.user_id = t.user_id
+                WHERE r.request_id = ?
+                """;
 
         try (PreparedStatement ps = dbManager.getConnection().prepareStatement(sql)) {
             ps.setString(1, requestId);
@@ -24,8 +31,8 @@ public class MaintenanceRequestDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     String first = rs.getString("first_name");
-                    String last  = rs.getString("last_name");
-                    String full  = ((first == null ? "" : first.trim()) + " " +
+                    String last = rs.getString("last_name");
+                    String full = ((first == null ? "" : first.trim()) + " " +
                             (last == null ? "" : last.trim())).trim();
                     return full.isEmpty() ? Optional.empty() : Optional.of(full);
                 }
@@ -39,11 +46,11 @@ public class MaintenanceRequestDAO {
 
     public Optional<String> findTenantEmailByRequestId(String requestId) {
         String sql = """
-        SELECT u.email
-        FROM maintenance_requests mr
-        JOIN users u ON u.user_id = mr.tenant_id
-        WHERE mr.request_id = ?
-    """;
+                SELECT u.email
+                FROM maintenance_requests mr
+                JOIN users u ON u.user_id = mr.tenant_id
+                WHERE mr.request_id = ?
+                """;
         try (PreparedStatement ps = dbManager.getConnection().prepareStatement(sql)) {
             ps.setString(1, requestId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -55,16 +62,13 @@ public class MaintenanceRequestDAO {
         }
     }
 
-    private final DatabaseManager dbManager;
-
-    public MaintenanceRequestDAO() {
-        this.dbManager = DatabaseManager.getInstance();
-    }
-
     public boolean saveRequest(MaintenanceRequest request) {
-        String sql = "INSERT INTO maintenance_requests (request_id, tenant_id, apartment_number, " +
-                "description, category, priority, status, submission_date, last_updated) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO maintenance_requests (" +
+                "request_id, tenant_id, apartment_number, " +
+                "description, category, priority, status, " +
+                "submission_date, last_updated, " +
+                "tenant_archived, staff_archived) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
             pstmt.setString(1, request.getRequestId());
@@ -76,6 +80,8 @@ public class MaintenanceRequestDAO {
             pstmt.setString(7, request.getStatus().name());
             pstmt.setTimestamp(8, Timestamp.valueOf(request.getSubmissionDate()));
             pstmt.setTimestamp(9, Timestamp.valueOf(request.getLastUpdated()));
+            pstmt.setBoolean(10, request.isTenantArchived());
+            pstmt.setBoolean(11, request.isStaffArchived());
 
             pstmt.executeUpdate();
             return true;
@@ -86,9 +92,20 @@ public class MaintenanceRequestDAO {
     }
 
     public boolean updateRequest(MaintenanceRequest request) {
-        String sql = "UPDATE maintenance_requests SET description = ?, category = ?, priority = ?, " +
-                "status = ?, last_updated = ?, assigned_staff_id = ?, scheduled_date = ?, completion_date = ?, " +
-                "staff_update_notes = ?, resolution_notes = ? WHERE request_id = ?";
+        String sql = "UPDATE maintenance_requests SET " +
+                "description = ?, " +
+                "category = ?, " +
+                "priority = ?, " +
+                "status = ?, " +
+                "last_updated = ?, " +
+                "assigned_staff_id = ?, " +
+                "scheduled_date = ?, " +
+                "completion_date = ?, " +
+                "staff_update_notes = ?, " +
+                "resolution_notes = ?, " +
+                "tenant_archived = ?, " +
+                "staff_archived = ? " +
+                "WHERE request_id = ?";
 
         try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
             pstmt.setString(1, request.getDescription());
@@ -97,13 +114,17 @@ public class MaintenanceRequestDAO {
             pstmt.setString(4, request.getStatus().name());
             pstmt.setTimestamp(5, Timestamp.valueOf(request.getLastUpdated()));
             pstmt.setString(6, request.getAssignedStaffId());
-            pstmt.setTimestamp(7, request.getScheduledDate() != null ?
-                    Timestamp.valueOf(request.getScheduledDate()) : null);
-            pstmt.setTimestamp(8, request.getCompletionDate() != null ?
-                    Timestamp.valueOf(request.getCompletionDate()) : null);
+            pstmt.setTimestamp(7, request.getScheduledDate() != null
+                    ? Timestamp.valueOf(request.getScheduledDate())
+                    : null);
+            pstmt.setTimestamp(8, request.getCompletionDate() != null
+                    ? Timestamp.valueOf(request.getCompletionDate())
+                    : null);
             pstmt.setString(9, request.getStaffUpdateNotes());
             pstmt.setString(10, request.getResolutionNotes());
-            pstmt.setString(11, request.getRequestId());
+            pstmt.setBoolean(11, request.isTenantArchived());
+            pstmt.setBoolean(12, request.isStaffArchived());
+            pstmt.setString(13, request.getRequestId());
 
             pstmt.executeUpdate();
             return true;
@@ -132,7 +153,8 @@ public class MaintenanceRequestDAO {
 
     public List<MaintenanceRequest> getRequestsByTenant(String tenantId) {
         List<MaintenanceRequest> requests = new ArrayList<>();
-        String sql = "SELECT * FROM maintenance_requests WHERE tenant_id = ? ORDER BY submission_date DESC";
+        String sql = "SELECT * FROM maintenance_requests " +
+                "WHERE tenant_id = ? ORDER BY submission_date DESC";
 
         try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
             pstmt.setString(1, tenantId);
@@ -150,7 +172,8 @@ public class MaintenanceRequestDAO {
 
     public List<MaintenanceRequest> getRequestsByStaff(String staffId) {
         List<MaintenanceRequest> requests = new ArrayList<>();
-        String sql = "SELECT * FROM maintenance_requests WHERE assigned_staff_id = ? ORDER BY priority DESC";
+        String sql = "SELECT * FROM maintenance_requests " +
+                "WHERE assigned_staff_id = ? ORDER BY priority DESC";
 
         try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
             pstmt.setString(1, staffId);
@@ -191,6 +214,23 @@ public class MaintenanceRequestDAO {
         request.setWorkOrderNumber(rs.getString("work_order_number"));
         request.setStaffUpdateNotes(rs.getString("staff_update_notes"));
         request.setResolutionNotes(rs.getString("resolution_notes"));
+
+        // archive flags
+        boolean tenantArchived = false;
+        boolean staffArchived = false;
+        try {
+            tenantArchived = rs.getBoolean("tenant_archived");
+            if (rs.wasNull()) tenantArchived = false;
+        } catch (SQLException ignore) {
+        }
+        try {
+            staffArchived = rs.getBoolean("staff_archived");
+            if (rs.wasNull()) staffArchived = false;
+        } catch (SQLException ignore) {
+        }
+
+        request.setTenantArchived(tenantArchived);
+        request.setStaffArchived(staffArchived);
 
         return request;
     }

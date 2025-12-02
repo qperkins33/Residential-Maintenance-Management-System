@@ -103,10 +103,6 @@ public class StaffDashboardController {
         menuLabel.setTextFill(Color.web("#95a5a6"));
 
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
-//        Button assignedBtn = DashboardUIHelper.createSidebarButton("📋 Assigned Tasks", false);
-//        Button historyBtn = DashboardUIHelper.createSidebarButton("📜 History", false);
-//        Button profileBtn = DashboardUIHelper.createSidebarButton("👤 Profile", false);
-//        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -175,7 +171,11 @@ public class StaffDashboardController {
         statsBox.getChildren().clear();
 
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
-        List<MaintenanceRequest> myRequests = requestDAO.getRequestsByStaff(staff.getStaffId());
+        List<MaintenanceRequest> myRequests = requestDAO
+                .getRequestsByStaff(staff.getStaffId())
+                .stream()
+                .filter(r -> !r.isStaffArchived())
+                .toList();
 
         long notStarted = myRequests.stream().filter(this::isNotStarted).count();
         long inProgress = myRequests.stream().filter(this::isInProgress).count();
@@ -210,7 +210,15 @@ public class StaffDashboardController {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         ComboBox<String> filterBox = new ComboBox<>();
-        filterBox.getItems().addAll("All Tasks", "Assigned", "In Progress", "Urgent Only", "Cancelled");
+        filterBox.getItems().addAll(
+                "All Tasks",
+                "Assigned",
+                "In Progress",
+                "Urgent Only",
+                "Completed",
+                "Cancelled",
+                "Archived"
+        );
         filterBox.setValue("All Tasks");
         filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
         filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
@@ -265,7 +273,6 @@ public class StaffDashboardController {
 
         loadRequests();
 
-        // DEFAULT SORT: newest at top by submitted date
         dateCol.setSortType(TableColumn.SortType.DESCENDING);
         requestTable.getSortOrder().setAll(dateCol);
         requestTable.sort();
@@ -295,6 +302,7 @@ public class StaffDashboardController {
             private final Button postUpdateBtn = new Button("Post Update");
             private final Button startBtn = new Button("Start");
             private final Button completeBtn = new Button("Complete");
+            private final Button archiveBtn = new Button("Archive");
             private final Button viewBtn = new Button("View");
             private final HBox buttonBox = new HBox(5);
 
@@ -304,6 +312,7 @@ public class StaffDashboardController {
                 postUpdateBtn.setStyle(btnStyle);
                 startBtn.setStyle(btnStyle);
                 completeBtn.setStyle(btnStyle);
+                archiveBtn.setStyle(btnStyle);
                 viewBtn.setStyle(btnStyle);
 
                 updateBtn.setOnAction(e -> {
@@ -324,6 +333,11 @@ public class StaffDashboardController {
                 completeBtn.setOnAction((ActionEvent event) -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     showCompleteDialog(request);
+                });
+
+                archiveBtn.setOnAction(e -> {
+                    MaintenanceRequest request = getTableView().getItems().get(getIndex());
+                    archiveAsStaff(request);
                 });
 
                 viewBtn.setOnAction((ActionEvent event) -> {
@@ -348,7 +362,11 @@ public class StaffDashboardController {
                     } else if (isInProgress(request)) {
                         buttonBox.getChildren().addAll(completeBtn, updateBtn, viewBtn);
                     } else if (isCompleted(request)) {
-                        buttonBox.getChildren().addAll(postUpdateBtn, viewBtn);
+                        if (!request.isStaffArchived()) {
+                            buttonBox.getChildren().addAll(archiveBtn, postUpdateBtn, viewBtn);
+                        } else {
+                            buttonBox.getChildren().addAll(postUpdateBtn, viewBtn);
+                        }
                     } else {
                         buttonBox.getChildren().addAll(updateBtn, viewBtn);
                     }
@@ -416,7 +434,6 @@ public class StaffDashboardController {
                 String tech = resolveTechnicianName(request);
                 final String updateText = text;
 
-                // Get tenant name once, outside the async block
                 final String tenantName = requestDAO
                         .findTenantNameByRequestId(request.getRequestId())
                         .orElse("");
@@ -452,30 +469,57 @@ public class StaffDashboardController {
 
     private void loadRequests() {
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
-        List<MaintenanceRequest> requests = requestDAO.getRequestsByStaff(staff.getStaffId());
-        requestTable.setItems(FXCollections.observableArrayList(requests));
+        List<MaintenanceRequest> all = requestDAO.getRequestsByStaff(staff.getStaffId());
+        List<MaintenanceRequest> visible = all.stream()
+                .filter(r -> !r.isStaffArchived())
+                .toList();
+
+        requestTable.setItems(FXCollections.observableArrayList(visible));
         refreshWorkload();
         refreshStats();
-        requestTable.sort();     // keep newest at top
+        requestTable.sort();
     }
 
     private void filterRequests(String filter) {
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
-        List<MaintenanceRequest> requests = requestDAO.getRequestsByStaff(staff.getStaffId());
+        List<MaintenanceRequest> all = requestDAO.getRequestsByStaff(staff.getStaffId());
+        List<MaintenanceRequest> filtered;
 
-        switch (filter) {
-            case "Assigned" -> requests = requests.stream().filter(r -> r.getStatus() == RequestStatus.ASSIGNED).toList();
-            case "In Progress" -> requests = requests.stream().filter(this::isInProgress).toList();
-            case "Urgent Only" -> requests = requests.stream()
-                    .filter(r -> (r.getPriority() == PriorityLevel.URGENT || r.getPriority() == PriorityLevel.EMERGENCY) && !isCompleted(r) && !isCancelled(r))
+        if ("Archived".equals(filter)) {
+            filtered = all.stream()
+                    .filter(MaintenanceRequest::isStaffArchived)
                     .toList();
-            case "Cancelled" -> requests = requests.stream().filter(this::isCancelled).toList();
-            default -> { }
+        } else {
+            filtered = all.stream()
+                    .filter(r -> !r.isStaffArchived())
+                    .toList();
+
+            switch (filter) {
+                case "Assigned" -> filtered = filtered.stream()
+                        .filter(r -> r.getStatus() == RequestStatus.ASSIGNED)
+                        .toList();
+                case "In Progress" -> filtered = filtered.stream()
+                        .filter(this::isInProgress)
+                        .toList();
+                case "Urgent Only" -> filtered = filtered.stream()
+                        .filter(r -> (r.getPriority() == PriorityLevel.URGENT ||
+                                r.getPriority() == PriorityLevel.EMERGENCY) &&
+                                !isCompleted(r) && !isCancelled(r))
+                        .toList();
+                case "Completed" -> filtered = filtered.stream()
+                        .filter(this::isCompleted)
+                        .toList();
+                case "Cancelled" -> filtered = filtered.stream()
+                        .filter(this::isCancelled)
+                        .toList();
+                default -> {
+                }
+            }
         }
 
-        requestTable.setItems(FXCollections.observableArrayList(requests));
+        requestTable.setItems(FXCollections.observableArrayList(filtered));
         refreshWorkload();
-        requestTable.sort();     // keep sort by date desc
+        requestTable.sort();
     }
 
     private void refreshWorkload() {
@@ -490,6 +534,45 @@ public class StaffDashboardController {
 
         staff.setCurrentWorkload((int) activeWorkload);
         workloadLabel.setText("Workload: " + activeWorkload + "/" + staff.getMaxCapacity());
+    }
+
+    private void archiveAsStaff(MaintenanceRequest request) {
+        if (request == null) {
+            return;
+        }
+
+        if (!isCompleted(request)) {
+            showError("Only completed requests can be archived.");
+            return;
+        }
+
+        if (request.isStaffArchived()) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Already Archived");
+            alert.setHeaderText(null);
+            alert.setContentText("This request is already archived for you.");
+            alert.showAndWait();
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Archive Request");
+        confirm.setHeaderText("Archive request #" + request.getRequestId() + " from your dashboard?");
+        confirm.setContentText("You can still view it later by changing the filter to Archived.");
+        confirm.showAndWait().ifPresent(response -> {
+            if (response != ButtonType.OK) {
+                return;
+            }
+
+            request.setStaffArchived(true);
+            request.setLastUpdated(LocalDateTime.now());
+
+            if (!requestDAO.updateRequest(request)) {
+                showError("Unable to archive request. Please try again.");
+            } else {
+                loadRequests();
+            }
+        });
     }
 
     private void startWork(MaintenanceRequest request) {
@@ -508,10 +591,8 @@ public class StaffDashboardController {
                 if (requestDAO.updateRequest(request)) {
                     String tech = resolveTechnicianName(request);
 
-                    // Use the captured previous status here
-                    String previousStatusText = previousStatus.toString(); // or map to pretty text if you want
+                    String previousStatusText = previousStatus.toString();
 
-                    // Get tenant name once, outside the async block
                     final String tenantName = requestDAO
                             .findTenantNameByRequestId(request.getRequestId())
                             .orElse("");
@@ -590,7 +671,6 @@ public class StaffDashboardController {
                 String hoursText = hoursField.getText().trim();
                 String costText = costField.getText().trim();
 
-                // Required: resolution + hours
                 if (resolutionText.isEmpty() || hoursText.isEmpty()) {
                     Alert alert = new Alert(Alert.AlertType.WARNING);
                     alert.setTitle("Missing Information");
@@ -599,7 +679,6 @@ public class StaffDashboardController {
                     return null;
                 }
 
-                // Validate hours numeric
                 try {
                     Double.parseDouble(hoursText);
                 } catch (NumberFormatException e) {
@@ -610,7 +689,6 @@ public class StaffDashboardController {
                     return null;
                 }
 
-                // Validate cost numeric if provided (optional)
                 if (!costText.isEmpty()) {
                     try {
                         Double.parseDouble(costText);
@@ -639,7 +717,6 @@ public class StaffDashboardController {
             }
 
             request.setActualCost(cost);
-
             request.close(resolution);
 
             if (requestDAO.updateRequest(request)) {
@@ -648,7 +725,6 @@ public class StaffDashboardController {
                 String previousStatusText = previousStatus.toString();
                 final String formattedCost = String.format("%.2f", cost);
 
-                // Get tenant name once, outside the async block
                 final String tenantName = requestDAO
                         .findTenantNameByRequestId(request.getRequestId())
                         .orElse("");

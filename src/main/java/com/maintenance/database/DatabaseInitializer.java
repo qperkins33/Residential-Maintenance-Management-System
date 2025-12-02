@@ -105,7 +105,9 @@ public class DatabaseInitializer {
                     "assigned_staff_id VARCHAR(50)," +
                     "work_order_number VARCHAR(50)," +
                     "staff_update_notes VARCHAR(1000)," +
-                    "resolution_notes VARCHAR(1000))");
+                    "resolution_notes VARCHAR(1000)," +
+                    "tenant_archived BOOLEAN DEFAULT FALSE," +
+                    "staff_archived BOOLEAN DEFAULT FALSE)");
 
             // Create Photos table
             stmt.execute("CREATE TABLE IF NOT EXISTS photos (" +
