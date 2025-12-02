@@ -480,18 +480,11 @@ public class AdminDashboardController {
         TextField departmentField = new TextField();
         departmentField.setPromptText("Operations");
 
-        ComboBox<String> accessLevelField = new ComboBox<>();
-        accessLevelField.getItems().addAll("MANAGER", "ASSISTANT-MANAGER");
-        accessLevelField.setPromptText("Select access level");
-        accessLevelField.setValue("MANAGER");
-
         int mRow = 0;
         managerGrid.add(new Label("Employee ID:"), 0, mRow);
         managerGrid.add(employeeIdField, 1, mRow++);
         managerGrid.add(new Label("Department:"), 0, mRow);
-        managerGrid.add(departmentField, 1, mRow++);
-        managerGrid.add(new Label("Access Level:"), 0, mRow);
-        managerGrid.add(accessLevelField, 1, mRow);
+        managerGrid.add(departmentField, 1, mRow);
 
         VBox managerSection = new VBox(8, new Label("Manager Details"), managerGrid);
         managerSection.setPadding(new Insets(10, 0, 0, 0));
@@ -616,13 +609,6 @@ public class AdminDashboardController {
                         event.consume();
                         return;
                     }
-                    if (accessLevelField.getValue() == null || accessLevelField.getValue().trim().isEmpty()) {
-                        new Alert(Alert.AlertType.WARNING,
-                                "Access level is required for managers.")
-                                .showAndWait();
-                        event.consume();
-                        return;
-                    }
                 }
             }
 
@@ -645,8 +631,7 @@ public class AdminDashboardController {
                     specializationsField.getText().trim(),
                     maxCapacitySpinner.getValue(),
                     employeeIdField.getText().trim(),
-                    departmentField.getText().trim(),
-                    accessLevelField.getValue() != null ? accessLevelField.getValue().trim() : null
+                    departmentField.getText().trim()
             );
 
             if (!success) {
@@ -688,8 +673,7 @@ public class AdminDashboardController {
             String specializations,
             Integer maxCapacity,
             String employeeId,
-            String department,
-            String accessLevel
+            String department
     ) {
         Connection conn = dbManager.getConnection();
         if (conn == null) {
@@ -763,15 +747,13 @@ public class AdminDashboardController {
                 }
             } else if ("MANAGER".equals(userType)) {
                 String managerSql = "INSERT INTO building_managers (" +
-                        "user_id, employee_id, department, access_level) " +
-                        "VALUES (?, ?, ?, ?)";
+                        "user_id, employee_id, department) " +
+                        "VALUES (?, ?, ?)";
                 try (PreparedStatement mgrStmt = conn.prepareStatement(managerSql)) {
                     mgrStmt.setString(1, userId);
                     mgrStmt.setString(2, employeeId);
                     mgrStmt.setString(3, department != null ? department : "Operations");
-                    mgrStmt.setString(4, accessLevel != null && !accessLevel.isBlank()
-                            ? accessLevel
-                            : "MANAGER");
+
                     mgrStmt.executeUpdate();
                 }
             }  // no extra table for admins
@@ -1118,7 +1100,7 @@ public class AdminDashboardController {
                         }
                     }
                 } else if ("MANAGER".equalsIgnoreCase(userType)) {
-                    String sql = "SELECT employee_id, department, access_level " +
+                    String sql = "SELECT employee_id, department " +
                             "FROM building_managers WHERE user_id = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setString(1, row.getUserId());
@@ -1126,12 +1108,10 @@ public class AdminDashboardController {
                             if (rs.next()) {
                                 String empId = rs.getString("employee_id");
                                 String dept = rs.getString("department");
-                                String access = rs.getString("access_level");
 
                                 addSectionLabel(grid, r++, "Manager Details");
                                 addUserDetailRow(grid, r++, "Employee ID:", empId);
-                                addUserDetailRow(grid, r++, "Department:", dept);
-                                addUserDetailRow(grid, r, "Access Level:", access);
+                                addUserDetailRow(grid, r, "Department:", dept);
                             }
                         }
                     }

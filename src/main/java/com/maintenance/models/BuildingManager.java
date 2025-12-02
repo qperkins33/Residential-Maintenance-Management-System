@@ -1,9 +1,7 @@
 package com.maintenance.models;
 
-import com.maintenance.enums.AccessLevel;
 import com.maintenance.enums.PriorityLevel;
 import com.maintenance.enums.RequestStatus;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,12 +10,10 @@ public class BuildingManager extends User {
     private String employeeId;
     private List<Building> managedBuildings;
     private String department;
-    private AccessLevel accessLevel;
 
     public BuildingManager() {
         super();
         this.managedBuildings = new ArrayList<>();
-        this.accessLevel = AccessLevel.MANAGER;
     }
 
     public BuildingManager(String username, String password, String firstName, String lastName,
@@ -25,7 +21,6 @@ public class BuildingManager extends User {
         super(username, password, firstName, lastName, email, phoneNumber);
         this.employeeId = employeeId;
         this.managedBuildings = new ArrayList<>();
-        this.accessLevel = AccessLevel.MANAGER;
     }
 
     public List<MaintenanceRequest> viewAllRequests() {
@@ -66,34 +61,6 @@ public class BuildingManager extends User {
         }
     }
 
-    public void addWorkNotes(String requestId, String notes) {
-        for (MaintenanceRequest request : viewAllRequests()) {
-            if (request.getRequestId().equals(requestId)) {
-                Comment comment = new Comment();
-                comment.setUserId(this.userId);
-                comment.setCommentText(notes);
-                comment.setInternal(true);
-                request.addComment(comment);
-                break;
-            }
-        }
-    }
-
-    public void scheduleWorkOrder(String requestId, LocalDateTime scheduledDate) {
-        for (MaintenanceRequest request : viewAllRequests()) {
-            if (request.getRequestId().equals(requestId)) {
-                request.setScheduledDate(scheduledDate);
-                WorkOrder workOrder = request.generateWorkOrder();
-                workOrder.updateSchedule(scheduledDate);
-                break;
-            }
-        }
-    }
-
-    public Report generateReports() {
-        return new Report();
-    }
-
     // PUBLIC Getters and Setters
     public String getEmployeeId() {
         return employeeId;
@@ -117,13 +84,5 @@ public class BuildingManager extends User {
 
     public void setDepartment(String department) {
         this.department = department;
-    }
-
-    public AccessLevel getAccessLevel() {
-        return accessLevel;
-    }
-
-    public void setAccessLevel(AccessLevel accessLevel) {
-        this.accessLevel = accessLevel;
     }
 }

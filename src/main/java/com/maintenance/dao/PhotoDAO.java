@@ -8,7 +8,6 @@ import java.sql.ResultSet;
 import java.util.UUID;
 
 public class PhotoDAO {
-
     private final DatabaseManager dbManager;
 
     public PhotoDAO() {
