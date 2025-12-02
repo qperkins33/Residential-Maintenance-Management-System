@@ -476,6 +476,7 @@ public class StaffDashboardController {
             }
 
             request.setStaffUpdateNotes(text);
+            request.setTenantArchived(false);
             request.setLastUpdated(LocalDateTime.now());
 
             if (!requestDAO.updateRequest(request)) {
