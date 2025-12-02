@@ -167,7 +167,8 @@ public final class DashboardUIHelper {
                     case COMPLETED -> getStyleClass().add("status-completed");
                     case IN_PROGRESS -> getStyleClass().add("status-in-progress");
                     case REOPENED -> getStyleClass().add("status-reopened");
-                    case ASSIGNED, SUBMITTED -> getStyleClass().add("status-assigned");
+                    case ASSIGNED -> getStyleClass().add("status-assigned");
+                    case SUBMITTED -> getStyleClass().add("status-submitted");
                     case CANCELLED -> getStyleClass().add("status-cancelled");
                     default -> getStyleClass().add("status-else");
                 }
