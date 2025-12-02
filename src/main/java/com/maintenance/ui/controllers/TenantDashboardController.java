@@ -167,7 +167,7 @@ public class TenantDashboardController {
                 "📋"
         );
         VBox pendingCard = DashboardUIHelper.createStatCard(
-                "Not Started",
+                "Pending Start",
                 String.valueOf(notStarted),
                 "#2196f3",
                 "⏸️"
@@ -216,7 +216,7 @@ public class TenantDashboardController {
         ComboBox<String> filterBox = new ComboBox<>();
         filterBox.getItems().addAll(
                 "All Requests",
-                "Not Started",
+                "Pending Start",
                 "In Progress",
                 "Completed",
                 "Cancelled",
@@ -434,7 +434,7 @@ public class TenantDashboardController {
                     .toList();
 
             switch (filter) {
-                case "Not Started" -> filtered = filtered.stream()
+                case "Pending Start" -> filtered = filtered.stream()
                         .filter(this::isNotStarted)
                         .toList();
                 case "In Progress" -> filtered = filtered.stream()

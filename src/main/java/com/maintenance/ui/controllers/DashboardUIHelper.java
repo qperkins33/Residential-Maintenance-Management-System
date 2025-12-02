@@ -145,6 +145,7 @@ public final class DashboardUIHelper {
         statusCol.setStyle("-fx-alignment: CENTER;");
         statusCol.setCellFactory(column -> new TableCell<>() {
             private final List<String> statusClasses = List.of(
+                    "status-submitted",
                     "status-completed",
                     "status-in-progress",
                     "status-reopened",
