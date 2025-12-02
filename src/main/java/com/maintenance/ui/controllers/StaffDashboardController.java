@@ -171,29 +171,27 @@ public class StaffDashboardController {
         statsBox.getChildren().clear();
 
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
-        List<MaintenanceRequest> myRequests = requestDAO
-                .getRequestsByStaff(staff.getStaffId())
-                .stream()
-                .filter(r -> !r.isStaffArchived())
-                .toList();
+        // Use ALL staff requests (including archived) for stats
+        List<MaintenanceRequest> allRequests = requestDAO.getRequestsByStaff(staff.getStaffId());
 
-        long notStarted = myRequests.stream().filter(this::isNotStarted).count();
-        long inProgress = myRequests.stream().filter(this::isInProgress).count();
-        long completed = myRequests.stream().filter(this::isCompleted).count();
-        long cancelled = myRequests.stream().filter(this::isCancelled).count();
+        long notStarted = allRequests.stream().filter(this::isNotStarted).count();
+        long inProgress = allRequests.stream().filter(this::isInProgress).count();
+        long completed = allRequests.stream().filter(this::isCompleted).count();
+        long cancelled = allRequests.stream().filter(this::isCancelled).count();
 
-        long urgent = myRequests.stream()
-                .filter(r -> (r.getPriority() == PriorityLevel.URGENT || r.getPriority() == PriorityLevel.EMERGENCY) && !isCompleted(r) && !isCancelled(r))
+        long urgent = allRequests.stream()
+                .filter(r -> (r.getPriority() == PriorityLevel.URGENT || r.getPriority() == PriorityLevel.EMERGENCY)
+                        && !isCompleted(r) && !isCancelled(r))
                 .count();
 
-        VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(myRequests.size()), "#667eea", "📋");
+        VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(allRequests.size()), "#667eea", "📋");
         VBox urgentCard = DashboardUIHelper.createStatCard("Urgent (Active)", String.valueOf(urgent), "#f44336", "🚨");
         VBox inProgressCard = DashboardUIHelper.createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "👷");
         VBox pendingCard = DashboardUIHelper.createStatCard("Not Started", String.valueOf(notStarted), "#2196f3", "⏸️");
         VBox completedCard = DashboardUIHelper.createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
         VBox cancelledCard = DashboardUIHelper.createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
 
-        statsBox.getChildren().addAll(totalCard, urgentCard, inProgressCard, pendingCard, completedCard, cancelledCard);
+        statsBox.getChildren().addAll(totalCard, urgentCard, pendingCard, inProgressCard, completedCard, cancelledCard);
     }
 
     private VBox createRequestsSection() {

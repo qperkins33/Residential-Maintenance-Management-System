@@ -20,6 +20,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -151,19 +152,17 @@ public class TenantDashboardController {
         statsBox.getChildren().clear();
 
         Tenant tenant = (Tenant) authService.getCurrentUser();
-        List<MaintenanceRequest> all = requestDAO.getRequestsByTenant(tenant.getUserId());
-        List<MaintenanceRequest> requests = all.stream()
-                .filter(r -> !r.isTenantArchived())
-                .toList();
+        // Use ALL requests (including archived) for stats
+        List<MaintenanceRequest> allRequests = requestDAO.getRequestsByTenant(tenant.getUserId());
 
-        long notStarted = requests.stream().filter(this::isNotStarted).count();
-        long inProgress = requests.stream().filter(this::isInProgress).count();
-        long completed = requests.stream().filter(this::isCompleted).count();
-        long cancelled = requests.stream().filter(this::isCancelled).count();
+        long notStarted = allRequests.stream().filter(this::isNotStarted).count();
+        long inProgress = allRequests.stream().filter(this::isInProgress).count();
+        long completed = allRequests.stream().filter(this::isCompleted).count();
+        long cancelled = allRequests.stream().filter(this::isCancelled).count();
 
         VBox totalCard = DashboardUIHelper.createStatCard(
                 "Total Requests",
-                String.valueOf(requests.size()),
+                String.valueOf(allRequests.size()),
                 "#667eea",
                 "📋"
         );
