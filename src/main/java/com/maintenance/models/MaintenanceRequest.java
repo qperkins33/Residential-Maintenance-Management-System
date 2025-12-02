@@ -28,7 +28,6 @@ public class MaintenanceRequest {
     private String staffUpdateNotes;
     private String resolutionNotes;
     private List<Photo> photos;
-    private List<Comment> comments;
     private WorkOrder workOrder;
     private boolean tenantArchived;
     private boolean staffArchived;
@@ -55,7 +54,6 @@ public class MaintenanceRequest {
         this.lastUpdated = LocalDateTime.now();
         this.status = RequestStatus.SUBMITTED;
         this.photos = new ArrayList<>();
-        this.comments = new ArrayList<>();
     }
 
     public void createRequest(Tenant tenant, String description, CategoryType category) {
@@ -82,11 +80,6 @@ public class MaintenanceRequest {
     public void addPhoto(Photo photo) {
         photo.setRequestId(this.requestId);
         this.photos.add(photo);
-    }
-
-    public void addComment(Comment comment) {
-        comment.setRequestId(this.requestId);
-        this.comments.add(comment);
     }
 
     public PriorityLevel calculatePriority() {
@@ -175,9 +168,6 @@ public class MaintenanceRequest {
 
     public List<Photo> getPhotos() { return photos; }
     public void setPhotos(List<Photo> photos) { this.photos = photos; }
-
-    public List<Comment> getComments() { return comments; }
-    public void setComments(List<Comment> comments) { this.comments = comments; }
 
     public WorkOrder getWorkOrder() { return workOrder; }
     public void setWorkOrder(WorkOrder workOrder) { this.workOrder = workOrder; }

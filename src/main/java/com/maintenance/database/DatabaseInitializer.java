@@ -12,7 +12,6 @@ public class DatabaseInitializer {
         try (Statement stmt = conn.createStatement()) {
 
             // TESTING: Uncomment to wipe db
-//            stmt.execute("DROP TABLE IF EXISTS comments");
 //            stmt.execute("DROP TABLE IF EXISTS photos");
 //            stmt.execute("DROP TABLE IF EXISTS work_orders");
 //            stmt.execute("DROP TABLE IF EXISTS maintenance_requests");
@@ -118,15 +117,6 @@ public class DatabaseInitializer {
                     "file_size BIGINT," +
                     "upload_date TIMESTAMP," +
                     "description VARCHAR(500))");
-
-            // Create Comments table
-            stmt.execute("CREATE TABLE IF NOT EXISTS comments (" +
-                    "comment_id VARCHAR(50) PRIMARY KEY," +
-                    "request_id VARCHAR(50)," +
-                    "user_id VARCHAR(50)," +
-                    "comment_text VARCHAR(2000)," +
-                    "timestamp TIMESTAMP," +
-                    "is_internal BOOLEAN)");
 
             // Create Work Orders table
             stmt.execute("CREATE TABLE IF NOT EXISTS work_orders (" +

@@ -35,17 +35,6 @@ public class MaintenanceStaff extends User {
         return new ArrayList<>(assignedRequests);
     }
 
-    public void updateWorkProgress(String requestId, String progress) {
-        for (MaintenanceRequest request : assignedRequests) {
-            if (request.getRequestId().equals(requestId)) {
-                Comment comment = new Comment();
-                comment.setUserId(this.userId);
-                comment.setCommentText("Progress Update: " + progress);
-                request.addComment(comment);
-                break;
-            }
-        }
-    }
 
     public void markRequestComplete(String requestId, String resolution) {
         for (MaintenanceRequest request : assignedRequests) {
