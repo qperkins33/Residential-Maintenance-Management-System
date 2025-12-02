@@ -357,6 +357,11 @@ public class AdminDashboardController {
         dialog.setTitle("Create New User");
         dialog.setHeaderText("Enter user details");
 
+        DialogPane pane = dialog.getDialogPane();
+        pane.setMinWidth(400);
+        pane.setPrefWidth(400);
+        pane.setMaxWidth(Region.USE_PREF_SIZE);
+
         ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(createButtonType, ButtonType.CANCEL);
 
@@ -364,6 +369,7 @@ public class AdminDashboardController {
         baseGrid.setHgap(10);
         baseGrid.setVgap(10);
         baseGrid.setPadding(new Insets(20));
+        baseGrid.setPrefWidth(400);
 
         TextField userIdField = new TextField();
         userIdField.setPromptText("Leave blank for auto");
