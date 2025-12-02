@@ -30,6 +30,24 @@ public class MaintenanceRequest {
     private List<Photo> photos;
     private List<Comment> comments;
     private WorkOrder workOrder;
+    private boolean tenantArchived;
+    private boolean staffArchived;
+
+    public boolean isTenantArchived() {
+        return tenantArchived;
+    }
+
+    public void setTenantArchived(boolean tenantArchived) {
+        this.tenantArchived = tenantArchived;
+    }
+
+    public boolean isStaffArchived() {
+        return staffArchived;
+    }
+
+    public void setStaffArchived(boolean staffArchived) {
+        this.staffArchived = staffArchived;
+    }
 
     public MaintenanceRequest() {
         this.requestId = IDGenerator.generateRequestId();

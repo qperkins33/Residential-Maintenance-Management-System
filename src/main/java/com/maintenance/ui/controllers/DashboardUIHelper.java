@@ -230,7 +230,6 @@ public final class DashboardUIHelper {
         grid.add(valueLabel, 1, row);
     }
 
-    // Public entry for all controllers. Looks up photo path from DB.
     public static void showRequestDetailsDialog(MaintenanceRequest request) {
         String photoUri = null;
         if (request != null && request.getRequestId() != null) {
@@ -241,10 +240,7 @@ public final class DashboardUIHelper {
         }
     }
 
-    // Internal helper that actually builds the dialog UI. Used when user clicks 'View'
-    // Internal helper that actually builds the dialog UI. Used when user clicks 'View'
     private static void showRequestDetailsDialog(MaintenanceRequest request, String photoUri) {
-        // Look up tenant and staff info using the IDs on the request
         String tenantName = null;
         String tenantPhone = null;
         String tenantEmail = null;
@@ -252,17 +248,15 @@ public final class DashboardUIHelper {
         String staffEmail = null;
         String staffName = null;
 
-        // tenantId in MaintenanceRequest is user_id
         if (request.getTenantId() != null && !request.getTenantId().isBlank()) {
             Tenant tenant = USER_DAO.getTenantById(request.getTenantId());
             if (tenant != null) {
-                tenantName = tenant.getFullName();       // from User base class
-                tenantPhone = tenant.getPhoneNumber();   // from User base class
-                tenantEmail = tenant.getEmail();         // <--- add this
+                tenantName = tenant.getFullName();
+                tenantPhone = tenant.getPhoneNumber();
+                tenantEmail = tenant.getEmail();
             }
         }
 
-        // assignedStaffId is staff_id
         if (request.getAssignedStaffId() != null && !request.getAssignedStaffId().isBlank()) {
             MaintenanceStaff staff = USER_DAO.getStaffByStaffId(request.getAssignedStaffId());
             if (staff != null) {
@@ -302,7 +296,6 @@ public final class DashboardUIHelper {
         addDetailRow(grid, row++, "Request ID:", request.getRequestId());
         addDetailRow(grid, row++, "Apartment:", request.getApartmentNumber());
 
-        // tenant info
         if (tenantName != null && !tenantName.isBlank()) {
             addDetailRow(grid, row++, "Tenant:", tenantName);
         }
@@ -313,7 +306,6 @@ public final class DashboardUIHelper {
             addDetailRow(grid, row++, "Tenant Email:", tenantEmail);
         }
 
-        // assigned staff info
         if (staffName != null && !staffName.isBlank()) {
             addDetailRow(grid, row++, "Assigned Staff:", staffName);
         }
@@ -395,7 +387,6 @@ public final class DashboardUIHelper {
             grid.add(resArea, 1, row++);
         }
 
-        // Photo at the bottom, if present
         if (photoUri != null && !photoUri.isBlank()) {
             Label photoLabel = new Label("Photo:");
             photoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
@@ -482,13 +473,10 @@ public final class DashboardUIHelper {
             });
             statusOptions.getChildren().add(cancelCheck);
         } else {
-            // For SUBMITTED or ASSIGNED: show read only status text, no action toggle
             String statusText = originalStatus.name().replace('_', ' ');
             Label statusLabel = new Label(statusText);
             statusLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
             statusOptions.getChildren().add(statusLabel);
-
-            // Make sure we keep the original status
             selectedStatus[0] = originalStatus;
         }
 
@@ -506,17 +494,29 @@ public final class DashboardUIHelper {
         Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtnType);
         boolean[] updated = {false};
         saveButton.addEventFilter(ActionEvent.ACTION, event -> {
-            if (categoryBox.getValue() == null || priorityBox.getValue() == null || descArea.getText().isBlank()) {
-                new Alert(Alert.AlertType.WARNING, "All fields are required.").showAndWait();
+            if (categoryBox.getValue() == null ||
+                    priorityBox.getValue() == null ||
+                    descArea.getText().isBlank()) {
+                new Alert(Alert.AlertType.WARNING,
+                        "All fields are required.").showAndWait();
                 event.consume();
                 return;
             }
 
+            RequestStatus newStatus = selectedStatus[0];
+
             request.setCategory(categoryBox.getValue());
             request.setDescription(descArea.getText().trim());
             request.setPriority(priorityBox.getValue());
-            request.setStatus(selectedStatus[0]);
+            request.setStatus(newStatus);
             request.setLastUpdated(LocalDateTime.now());
+
+            // If tenant reopens a closed request, clear both archive flags
+            if ((originalStatus == RequestStatus.COMPLETED || originalStatus == RequestStatus.CANCELLED)
+                    && newStatus == RequestStatus.REOPENED) {
+                request.setTenantArchived(false);
+                request.setStaffArchived(false);
+            }
 
             if (!requestDAO.updateRequest(request)) {
                 new Alert(Alert.AlertType.ERROR, "Unable to update request. Please try again.").showAndWait();
