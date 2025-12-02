@@ -63,23 +63,6 @@ public class Tenant extends User {
         return null;
     }
 
-    public void addCommentToRequest(String requestId, String comment) {
-        for (MaintenanceRequest request : myRequests) {
-            if (request.getRequestId().equals(requestId)) {
-                Comment newComment = new Comment();
-                newComment.setUserId(this.userId);  // Using inherited protected field
-                newComment.setCommentText(comment);
-                request.addComment(newComment);
-                break;
-            }
-        }
-    }
-
-    public void rateService(String requestId, int rating, String feedback) {
-        // Rating logic implementation
-        System.out.println("Rating request " + requestId + " with " + rating + " stars");
-    }
-
     // Getters and Setters for Tenant-specific fields
     public String getApartmentNumber() {
         return apartmentNumber;
