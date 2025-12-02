@@ -137,7 +137,7 @@ public class LoginController {
         Button loginButton = getButton(usernameField, passwordField, errorLabel);
 
         // Demo credentials info
-        Label infoLabel = new Label("Demo: admin1/pass123, tenant1/pass123, manager1/pass123, staff1/pass123");
+        Label infoLabel = new Label("Demo: admin1/pass123");
         infoLabel.setFont(Font.font("Arial", 10));
         infoLabel.setTextFill(Color.GRAY);
         infoLabel.setWrapText(true);
