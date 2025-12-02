@@ -126,15 +126,6 @@ public class DatabaseInitializer {
                     "instructions VARCHAR(2000)," +
                     "status VARCHAR(20))");
 
-            // Create Notifications table
-            stmt.execute("CREATE TABLE IF NOT EXISTS notifications (" +
-                    "notification_id VARCHAR(50) PRIMARY KEY," +
-                    "recipient_id VARCHAR(50)," +
-                    "message VARCHAR(1000)," +
-                    "notification_type VARCHAR(50)," +
-                    "is_read BOOLEAN," +
-                    "sent_date TIMESTAMP)");
-
             // Insert default users
             insertDefaultUsers(stmt);
 
