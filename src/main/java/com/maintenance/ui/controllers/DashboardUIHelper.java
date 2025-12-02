@@ -33,7 +33,6 @@ public final class DashboardUIHelper {
     private static final PhotoDAO PHOTO_DAO = new PhotoDAO();
     private static final UserDAO USER_DAO = new UserDAO();
 
-
     private DashboardUIHelper() {}
 
     public static void applyRootStyles(AnchorPane root, Class<?> clazz) {
