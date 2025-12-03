@@ -2,6 +2,7 @@ package com.maintenance.ui.controllers;
 
 import com.maintenance.dao.MaintenanceRequestDAO;
 import com.maintenance.database.DatabaseManager;
+import com.maintenance.enums.CategoryType;
 import com.maintenance.enums.RequestStatus;
 import com.maintenance.models.Admin;
 import com.maintenance.models.MaintenanceRequest;
@@ -51,9 +52,6 @@ public class AdminDashboardController {
         HBox topBar = createTopBar();
         mainLayout.setTop(topBar);
 
-//        VBox sidebar = createSidebar();
-//        mainLayout.setLeft(sidebar);
-
         VBox centerContent = createCenterContent();
         VBox.setVgrow(centerContent, Priority.ALWAYS);
         mainLayout.setCenter(centerContent);
@@ -98,24 +96,6 @@ public class AdminDashboardController {
         topBar.getChildren().addAll(titleLabel, spacer, userLabel, logoutButton);
         return topBar;
     }
-
-//    private VBox createSidebar() {
-//        VBox sidebar = new VBox(15);
-//        sidebar.setPadding(new Insets(20));
-//        sidebar.setStyle("-fx-background-color: #2c3e50;");
-//        sidebar.setPrefWidth(250);
-//
-//        Label menuLabel = new Label("MENU");
-//        menuLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-//        menuLabel.setTextFill(javafx.scene.paint.Color.web("#95a5a6"));
-//
-//        Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
-////        Button usersBtn = DashboardUIHelper.createSidebarButton("👥 Users", false);
-////        Button settingsBtn = DashboardUIHelper.createSidebarButton("⚙️ Settings", false);
-//
-//        sidebar.getChildren().addAll(menuLabel, dashboardBtn);
-//        return sidebar;
-//    }
 
     private VBox createCenterContent() {
         VBox content = new VBox(20);
@@ -358,8 +338,8 @@ public class AdminDashboardController {
         dialog.setHeaderText("Enter user details");
 
         DialogPane pane = dialog.getDialogPane();
-        pane.setMinWidth(400);
-        pane.setPrefWidth(400);
+        pane.setMinWidth(430);
+        pane.setPrefWidth(430);
         pane.setMaxWidth(Region.USE_PREF_SIZE);
 
         ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
@@ -369,7 +349,7 @@ public class AdminDashboardController {
         baseGrid.setHgap(10);
         baseGrid.setVgap(10);
         baseGrid.setPadding(new Insets(20));
-        baseGrid.setPrefWidth(400);
+        baseGrid.setPrefWidth(430);
 
         TextField userIdField = new TextField();
         userIdField.setPromptText("Leave blank for auto");
@@ -459,8 +439,16 @@ public class AdminDashboardController {
         TextField staffIdField = new TextField();
         staffIdField.setPromptText("STF001");
 
-        TextField specializationsField = new TextField();
-        specializationsField.setPromptText("Plumbing,Electrical");
+        final List<CheckBox> specializationChecks = new ArrayList<>();
+        FlowPane specializationPane = new FlowPane(10, 5);
+        specializationPane.setPrefWrapLength(260);
+
+        for (CategoryType ct : CategoryType.values()) {
+            CheckBox cb = new CheckBox(ct.getDisplayName());
+            cb.setUserData(ct.name());
+            specializationChecks.add(cb);
+            specializationPane.getChildren().add(cb);
+        }
 
         Spinner<Integer> maxCapacitySpinner = new Spinner<>(1, 100, 10);
 
@@ -468,7 +456,7 @@ public class AdminDashboardController {
         staffGrid.add(new Label("Staff ID:"), 0, sRow);
         staffGrid.add(staffIdField, 1, sRow++);
         staffGrid.add(new Label("Specializations:"), 0, sRow);
-        staffGrid.add(specializationsField, 1, sRow++);
+        staffGrid.add(specializationPane, 1, sRow++);
         staffGrid.add(new Label("Max Capacity:"), 0, sRow);
         staffGrid.add(maxCapacitySpinner, 1, sRow);
 
@@ -618,6 +606,27 @@ public class AdminDashboardController {
                 }
             }
 
+            String specializationString = null;
+            if ("STAFF".equals(userType)) {
+                StringBuilder sb = new StringBuilder();
+                for (CheckBox cb : specializationChecks) {
+                    if (cb.isSelected()) {
+                        if (!sb.isEmpty()) {
+                            sb.append(",");
+                        }
+                        sb.append(cb.getUserData());
+                    }
+                }
+                if (sb.isEmpty()) {
+                    new Alert(Alert.AlertType.WARNING,
+                            "Select at least one specialization for maintenance staff.")
+                            .showAndWait();
+                    event.consume();
+                    return;
+                }
+                specializationString = sb.toString();
+            }
+
             boolean success = createUserInDatabase(
                     customUserId,
                     username,
@@ -634,7 +643,7 @@ public class AdminDashboardController {
                     emergencyContactField.getText().trim(),
                     emergencyPhoneField.getText().trim(),
                     staffIdField.getText().trim(),
-                    specializationsField.getText().trim(),
+                    specializationString,
                     maxCapacitySpinner.getValue(),
                     employeeIdField.getText().trim(),
                     departmentField.getText().trim()
@@ -785,9 +794,6 @@ public class AdminDashboardController {
         }
     }
 
-    /**
-     * Edit User dialog: only activate/deactivate toggle.
-     */
     private void showEditUserDialog(UserRow row) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Edit User");
