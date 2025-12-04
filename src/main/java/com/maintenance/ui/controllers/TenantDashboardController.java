@@ -33,7 +33,7 @@ public class TenantDashboardController {
     private final PhotoDAO photoDAO;
     private TableView<MaintenanceRequest> requestTable;
     private HBox statsBox;
-    private ComboBox<String> filterBox = new ComboBox<>();
+    private final ComboBox<String> filterBox = new ComboBox<>();
 
     public TenantDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;

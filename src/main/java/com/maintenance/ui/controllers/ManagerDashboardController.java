@@ -29,7 +29,7 @@ public class ManagerDashboardController {
     private final UserDAO userDAO;
     private TableView<MaintenanceRequest> requestTable;
     private HBox statsBox;
-    private ComboBox<String> filterBox = new ComboBox<>();
+    private final ComboBox<String> filterBox = new ComboBox<>();
 
     public ManagerDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
