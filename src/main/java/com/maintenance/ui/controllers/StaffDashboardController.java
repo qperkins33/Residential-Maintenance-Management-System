@@ -484,7 +484,10 @@ public class StaffDashboardController {
                         "Unable to save staff update. Please try again.").showAndWait();
                 event.consume();
             } else {
-                String tech = resolveTechnicianName(request);
+                String staff = resolveTechnicianName(request);
+                String staffEmail = requestDAO
+                        .findStaffEmailByRequestId(request.getRequestId())
+                        .orElse("");
                 final String updateText = text;
 
                 final String tenantName = requestDAO
@@ -501,11 +504,12 @@ public class StaffDashboardController {
                                             "Request ID: " + request.getRequestId() + "\n" +
                                             "Status: " + request.getStatus() + "\n" +
                                             "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
-                                            "Technician: " + tech + "\n\n" +
+                                            "Technician: " + staff + "\n\n" +
                                             "Description: " + request.getDescription() + "\n\n" +
                                             "Update from technician:\n" +
                                             updateText + "\n\n" +
-                                            "Reply to this email if you have questions.\n" +
+                                            "Reply to the following email if you have questions:\n" +
+                                            staffEmail + "\n\n" +
                                             "Residential Maintenance";
                             Email.send(to, subject, body);
                         })
@@ -643,7 +647,10 @@ public class StaffDashboardController {
                 request.setLastUpdated(java.time.LocalDateTime.now());
 
                 if (requestDAO.updateRequest(request)) {
-                    String tech = resolveTechnicianName(request);
+                    String staff = resolveTechnicianName(request);
+                    String staffEmail = requestDAO
+                            .findStaffEmailByRequestId(request.getRequestId())
+                            .orElse("");
 
                     String previousStatusText = previousStatus.toString();
 
@@ -661,9 +668,10 @@ public class StaffDashboardController {
                                                 "Request ID: " + request.getRequestId() + "\n" +
                                                 "Status: In Progress\n" +
                                                 "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
-                                                "Technician: " + tech + "\n\n" +
+                                                "Technician: " + staff + "\n\n" +
                                                 "Description: " + request.getDescription() + "\n\n" +
-                                                "Reply to this email if you have questions.\n" +
+                                                "Reply to the following email if you have questions:\n" +
+                                                staffEmail + "\n\n" +
                                                 "Residential Maintenance";
                                 Email.send(to, subject, body);
                             })
@@ -774,7 +782,10 @@ public class StaffDashboardController {
             request.close(resolution);
 
             if (requestDAO.updateRequest(request)) {
-                String tech = resolveTechnicianName(request);
+                String staff = resolveTechnicianName(request);
+                String staffEmail = requestDAO
+                        .findStaffEmailByRequestId(request.getRequestId())
+                        .orElse("");
 
                 String previousStatusText = previousStatus.toString();
                 final String formattedCost = String.format("%.2f", cost);
@@ -793,11 +804,12 @@ public class StaffDashboardController {
                                             "Request ID: " + request.getRequestId() + "\n" +
                                             "Status: Completed\n" +
                                             "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
-                                            "Technician: " + tech + "\n\n" +
+                                            "Technician: " + staff + "\n\n" +
                                             "Description: " + request.getDescription() + "\n\n" +
                                             "Resolution: " + resolution + "\n" +
                                             "Cost: $" + formattedCost + "\n\n" +
-                                            "Reply to this email if you have questions.\n" +
+                                            "Reply to the following email if you have questions:\n" +
+                                            staffEmail + "\n\n" +
                                             "Residential Maintenance";
                             Email.send(to, subject, body);
                         })
