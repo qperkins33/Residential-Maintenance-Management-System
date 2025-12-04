@@ -33,6 +33,7 @@ public class StaffDashboardController {
     private TableView<MaintenanceRequest> requestTable;
     private Label workloadLabel;
     private HBox statsBox;
+    private final ComboBox<String> filterBox = new ComboBox<>();
 
     public StaffDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
@@ -207,7 +208,6 @@ public class StaffDashboardController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        ComboBox<String> filterBox = new ComboBox<>();
         filterBox.getItems().addAll(
                 "All Tasks",
                 "Assigned",
@@ -531,6 +531,7 @@ public class StaffDashboardController {
         refreshWorkload();
         refreshStats();
         requestTable.sort();
+        filterBox.setValue("All Tasks");
     }
 
     private void filterRequests(String filter) {
