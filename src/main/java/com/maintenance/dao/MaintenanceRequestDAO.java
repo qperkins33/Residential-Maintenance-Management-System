@@ -62,6 +62,57 @@ public class MaintenanceRequestDAO {
         }
     }
 
+    public Optional<String> findStaffNameByRequestId(String requestId) {
+        String sql = """
+            SELECT u.first_name, u.last_name
+            FROM maintenance_requests r
+            JOIN maintenance_staff ms ON r.assigned_staff_id = ms.staff_id
+            JOIN users u ON u.user_id = ms.user_id
+            WHERE r.request_id = ?
+            """;
+
+        try (PreparedStatement ps = dbManager.getConnection().prepareStatement(sql)) {
+            ps.setString(1, requestId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String first = rs.getString("first_name");
+                    String last = rs.getString("last_name");
+                    String full = ((first == null ? "" : first.trim()) + " " +
+                            (last == null ? "" : last.trim())).trim();
+                    return full.isEmpty() ? Optional.empty() : Optional.of(full);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error loading staff name by request_id: " + e.getMessage());
+        }
+
+        return Optional.empty();
+    }
+
+    public Optional<String> findStaffEmailByRequestId(String requestId) {
+        String sql = """
+            SELECT u.email
+            FROM maintenance_requests mr
+            JOIN maintenance_staff ms ON mr.assigned_staff_id = ms.staff_id
+            JOIN users u ON u.user_id = ms.user_id
+            WHERE mr.request_id = ?
+            """;
+
+        try (PreparedStatement ps = dbManager.getConnection().prepareStatement(sql)) {
+            ps.setString(1, requestId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.ofNullable(rs.getString("email"));
+                }
+                return Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to fetch staff email for request " + requestId, e);
+        }
+    }
+
+
     public boolean saveRequest(MaintenanceRequest request) {
         String sql = "INSERT INTO maintenance_requests (" +
                 "request_id, tenant_id, apartment_number, " +
