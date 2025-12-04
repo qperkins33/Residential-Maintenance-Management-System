@@ -350,8 +350,9 @@ public class TenantDashboardController {
 
                 buttonBox.getChildren().clear();
 
-                // Always allow edit
-                buttonBox.getChildren().add(editBtn);
+                if (!isCompleted(request)) {
+                    buttonBox.getChildren().add(editBtn);
+                }
 
                 if (request.isTenantArchived()) {
                     // Archived view: show Unarchive instead of Archive
