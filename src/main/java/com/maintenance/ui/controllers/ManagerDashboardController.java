@@ -29,6 +29,7 @@ public class ManagerDashboardController {
     private final UserDAO userDAO;
     private TableView<MaintenanceRequest> requestTable;
     private HBox statsBox;
+    private ComboBox<String> filterBox = new ComboBox<>();
 
     public ManagerDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
@@ -221,7 +222,6 @@ public class ManagerDashboardController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        ComboBox<String> filterBox = new ComboBox<>();
         filterBox.getItems().addAll(
                 "All Requests",
                 "Unassigned",
@@ -380,6 +380,7 @@ public class ManagerDashboardController {
         requestTable.setItems(FXCollections.observableArrayList(requestDAO.getAllRequests()));
         refreshStats();
         requestTable.sort();   // keep sort by date desc
+        filterBox.setValue("All Requests");
     }
 
     private void filterRequests(String filter) {

@@ -33,6 +33,7 @@ public class TenantDashboardController {
     private final PhotoDAO photoDAO;
     private TableView<MaintenanceRequest> requestTable;
     private HBox statsBox;
+    private ComboBox<String> filterBox = new ComboBox<>();
 
     public TenantDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
@@ -213,7 +214,6 @@ public class TenantDashboardController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        ComboBox<String> filterBox = new ComboBox<>();
         filterBox.getItems().addAll(
                 "All Requests",
                 "Pending Start",
@@ -405,18 +405,16 @@ public class TenantDashboardController {
 
     private void loadRequests() {
         Tenant tenant = (Tenant) authService.getCurrentUser();
-        List<MaintenanceRequest> allRequests =
-                requestDAO.getRequestsByTenant(tenant.getUserId());
-        List<MaintenanceRequest> visible =
-                allRequests.stream()
+        List<MaintenanceRequest> allRequests = requestDAO.getRequestsByTenant(tenant.getUserId());
+        List<MaintenanceRequest> visible = allRequests.stream()
                         .filter(r -> !r.isTenantArchived())
                         .toList();
 
-        ObservableList<MaintenanceRequest> requests =
-                FXCollections.observableArrayList(visible);
+        ObservableList<MaintenanceRequest> requests = FXCollections.observableArrayList(visible);
         requestTable.setItems(requests);
         refreshStats();
         requestTable.sort();
+        filterBox.setValue("All Requests");
     }
 
     private void filterRequests(String filter) {
