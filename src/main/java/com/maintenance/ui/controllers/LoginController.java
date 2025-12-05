@@ -82,6 +82,9 @@ public class LoginController {
         tagline.setFont(Font.font("Arial", 17));
         tagline.setTextFill(Color.web("#f1f3ff"));
 
+        // Space above and below
+        VBox.setMargin(tagline, new Insets(6, 0, 6, 0));
+
         HBox heroHeader = new HBox(12, appNameLarge);
         heroHeader.setAlignment(Pos.CENTER_LEFT);
 

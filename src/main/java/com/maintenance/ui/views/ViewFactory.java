@@ -20,7 +20,7 @@ public class ViewFactory {
             Scene scene = new Scene(root, 1200, 700);
             scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
 
-            stage.setTitle("Residential Maintenance System - Login");
+            stage.setTitle("RMMS - Login");
             stage.setScene(scene);
             stage.setMaximized(true);
             stage.show();
@@ -39,7 +39,7 @@ public class ViewFactory {
             Scene scene = new Scene(root, 1200, 700);
             scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
 
-            stage.setTitle("Tenant Dashboard");
+            stage.setTitle("RMMS - Tenant Dashboard");
             stage.setScene(scene);
             stage.setMaximized(true);
             stage.show();
@@ -58,7 +58,7 @@ public class ViewFactory {
             Scene scene = new Scene(root, 1200, 700);
             scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
 
-            stage.setTitle("Manager Dashboard");
+            stage.setTitle("RMMS - Manager Dashboard");
             stage.setScene(scene);
             stage.setMaximized(true);
             stage.show();
@@ -77,7 +77,7 @@ public class ViewFactory {
             Scene scene = new Scene(root, 1200, 700);
             scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
 
-            stage.setTitle("Staff Dashboard");
+            stage.setTitle("RMMS - Staff Dashboard");
             stage.setScene(scene);
             stage.setMaximized(true);
             stage.show();
@@ -96,7 +96,7 @@ public class ViewFactory {
             Scene scene = new Scene(root, 1200, 700);
             scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
 
-            stage.setTitle("Admin Dashboard");
+            stage.setTitle("RMMS - Admin Dashboard");
             stage.setScene(scene);
             stage.setMaximized(true);
             stage.show();
