@@ -390,6 +390,8 @@ public class StaffDashboardController {
                     buttonBox.getChildren().addAll(completeBtn, updateBtn, viewBtn);
                 } else if (isCompleted(request)) {
                     buttonBox.getChildren().addAll(archiveBtn, postUpdateBtn, viewBtn);
+                } else if (request.getStatus() == RequestStatus.CANCELLED) {
+                    buttonBox.getChildren().addAll(archiveBtn, updateBtn, viewBtn);
                 } else {
                     buttonBox.getChildren().addAll(updateBtn, viewBtn);
                 }
@@ -599,8 +601,8 @@ public class StaffDashboardController {
             return;
         }
 
-        if (!isCompleted(request)) {
-            showError("Only completed requests can be archived.");
+        if (!isCompleted(request) && request.getStatus() != RequestStatus.CANCELLED) {
+            showError("Only completed or cancelled requests can be archived.");
             return;
         }
 
