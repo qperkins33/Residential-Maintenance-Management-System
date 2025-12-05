@@ -202,8 +202,8 @@ public class ManagerDashboardController {
         // Make cards clickable to change filter
         totalCard.setOnMouseClicked(e -> setFilterFromCard("All Requests"));
         unassignedCard.setOnMouseClicked(e -> setFilterFromCard("Unassigned"));
-        pendingCard.setOnMouseClicked(e -> setFilterFromCard("In Progress"));
-        inProgressCard.setOnMouseClicked(e -> setFilterFromCard("Not Started"));
+        pendingCard.setOnMouseClicked(e -> setFilterFromCard("Not Started"));
+        inProgressCard.setOnMouseClicked(e -> setFilterFromCard("In Progress"));
         completedCard.setOnMouseClicked(e -> setFilterFromCard("Completed"));
         cancelledCard.setOnMouseClicked(e -> setFilterFromCard("Cancelled"));
 

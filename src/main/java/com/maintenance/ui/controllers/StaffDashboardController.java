@@ -228,7 +228,7 @@ public class StaffDashboardController {
         totalCard.setOnMouseClicked(e -> setFilterFromCard("All Tasks"));
         assignedCard.setOnMouseClicked(e -> setFilterFromCard("Assigned"));
         inProgressCard.setOnMouseClicked(e -> setFilterFromCard("In Progress"));
-        urgentCard.setOnMouseClicked(e -> setFilterFromCard("Urgent Only"));
+        urgentCard.setOnMouseClicked(e -> setFilterFromCard("Urgent (Active)"));
         completedCard.setOnMouseClicked(e -> setFilterFromCard("Completed"));
         cancelledCard.setOnMouseClicked(e -> setFilterFromCard("Cancelled"));
 
@@ -259,7 +259,7 @@ public class StaffDashboardController {
                 "All Tasks",
                 "Assigned",
                 "In Progress",
-                "Urgent Only",
+                "Urgent (Active)",
                 "Completed",
                 "Cancelled",
                 "Archived"
@@ -618,7 +618,7 @@ public class StaffDashboardController {
                 case "In Progress" -> filtered = filtered.stream()
                         .filter(this::isInProgress)
                         .toList();
-                case "Urgent Only" -> filtered = filtered.stream()
+                case "Urgent (Active)" -> filtered = filtered.stream()
                         .filter(r -> (r.getPriority() == PriorityLevel.URGENT ||
                                 r.getPriority() == PriorityLevel.EMERGENCY) &&
                                 !isCompleted(r) && !isCancelled(r))
