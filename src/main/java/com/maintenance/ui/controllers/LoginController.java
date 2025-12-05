@@ -32,7 +32,11 @@ public class LoginController {
     }
 
     public void createLoginUI(AnchorPane root) {
-        // Full window background
+        // Attach global app styles so login shares the same visual system
+        DashboardUIHelper.applyRootStyles(root, getClass());
+
+        // Clear any previous content and set the gradient background
+        root.getChildren().clear();
         root.setStyle("-fx-background-color: linear-gradient(to bottom right, #667eea 0%, #764ba2 100%);");
 
         // Outer container that fills the screen and adds padding around the centered card
@@ -57,25 +61,25 @@ public class LoginController {
         // LEFT PANEL
         VBox brandingPanel = new VBox(18);
         brandingPanel.setAlignment(Pos.TOP_LEFT);
-        brandingPanel.setPrefWidth(380); // slightly wider
+        brandingPanel.setPrefWidth(380);
         brandingPanel.setPadding(new Insets(28));
         brandingPanel.setStyle(
                 "-fx-background-color: linear-gradient(to bottom right, #667eea, #764ba2); " +
                         "-fx-background-radius: 22;"
         );
 
-        Label appNameLarge = new Label("Building Maintenance Hub");
+        Label appNameLarge = new Label("Residential Maintenance Management System");
         appNameLarge.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 30));
         appNameLarge.setTextFill(Color.WHITE);
-        appNameLarge.setWrapText(true);                 // allow wrapping
-        appNameLarge.setMaxWidth(260);                  // prevents cutoff in HBox
-        HBox.setHgrow(appNameLarge, Priority.ALWAYS);   // let it use remaining space
+        appNameLarge.setWrapText(true);
+        appNameLarge.setMaxWidth(260);
+        HBox.setHgrow(appNameLarge, Priority.ALWAYS);
 
         Label tagline = new Label(
                 "Centralize tenant issues, assign work orders, and keep your buildings running smoothly."
         );
         tagline.setWrapText(true);
-        tagline.setFont(Font.font("Arial", 20));
+        tagline.setFont(Font.font("Arial", 17));
         tagline.setTextFill(Color.web("#f1f3ff"));
 
         HBox heroHeader = new HBox(12, appNameLarge);
@@ -116,7 +120,6 @@ public class LoginController {
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 25, 0, 0, 10);"
         );
 
-        // Load apartment icon image
         ImageView appIconView = new ImageView(appIcon);
         appIconView.setFitWidth(26);
         appIconView.setFitHeight(26);
@@ -147,7 +150,6 @@ public class LoginController {
                         "-fx-border-color: transparent;"
         );
 
-        // Password field
         Label passwordLabel = new Label("Password");
         passwordLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 13));
         passwordLabel.setTextFill(Color.web("#374151"));
@@ -205,7 +207,6 @@ public class LoginController {
         StackPane.setMargin(eyeIconView, new Insets(0, 10, 0, 0));
         passwordFieldContainer.getChildren().addAll(passwordStack, eyeIconView);
 
-        // Error label
         Label errorLabel = new Label();
         errorLabel.setTextFill(Color.web("#b91c1c"));
         errorLabel.setWrapText(true);
@@ -215,7 +216,6 @@ public class LoginController {
         );
         errorLabel.setVisible(false);
 
-        // Button
         Button loginButton = getButton(usernameField, passwordField, errorLabel);
         loginButton.setMaxWidth(Double.MAX_VALUE);
         loginButton.setStyle(
@@ -241,28 +241,17 @@ public class LoginController {
                 )
         );
 
-        Label infoLabel = new Label("Demo access: admin1 / pass123");
-        infoLabel.setFont(Font.font("Arial", 10));
-        infoLabel.setTextFill(Color.web("#6b7280"));
-        infoLabel.setStyle(
-                "-fx-background-color: #f3f4ff; -fx-padding: 6 10 6 10; " +
-                        "-fx-background-radius: 9999;"
-        );
-        infoLabel.setWrapText(true);
-
         VBox userBox = new VBox(6, usernameLabel, usernameField);
         VBox passBox = new VBox(6, passwordLabel, passwordFieldContainer);
         userBox.setMaxWidth(Double.MAX_VALUE);
         passBox.setMaxWidth(Double.MAX_VALUE);
 
-        // Remember and forgot removed, so inputs go directly to error/button
         mainContainer.getChildren().addAll(
                 headerRow,
                 userBox,
                 passBox,
                 errorLabel,
-                loginButton,
-                infoLabel
+                loginButton
         );
 
         shell.getChildren().addAll(brandingPanel, mainContainer);
@@ -275,7 +264,6 @@ public class LoginController {
         AnchorPane.setLeftAnchor(outer, 0.0);
         AnchorPane.setRightAnchor(outer, 0.0);
 
-        root.getChildren().clear();
         root.getChildren().add(outer);
     }
 
