@@ -185,12 +185,42 @@ public class StaffDashboardController {
                         && !isCompleted(r) && !isCancelled(r))
                 .count();
 
-        VBox totalCard = DashboardUIHelper.createStatCard("Total Requests", String.valueOf(allRequests.size()), "#667eea", "📋");
-        VBox urgentCard = DashboardUIHelper.createStatCard("Urgent (Active)", String.valueOf(urgent), "#f44336", "🚨");
-        VBox inProgressCard = DashboardUIHelper.createStatCard("In Progress", String.valueOf(inProgress), "#ff9800", "👷");
-        VBox pendingCard = DashboardUIHelper.createStatCard("Assigned", String.valueOf(notStarted), "#2196f3", "⏸️");
-        VBox completedCard = DashboardUIHelper.createStatCard("Completed", String.valueOf(completed), "#4caf50", "✅");
-        VBox cancelledCard = DashboardUIHelper.createStatCard("Cancelled", String.valueOf(cancelled), "#f44336", "❌");
+        VBox totalCard = DashboardUIHelper.createStatCard(
+                "Total Requests",
+                String.valueOf(allRequests.size()),
+                "#667eea",
+                DashboardUIHelper.loadStatIcon("request.png")
+        );
+        VBox urgentCard = DashboardUIHelper.createStatCard(
+                "Urgent (Active)",
+                String.valueOf(urgent),
+                "#f44336",
+                DashboardUIHelper.loadStatIcon("urgent.png")
+        );
+        VBox inProgressCard = DashboardUIHelper.createStatCard(
+                "In Progress",
+                String.valueOf(inProgress),
+                "#ff9800",
+                DashboardUIHelper.loadStatIcon("in-progress.png")
+        );
+        VBox pendingCard = DashboardUIHelper.createStatCard(
+                "Assigned",
+                String.valueOf(notStarted),
+                "#2196f3",
+                DashboardUIHelper.loadStatIcon("to-do.png")
+        );
+        VBox completedCard = DashboardUIHelper.createStatCard(
+                "Completed",
+                String.valueOf(completed),
+                "#4caf50",
+                DashboardUIHelper.loadStatIcon("completed.png")
+        );
+        VBox cancelledCard = DashboardUIHelper.createStatCard(
+                "Cancelled",
+                String.valueOf(cancelled),
+                "#f44336",
+                DashboardUIHelper.loadStatIcon("cancelled.png")
+        );
 
         statsBox.getChildren().addAll(totalCard, urgentCard, pendingCard, inProgressCard, completedCard, cancelledCard);
     }

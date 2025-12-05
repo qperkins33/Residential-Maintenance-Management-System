@@ -166,37 +166,37 @@ public class ManagerDashboardController {
                 "Total Requests",
                 String.valueOf(allRequests.size()),
                 "#667eea",
-                "📋"
+                DashboardUIHelper.loadStatIcon("request.png")
         );
         VBox unassignedCard = DashboardUIHelper.createStatCard(
                 "Unassigned",
                 String.valueOf(unassigned),
                 "#2196f3",
-                "👀"
+                DashboardUIHelper.loadStatIcon("unassigned.png")
         );
         VBox pendingCard = DashboardUIHelper.createStatCard(
                 "Not Started",
                 String.valueOf(notStarted),
                 "#2196f3",
-                "⏸️"
+                DashboardUIHelper.loadStatIcon("not-started.png")
         );
         VBox inProgressCard = DashboardUIHelper.createStatCard(
                 "In Progress",
                 String.valueOf(inProgress),
                 "#ff9800",
-                "👷️"
+                DashboardUIHelper.loadStatIcon("in-progress.png")
         );
         VBox completedCard = DashboardUIHelper.createStatCard(
                 "Completed",
                 String.valueOf(completed),
                 "#4caf50",
-                "✅"
+                DashboardUIHelper.loadStatIcon("completed.png")
         );
         VBox cancelledCard = DashboardUIHelper.createStatCard(
                 "Cancelled",
                 String.valueOf(cancelled),
                 "#f44336",
-                "❌"
+                DashboardUIHelper.loadStatIcon("cancelled.png")
         );
 
         statsBox.getChildren().addAll(
