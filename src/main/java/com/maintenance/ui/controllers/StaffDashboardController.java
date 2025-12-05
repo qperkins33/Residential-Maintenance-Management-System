@@ -172,22 +172,24 @@ public class StaffDashboardController {
         statsBox.getChildren().clear();
 
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
-        // Use ALL staff requests (including archived) for stats
+        // Use only NON-archived requests for stats
         List<MaintenanceRequest> allRequests = requestDAO.getRequestsByStaff(staff.getStaffId());
+        List<MaintenanceRequest> activeRequests = allRequests.stream()
+                .filter(r -> !r.isStaffArchived())
+                .toList();
 
-        long notStarted = allRequests.stream().filter(this::isNotStarted).count();
-        long inProgress = allRequests.stream().filter(this::isInProgress).count();
-        long completed = allRequests.stream().filter(this::isCompleted).count();
-        long cancelled = allRequests.stream().filter(this::isCancelled).count();
-
-        long urgent = allRequests.stream()
+        long notStarted = activeRequests.stream().filter(this::isNotStarted).count();
+        long inProgress = activeRequests.stream().filter(this::isInProgress).count();
+        long completed = activeRequests.stream().filter(this::isCompleted).count();
+        long cancelled = activeRequests.stream().filter(this::isCancelled).count();
+        long urgent = activeRequests.stream()
                 .filter(r -> (r.getPriority() == PriorityLevel.URGENT || r.getPriority() == PriorityLevel.EMERGENCY)
                         && !isCompleted(r) && !isCancelled(r))
                 .count();
 
         VBox totalCard = DashboardUIHelper.createStatCard(
                 "Total Requests",
-                String.valueOf(allRequests.size()),
+                String.valueOf(activeRequests.size()),
                 "#667eea",
                 DashboardUIHelper.loadStatIcon("request.png")
         );
