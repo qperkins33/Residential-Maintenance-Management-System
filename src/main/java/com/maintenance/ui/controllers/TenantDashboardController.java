@@ -350,19 +350,15 @@ public class TenantDashboardController {
 
                 buttonBox.getChildren().clear();
 
-                if (!isCompleted(request)) {
-                    buttonBox.getChildren().add(editBtn);
-                }
-
                 if (request.isTenantArchived()) {
                     // Archived view: show Unarchive instead of Archive
                     buttonBox.getChildren().add(unarchiveBtn);
-                } else if (isCompleted(request)) {
+                } else if (isCompleted(request) || request.getStatus() == RequestStatus.CANCELLED) {
                     // Completed and not archived: allow Archive
                     buttonBox.getChildren().add(archiveBtn);
                 }
 
-                buttonBox.getChildren().add(viewBtn);
+                buttonBox.getChildren().addAll(editBtn, viewBtn);
                 setGraphic(buttonBox);
             }
         });
@@ -459,9 +455,9 @@ public class TenantDashboardController {
             return;
         }
 
-        if (!isCompleted(request)) {
+        if (!isCompleted(request) && request.getStatus() != RequestStatus.CANCELLED) {
             new Alert(Alert.AlertType.INFORMATION,
-                    "Only completed requests can be archived.").showAndWait();
+                    "Only completed or cancelled requests can be archived.").showAndWait();
             return;
         }
 
