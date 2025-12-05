@@ -152,17 +152,20 @@ public class TenantDashboardController {
         statsBox.getChildren().clear();
 
         Tenant tenant = (Tenant) authService.getCurrentUser();
-        // Use ALL requests (including archived) for stats
+        // Use only NON-archived requests for stats
         List<MaintenanceRequest> allRequests = requestDAO.getRequestsByTenant(tenant.getUserId());
+        List<MaintenanceRequest> activeRequests = allRequests.stream()
+                .filter(r -> !r.isTenantArchived())
+                .toList();
 
-        long notStarted = allRequests.stream().filter(this::isNotStarted).count();
-        long inProgress = allRequests.stream().filter(this::isInProgress).count();
-        long completed = allRequests.stream().filter(this::isCompleted).count();
-        long cancelled = allRequests.stream().filter(this::isCancelled).count();
+        long notStarted = activeRequests.stream().filter(this::isNotStarted).count();
+        long inProgress = activeRequests.stream().filter(this::isInProgress).count();
+        long completed = activeRequests.stream().filter(this::isCompleted).count();
+        long cancelled = activeRequests.stream().filter(this::isCancelled).count();
 
         VBox totalCard = DashboardUIHelper.createStatCard(
                 "Total Requests",
-                String.valueOf(allRequests.size()),
+                String.valueOf(activeRequests.size()),
                 "#667eea",
                 DashboardUIHelper.loadStatIcon("request.png")
         );
@@ -190,6 +193,13 @@ public class TenantDashboardController {
                 "#f44336",
                 DashboardUIHelper.loadStatIcon("cancelled.png")
         );
+
+        // Make cards clickable to change filter
+        totalCard.setOnMouseClicked(e -> setFilterFromCard("All Requests"));
+        pendingCard.setOnMouseClicked(e -> setFilterFromCard("Pending Start"));
+        inProgressCard.setOnMouseClicked(e -> setFilterFromCard("In Progress"));
+        completedCard.setOnMouseClicked(e -> setFilterFromCard("Completed"));
+        cancelledCard.setOnMouseClicked(e -> setFilterFromCard("Cancelled"));
 
         statsBox.getChildren().addAll(
                 totalCard,
@@ -223,7 +233,13 @@ public class TenantDashboardController {
         );
         filterBox.setValue("All Requests");
         filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
-        filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
+//        filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
+
+        filterBox.valueProperty().addListener((obs, oldFilter, newFilter) -> {
+            if (newFilter != null) {
+                filterRequests(newFilter);
+            }
+        });
 
         Button refreshBtn = new Button("🔄 Refresh");
         refreshBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
@@ -287,6 +303,10 @@ public class TenantDashboardController {
         section.getChildren().addAll(headerBox, requestTable);
         VBox.setVgrow(requestTable, Priority.ALWAYS);
         return section;
+    }
+
+    private void setFilterFromCard(String filter) {
+        filterBox.setValue(filter);
     }
 
     private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {

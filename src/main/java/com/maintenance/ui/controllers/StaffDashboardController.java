@@ -172,22 +172,24 @@ public class StaffDashboardController {
         statsBox.getChildren().clear();
 
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
-        // Use ALL staff requests (including archived) for stats
+        // Use only NON-archived requests for stats
         List<MaintenanceRequest> allRequests = requestDAO.getRequestsByStaff(staff.getStaffId());
+        List<MaintenanceRequest> activeRequests = allRequests.stream()
+                .filter(r -> !r.isStaffArchived())
+                .toList();
 
-        long notStarted = allRequests.stream().filter(this::isNotStarted).count();
-        long inProgress = allRequests.stream().filter(this::isInProgress).count();
-        long completed = allRequests.stream().filter(this::isCompleted).count();
-        long cancelled = allRequests.stream().filter(this::isCancelled).count();
-
-        long urgent = allRequests.stream()
+        long notStarted = activeRequests.stream().filter(this::isNotStarted).count();
+        long inProgress = activeRequests.stream().filter(this::isInProgress).count();
+        long completed = activeRequests.stream().filter(this::isCompleted).count();
+        long cancelled = activeRequests.stream().filter(this::isCancelled).count();
+        long urgent = activeRequests.stream()
                 .filter(r -> (r.getPriority() == PriorityLevel.URGENT || r.getPriority() == PriorityLevel.EMERGENCY)
                         && !isCompleted(r) && !isCancelled(r))
                 .count();
 
         VBox totalCard = DashboardUIHelper.createStatCard(
                 "Total Requests",
-                String.valueOf(allRequests.size()),
+                String.valueOf(activeRequests.size()),
                 "#667eea",
                 DashboardUIHelper.loadStatIcon("request.png")
         );
@@ -203,7 +205,7 @@ public class StaffDashboardController {
                 "#ff9800",
                 DashboardUIHelper.loadStatIcon("in-progress.png")
         );
-        VBox pendingCard = DashboardUIHelper.createStatCard(
+        VBox assignedCard = DashboardUIHelper.createStatCard(
                 "Assigned",
                 String.valueOf(notStarted),
                 "#2196f3",
@@ -222,7 +224,22 @@ public class StaffDashboardController {
                 DashboardUIHelper.loadStatIcon("cancelled.png")
         );
 
-        statsBox.getChildren().addAll(totalCard, urgentCard, pendingCard, inProgressCard, completedCard, cancelledCard);
+        // Make cards clickable to change filter
+        totalCard.setOnMouseClicked(e -> setFilterFromCard("All Tasks"));
+        assignedCard.setOnMouseClicked(e -> setFilterFromCard("Assigned"));
+        inProgressCard.setOnMouseClicked(e -> setFilterFromCard("In Progress"));
+        urgentCard.setOnMouseClicked(e -> setFilterFromCard("Urgent Only"));
+        completedCard.setOnMouseClicked(e -> setFilterFromCard("Completed"));
+        cancelledCard.setOnMouseClicked(e -> setFilterFromCard("Cancelled"));
+
+        statsBox.getChildren().addAll(
+                totalCard,
+                assignedCard,
+                inProgressCard,
+                urgentCard,
+                completedCard,
+                cancelledCard
+        );
     }
 
     private VBox createRequestsSection() {
@@ -249,7 +266,13 @@ public class StaffDashboardController {
         );
         filterBox.setValue("All Tasks");
         filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
-        filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
+//        filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
+
+        filterBox.valueProperty().addListener((obs, oldFilter, newFilter) -> {
+            if (newFilter != null) {
+                filterRequests(newFilter);
+            }
+        });
 
         Button refreshBtn = new Button("🔄 Refresh");
         refreshBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
@@ -317,6 +340,10 @@ public class StaffDashboardController {
         VBox.setVgrow(requestTable, Priority.ALWAYS);
 
         return section;
+    }
+
+    private void setFilterFromCard(String filter) {
+        filterBox.setValue(filter);
     }
 
     private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {
