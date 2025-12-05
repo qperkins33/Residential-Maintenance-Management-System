@@ -513,12 +513,15 @@ public final class DashboardUIHelper {
             request.setStatus(newStatus);
             request.setLastUpdated(LocalDateTime.now());
 
+            request.setTenantArchived(false);
+            request.setStaffArchived(false);
+
             // If tenant reopens a closed request, clear both archive flags
-            if ((originalStatus == RequestStatus.COMPLETED || originalStatus == RequestStatus.CANCELLED)
-                    && newStatus == RequestStatus.REOPENED) {
-                request.setTenantArchived(false);
-                request.setStaffArchived(false);
-            }
+//            if ((originalStatus == RequestStatus.COMPLETED || originalStatus == RequestStatus.CANCELLED)
+//                    && newStatus == RequestStatus.REOPENED) {
+//                request.setTenantArchived(false);
+//                request.setStaffArchived(false);
+//            }
 
             if (!requestDAO.updateRequest(request)) {
                 new Alert(Alert.AlertType.ERROR, "Unable to update request. Please try again.").showAndWait();
