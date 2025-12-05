@@ -14,7 +14,6 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -33,11 +32,10 @@ public class LoginController {
     }
 
     public void createLoginUI(AnchorPane root) {
-        // Full window gradient background
-        root.setStyle(
-                "-fx-background-color: linear-gradient(to bottom right, #667eea 0%, #764ba2 100%);"
-        );
+        // Full window background
+        root.setStyle("-fx-background-color: linear-gradient(to bottom right, #667eea 0%, #764ba2 100%);");
 
+        // Outer container that fills the screen and adds padding around the centered card
         StackPane outer = new StackPane();
         outer.setPadding(new Insets(60));
         outer.setAlignment(Pos.CENTER);
@@ -54,9 +52,7 @@ public class LoginController {
                         "-fx-border-width: 1.2;"
         );
 
-        Image appIcon = new Image(Objects.requireNonNull(
-                getClass().getResource("/images/apartment.png")).toExternalForm()
-        );
+        Image appIcon = new Image(Objects.requireNonNull(getClass().getResource("/images/apartment.png")).toExternalForm());
 
         // LEFT PANEL
         VBox brandingPanel = new VBox(18);
@@ -79,7 +75,7 @@ public class LoginController {
                 "Centralize tenant issues, assign work orders, and keep your buildings running smoothly."
         );
         tagline.setWrapText(true);
-        tagline.setFont(Font.font("Arial", 13));
+        tagline.setFont(Font.font("Arial", 20));
         tagline.setTextFill(Color.web("#f1f3ff"));
 
         HBox heroHeader = new HBox(12, appNameLarge);
@@ -116,11 +112,11 @@ public class LoginController {
         mainContainer.setPadding(new Insets(30));
         mainContainer.setPrefWidth(380);
         mainContainer.setStyle(
-                "-fx-background-color: white; " +
-                        "-fx-background-radius: 22; " +
+                "-fx-background-color: white; -fx-background-radius: 22; " +
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 25, 0, 0, 10);"
         );
 
+        // Load apartment icon image
         ImageView appIconView = new ImageView(appIcon);
         appIconView.setFitWidth(26);
         appIconView.setFitHeight(26);
@@ -151,6 +147,7 @@ public class LoginController {
                         "-fx-border-color: transparent;"
         );
 
+        // Password field
         Label passwordLabel = new Label("Password");
         passwordLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 13));
         passwordLabel.setTextFill(Color.web("#374151"));
