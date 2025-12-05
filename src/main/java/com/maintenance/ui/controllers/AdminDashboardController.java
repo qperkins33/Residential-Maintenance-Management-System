@@ -314,18 +314,42 @@ public class AdminDashboardController {
         long admins = users.stream().filter(u -> "ADMIN".equalsIgnoreCase(u.getUserType())).count();
         long inactive = users.stream().filter(u -> !u.isActive()).count();
 
-        VBox totalCard = DashboardUIHelper.createStatCard("Total Users",
-                String.valueOf(total), "#667eea", "👥");
-        VBox tenantCard = DashboardUIHelper.createStatCard("Tenants",
-                String.valueOf(tenants), "#2196f3", "🏠");
-        VBox staffCard = DashboardUIHelper.createStatCard("Staff",
-                String.valueOf(staff), "#ff9800", "🛠");
-        VBox managerCard = DashboardUIHelper.createStatCard("Managers",
-                String.valueOf(managers), "#4caf50", "📋");
-        VBox adminCard = DashboardUIHelper.createStatCard("Admins",
-                String.valueOf(admins), "#9c27b0", "🔐");
-        VBox inactiveCard = DashboardUIHelper.createStatCard("Inactive",
-                String.valueOf(inactive), "#f44336", "⏸");
+        VBox totalCard = DashboardUIHelper.createStatCard(
+                "Total Users",
+                String.valueOf(total),
+                "#667eea",
+                DashboardUIHelper.loadStatIcon("users.png")
+        );
+        VBox tenantCard = DashboardUIHelper.createStatCard(
+                "Tenants",
+                String.valueOf(tenants),
+                "#2196f3",
+                DashboardUIHelper.loadStatIcon("tenant.png")
+        );
+        VBox staffCard = DashboardUIHelper.createStatCard(
+                "Staff",
+                String.valueOf(staff),
+                "#ff9800",
+                DashboardUIHelper.loadStatIcon("staff.png")
+        );
+        VBox managerCard = DashboardUIHelper.createStatCard(
+                "Managers",
+                String.valueOf(managers),
+                "#4caf50",
+                DashboardUIHelper.loadStatIcon("manager.png")
+        );
+        VBox adminCard = DashboardUIHelper.createStatCard(
+                "Admins",
+                String.valueOf(admins),
+                "#9c27b0",
+                DashboardUIHelper.loadStatIcon("admin.png")
+        );
+        VBox inactiveCard = DashboardUIHelper.createStatCard(
+                "Inactive",
+                String.valueOf(inactive),
+                "#f44336",
+                DashboardUIHelper.loadStatIcon("inactive.png")
+        );
 
         statsBox.getChildren().addAll(
                 totalCard, tenantCard, staffCard, managerCard, adminCard, inactiveCard

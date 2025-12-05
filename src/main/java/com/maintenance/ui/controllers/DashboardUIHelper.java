@@ -72,7 +72,7 @@ public final class DashboardUIHelper {
         return btn;
     }
 
-    public static VBox createStatCard(String title, String value, String color, String icon) {
+    public static VBox createStatCard(String title, String value, String color, Image iconImage) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20));
         card.setStyle("-fx-background-color: white; -fx-background-radius: 10; " +
@@ -83,14 +83,16 @@ public final class DashboardUIHelper {
         HBox headerBox = new HBox(10);
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
-        Label iconLabel = new Label(icon);
-        iconLabel.setFont(Font.font(24));
+        ImageView iconView = new ImageView(iconImage);
+        iconView.setFitWidth(24);
+        iconView.setFitHeight(24);
+        iconView.setPreserveRatio(true);
 
         Label titleLabel = new Label(title);
         titleLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 13));
         titleLabel.setTextFill(Color.GRAY);
 
-        headerBox.getChildren().addAll(iconLabel, titleLabel);
+        headerBox.getChildren().addAll(iconView, titleLabel);
 
         Label valueLabel = new Label(value);
         valueLabel.setFont(Font.font("Arial", FontWeight.BOLD, 36));
@@ -106,6 +108,14 @@ public final class DashboardUIHelper {
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);"));
 
         return card;
+    }
+
+    public static Image loadStatIcon(String imageFileName) {
+        var url = DashboardUIHelper.class.getResource("/images/" + imageFileName);
+        if (url == null) {
+            throw new IllegalArgumentException("Icon not found: " + imageFileName);
+        }
+        return new Image(url.toExternalForm());
     }
 
     public static TableColumn<MaintenanceRequest, PriorityLevel> createPriorityColumn() {

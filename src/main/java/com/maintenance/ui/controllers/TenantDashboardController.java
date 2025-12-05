@@ -20,7 +20,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -165,31 +164,31 @@ public class TenantDashboardController {
                 "Total Requests",
                 String.valueOf(allRequests.size()),
                 "#667eea",
-                "📋"
+                DashboardUIHelper.loadStatIcon("request.png")
         );
         VBox pendingCard = DashboardUIHelper.createStatCard(
                 "Pending Start",
                 String.valueOf(notStarted),
                 "#2196f3",
-                "⏸️"
+                DashboardUIHelper.loadStatIcon("pending.png")
         );
         VBox inProgressCard = DashboardUIHelper.createStatCard(
                 "In Progress",
                 String.valueOf(inProgress),
                 "#ff9800",
-                "👷"
+                DashboardUIHelper.loadStatIcon("in-progress.png")
         );
         VBox completedCard = DashboardUIHelper.createStatCard(
                 "Completed",
                 String.valueOf(completed),
                 "#4caf50",
-                "✅"
+                DashboardUIHelper.loadStatIcon("completed.png")
         );
         VBox cancelledCard = DashboardUIHelper.createStatCard(
                 "Cancelled",
                 String.valueOf(cancelled),
                 "#f44336",
-                "❌"
+                DashboardUIHelper.loadStatIcon("cancelled.png")
         );
 
         statsBox.getChildren().addAll(
