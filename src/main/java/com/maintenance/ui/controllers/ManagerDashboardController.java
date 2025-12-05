@@ -199,6 +199,14 @@ public class ManagerDashboardController {
                 DashboardUIHelper.loadStatIcon("cancelled.png")
         );
 
+        // Make cards clickable to change filter
+        totalCard.setOnMouseClicked(e -> setFilterFromCard("All Requests"));
+        unassignedCard.setOnMouseClicked(e -> setFilterFromCard("Unassigned"));
+        pendingCard.setOnMouseClicked(e -> setFilterFromCard("In Progress"));
+        inProgressCard.setOnMouseClicked(e -> setFilterFromCard("Not Started"));
+        completedCard.setOnMouseClicked(e -> setFilterFromCard("Completed"));
+        cancelledCard.setOnMouseClicked(e -> setFilterFromCard("Cancelled"));
+
         statsBox.getChildren().addAll(
                 totalCard,
                 unassignedCard,
@@ -232,7 +240,13 @@ public class ManagerDashboardController {
         );
         filterBox.setValue("All Requests");
         filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
-        filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
+//        filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
+
+        filterBox.valueProperty().addListener((obs, oldFilter, newFilter) -> {
+            if (newFilter != null) {
+                filterRequests(newFilter);
+            }
+        });
 
         Button refreshBtn = new Button("🔄 Refresh");
         refreshBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
@@ -289,6 +303,10 @@ public class ManagerDashboardController {
         section.getChildren().addAll(headerBox, requestTable);
         VBox.setVgrow(requestTable, Priority.ALWAYS);
         return section;
+    }
+
+    private void setFilterFromCard(String filter) {
+        filterBox.setValue(filter);
     }
 
     private TableColumn<MaintenanceRequest, String> getMaintenanceRequestStringTableColumn() {
