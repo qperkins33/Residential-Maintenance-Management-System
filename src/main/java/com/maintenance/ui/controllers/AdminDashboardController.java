@@ -26,16 +26,48 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Controller for the Admin dashboard.
+ * Allows admins to:
+ *  - View all users
+ *  - Create new users by type (Tenant, Staff, Manager, Admin)
+ *  - Edit basic user info and active status
+ *  - View detailed user-specific information (tenant/staff/manager)
+ *  - See high-level stats about user distribution
+ */
 public class AdminDashboardController {
 
+    /**
+     * Factory for opening/closing application views/windows.
+     */
     private final ViewFactory viewFactory;
+    /**
+     * Authentication service used to retrieve current user and perform logout.
+     */
     private final AuthenticationService authService;
+    /**
+     * Database manager for obtaining JDBC connections.
+     */
     private final DatabaseManager dbManager;
+    /**
+     * DAO used for loading maintenance requests, mainly for staff workload stats.
+     */
     private final MaintenanceRequestDAO requestDAO;
 
+    /**
+     * Table displaying abstracted user rows for the Admin.
+     */
     private TableView<UserRow> userTable;
+    /**
+     * Horizontal container showing stat cards (total users, tenants, staff, etc.).
+     */
     private HBox statsBox;
 
+    /**
+     * Constructs the Admin dashboard controller with its dependencies.
+     *
+     * @param viewFactory factory for switching between UI windows
+     */
     public AdminDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
         this.authService = AuthenticationService.getInstance();
@@ -43,19 +75,28 @@ public class AdminDashboardController {
         this.requestDAO = new MaintenanceRequestDAO();
     }
 
+    /**
+     * Entry point to build and attach the Admin dashboard UI to the given root pane.
+     *
+     * @param root AnchorPane where the dashboard will be attached and stretched.
+     */
     public void createDashboardUI(AnchorPane root) {
+        // Attach shared app styles
         DashboardUIHelper.applyRootStyles(root, getClass());
 
         BorderPane mainLayout = new BorderPane();
         mainLayout.setPadding(new Insets(0));
 
+        // Top bar: title, current admin, logout
         HBox topBar = createTopBar();
         mainLayout.setTop(topBar);
 
+        // Center: stats + users table
         VBox centerContent = createCenterContent();
         VBox.setVgrow(centerContent, Priority.ALWAYS);
         mainLayout.setCenter(centerContent);
 
+        // Stretch main layout to fill parent anchor pane
         AnchorPane.setTopAnchor(mainLayout, 0.0);
         AnchorPane.setBottomAnchor(mainLayout, 0.0);
         AnchorPane.setLeftAnchor(mainLayout, 0.0);
@@ -64,6 +105,11 @@ public class AdminDashboardController {
         root.getChildren().add(mainLayout);
     }
 
+    /**
+     * Builds the top bar containing the page title, logged-in admin name, and logout button.
+     *
+     * @return configured HBox for the top bar
+     */
     private HBox createTopBar() {
         HBox topBar = new HBox(20);
         topBar.setPadding(new Insets(15, 30, 15, 30));
@@ -76,11 +122,13 @@ public class AdminDashboardController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        // Display current admin name if available
         Admin admin = (Admin) authService.getCurrentUser();
         String name = admin != null ? admin.getFullName() : "Admin";
         Label userLabel = new Label("👤 " + name + " (Admin)");
         userLabel.setFont(Font.font("Arial", 14));
 
+        // Logout button closes current stage and returns to login screen
         Button logoutButton = new Button("Logout");
         logoutButton.setStyle(
                 "-fx-background-color: #ff5252; -fx-text-fill: white; " +
@@ -97,27 +145,41 @@ public class AdminDashboardController {
         return topBar;
     }
 
+    /**
+     * Creates the main content area containing stats and the users section.
+     *
+     * @return VBox with stats and user table
+     */
     private VBox createCenterContent() {
         VBox content = new VBox(20);
         content.setPadding(new Insets(30));
         content.setFillWidth(true);
 
+        // Holds stat cards
         statsBox = new HBox(20);
 
+        // Users table and header
         VBox usersSection = createUsersSection();
         VBox.setVgrow(usersSection, Priority.ALWAYS);
 
         content.getChildren().addAll(statsBox, usersSection);
 
+        // Initial load of users and stats
         loadUsers();
 
         return content;
     }
 
+    /**
+     * Builds the "All Users" section: header row and the underlying TableView configuration.
+     *
+     * @return VBox containing the user table and controls
+     */
     private VBox createUsersSection() {
         VBox section = new VBox(15);
         section.setFillWidth(true);
 
+        // Header row with title and "New User" button
         HBox headerBox = new HBox(20);
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
@@ -136,12 +198,14 @@ public class AdminDashboardController {
 
         headerBox.getChildren().addAll(sectionTitle, spacer, newUserBtn);
 
+        // User table setup
         userTable = new TableView<>();
         userTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
         userTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         userTable.setMaxHeight(Double.MAX_VALUE);
         VBox.setVgrow(userTable, Priority.ALWAYS);
 
+        // Column definitions bound to UserRow properties
         TableColumn<UserRow, String> idCol = new TableColumn<>("User ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("userId"));
         idCol.setPrefWidth(120);
@@ -174,6 +238,7 @@ public class AdminDashboardController {
         dateCol.setCellValueFactory(new PropertyValueFactory<>("dateCreated"));
         dateCol.setPrefWidth(120);
 
+        // Actions column (Edit / View)
         TableColumn<UserRow, Void> actionCol = getUserRowVoidTableColumn();
 
         userTable.getColumns().setAll(List.of(
@@ -188,6 +253,7 @@ public class AdminDashboardController {
                 actionCol
         ));
 
+        // Placeholder label when there are no users
         Label emptyLabel = new Label("No users found");
         emptyLabel.setFont(Font.font("Arial", 14));
         emptyLabel.setTextFill(javafx.scene.paint.Color.GRAY);
@@ -198,6 +264,11 @@ public class AdminDashboardController {
         return section;
     }
 
+    /**
+     * Creates the "Actions" column for each UserRow with "Edit" and "View" buttons.
+     *
+     * @return configured TableColumn with custom cell factory
+     */
     private TableColumn<UserRow, Void> getUserRowVoidTableColumn() {
         TableColumn<UserRow, Void> actionCol = new TableColumn<>("Actions");
         actionCol.setPrefWidth(210);
@@ -215,6 +286,7 @@ public class AdminDashboardController {
                 viewBtn.setStyle(btnStyle);
                 editBtn.setStyle(btnStyle);
 
+                // Show read-only user details dialog
                 viewBtn.setOnAction(e -> {
                     UserRow row = getTableView().getItems().get(getIndex());
                     if (row != null) {
@@ -222,6 +294,7 @@ public class AdminDashboardController {
                     }
                 });
 
+                // Show editable user dialog for updating basic info / status
                 editBtn.setOnAction(e -> {
                     UserRow row = getTableView().getItems().get(getIndex());
                     if (row != null) {
@@ -243,12 +316,20 @@ public class AdminDashboardController {
         return actionCol;
     }
 
+    /**
+     * Loads all users from the database into the table and refreshes the stat cards.
+     */
     private void loadUsers() {
         List<UserRow> users = fetchAllUsers();
         userTable.setItems(FXCollections.observableArrayList(users));
         refreshStats(users);
     }
 
+    /**
+     * Fetches all users directly from the users table and maps them into UserRow objects.
+     *
+     * @return list of UserRow representing each user record
+     */
     private List<UserRow> fetchAllUsers() {
         List<UserRow> list = new ArrayList<>();
         Connection conn = dbManager.getConnection();
@@ -282,6 +363,7 @@ public class AdminDashboardController {
                     created = ts.toLocalDateTime().format(fmt);
                 }
 
+                // Construct full name safely even when first/last are null
                 String fullName = ((firstName != null ? firstName : "") + " " +
                         (lastName != null ? lastName : "")).trim();
 
@@ -304,6 +386,12 @@ public class AdminDashboardController {
         return list;
     }
 
+    /**
+     * Generates and adds stat cards based on the provided users list.
+     * Shows counts for total, tenants, staff, managers, admins, and inactive.
+     *
+     * @param users list of users represented as UserRow objects
+     */
     private void refreshStats(List<UserRow> users) {
         statsBox.getChildren().clear();
 
@@ -314,6 +402,7 @@ public class AdminDashboardController {
         long admins = users.stream().filter(u -> "ADMIN".equalsIgnoreCase(u.getUserType())).count();
         long inactive = users.stream().filter(u -> !u.isActive()).count();
 
+        // Individual stat cards with specific color codes and icons
         VBox totalCard = DashboardUIHelper.createStatCard(
                 "Total Users",
                 String.valueOf(total),
@@ -356,6 +445,11 @@ public class AdminDashboardController {
         );
     }
 
+    /**
+     * Displays a dialog for creating a new user of a given type.
+     * Dynamically shows extra sections for tenants, staff, and managers.
+     * Handles validation and persists new records if creation is successful.
+     */
     private void showCreateUserDialog() {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Create New User");
@@ -369,6 +463,7 @@ public class AdminDashboardController {
         ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(createButtonType, ButtonType.CANCEL);
 
+        // Base user info grid (applies to all user types)
         GridPane baseGrid = new GridPane();
         baseGrid.setHgap(10);
         baseGrid.setVgap(10);
@@ -463,6 +558,7 @@ public class AdminDashboardController {
         TextField staffIdField = new TextField();
         staffIdField.setPromptText("STF001");
 
+        // Staff specializations using CategoryType enums
         final List<CheckBox> specializationChecks = new ArrayList<>();
         FlowPane specializationPane = new FlowPane(10, 5);
         specializationPane.setPrefWrapLength(260);
@@ -474,6 +570,7 @@ public class AdminDashboardController {
             specializationPane.getChildren().add(cb);
         }
 
+        // Spinner for staff max capacity (max concurrent active requests)
         Spinner<Integer> maxCapacitySpinner = new Spinner<>(1, 100, 10);
 
         int sRow = 0;
@@ -507,7 +604,7 @@ public class AdminDashboardController {
         VBox managerSection = new VBox(8, new Label("Manager Details"), managerGrid);
         managerSection.setPadding(new Insets(10, 0, 0, 0));
 
-        // Initially hide type sections
+        // Initially hide type-specific sections
         tenantSection.setVisible(false);
         tenantSection.setManaged(false);
         staffSection.setVisible(false);
@@ -515,6 +612,7 @@ public class AdminDashboardController {
         managerSection.setVisible(false);
         managerSection.setManaged(false);
 
+        // Toggle visibility based on selected user type
         userTypeBox.valueProperty().addListener((obs, oldVal, newVal) -> {
             boolean isTenant = "TENANT".equals(newVal);
             boolean isStaff = "STAFF".equals(newVal);
@@ -530,6 +628,7 @@ public class AdminDashboardController {
             managerSection.setManaged(isManager);
         });
 
+        // Wrap all grids in a scrollable container
         VBox container = new VBox(15);
         container.setPadding(new Insets(10));
         container.getChildren().addAll(baseGrid, tenantSection, staffSection, managerSection);
@@ -543,6 +642,7 @@ public class AdminDashboardController {
         Button createButton = (Button) dialog.getDialogPane().lookupButton(createButtonType);
         final boolean[] created = {false};
 
+        // Validate and create user on "Create" button press
         createButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
             String customUserId = userIdField.getText().trim();
             String username = usernameField.getText().trim();
@@ -554,6 +654,7 @@ public class AdminDashboardController {
             String userType = userTypeBox.getValue();
             boolean active = activeCheckBox.isSelected();
 
+            // Hard limit on manual userId length to avoid DB overflow
             if (customUserId.length() > 50) {
                 new Alert(Alert.AlertType.WARNING,
                         "User ID must be 50 characters or less.").showAndWait();
@@ -561,6 +662,7 @@ public class AdminDashboardController {
                 return;
             }
 
+            // Required base fields
             if (username.isEmpty() || password.isEmpty() ||
                     firstName.isEmpty() || lastName.isEmpty() || userType == null) {
                 new Alert(Alert.AlertType.WARNING,
@@ -570,6 +672,7 @@ public class AdminDashboardController {
                 return;
             }
 
+            // Email validation
             if (email.isEmpty()) {
                 new Alert(Alert.AlertType.WARNING,
                         "Email is required.")
@@ -585,6 +688,7 @@ public class AdminDashboardController {
                 return;
             }
 
+            // Phone validation
             if (phone.isEmpty()) {
                 new Alert(Alert.AlertType.WARNING,
                         "Phone number is required.")
@@ -600,6 +704,7 @@ public class AdminDashboardController {
                 return;
             }
 
+            // Additional per-type validation
             switch (userType) {
                 case "TENANT" -> {
                     if (aptField.getText().trim().isEmpty()) {
@@ -630,6 +735,7 @@ public class AdminDashboardController {
                 }
             }
 
+            // Collect staff specializations into a comma-separated string
             String specializationString = null;
             if ("STAFF".equals(userType)) {
                 StringBuilder sb = new StringBuilder();
@@ -651,6 +757,7 @@ public class AdminDashboardController {
                 specializationString = sb.toString();
             }
 
+            // Attempt to create user in DB using a transaction
             boolean success = createUserInDatabase(
                     customUserId,
                     username,
@@ -685,6 +792,7 @@ public class AdminDashboardController {
 
         dialog.showAndWait();
 
+        // Refresh table and show success message if creation happened
         if (created[0]) {
             loadUsers();
             new Alert(Alert.AlertType.INFORMATION,
@@ -693,6 +801,11 @@ public class AdminDashboardController {
         }
     }
 
+    /**
+     * Persists a new user and any associated role-specific record inside a single transaction.
+     *
+     * @return true on success, false if any error/rollback occurred
+     */
     private boolean createUserInDatabase(
             String customUserId,
             String username,
@@ -720,6 +833,7 @@ public class AdminDashboardController {
             return false;
         }
 
+        // Use IDGenerator if no custom userId provided
         String userId;
         if (customUserId != null && !customUserId.isBlank()) {
             userId = customUserId;
@@ -730,6 +844,7 @@ public class AdminDashboardController {
         try {
             conn.setAutoCommit(false);
 
+            // Insert base user row
             String userSql = "INSERT INTO users (" +
                     "user_id, username, password, first_name, last_name, " +
                     "email, phone_number, user_type, date_created, is_active) " +
@@ -748,6 +863,7 @@ public class AdminDashboardController {
                 userStmt.executeUpdate();
             }
 
+            // Insert tenant row if needed
             if ("TENANT".equals(userType)) {
                 String tenantSql = "INSERT INTO tenants (" +
                         "user_id, apartment_number, lease_start_date, lease_end_date, " +
@@ -771,6 +887,7 @@ public class AdminDashboardController {
                     tenantStmt.executeUpdate();
                 }
             } else if ("STAFF".equals(userType)) {
+                // Insert staff row
                 String staffSql = "INSERT INTO maintenance_staff (" +
                         "user_id, staff_id, specializations, current_workload, " +
                         "max_capacity, is_available) " +
@@ -785,6 +902,7 @@ public class AdminDashboardController {
                     staffStmt.executeUpdate();
                 }
             } else if ("MANAGER".equals(userType)) {
+                // Insert manager row
                 String managerSql = "INSERT INTO building_managers (" +
                         "user_id, employee_id, department) " +
                         "VALUES (?, ?, ?)";
@@ -797,7 +915,7 @@ public class AdminDashboardController {
                 }
             }  // no extra table for admins
 
-
+            // Commit all inserts as one unit
             conn.commit();
             return true;
 
@@ -818,6 +936,12 @@ public class AdminDashboardController {
         }
     }
 
+    /**
+     * Shows a dialog for editing basic user data (name, email, phone) and toggling active status.
+     * Prevents the currently logged-in admin from deactivating themselves via this dialog.
+     *
+     * @param row the UserRow to edit
+     */
     private void showEditUserDialog(UserRow row) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Edit User");
@@ -833,6 +957,7 @@ public class AdminDashboardController {
 
         Label statusLabel = new Label("Account status:");
 
+        // Toggle used to represent changing the is_active flag (language flips depending on state)
         CheckBox toggle = new CheckBox();
         boolean originalActive = row.isActive();
         final boolean[] targetActive = {originalActive};
@@ -840,6 +965,7 @@ public class AdminDashboardController {
         Admin currentAdmin = (Admin) authService.getCurrentUser();
         final String currentUserId = currentAdmin != null ? currentAdmin.getUserId() : null;
 
+        // Style toggle based on original state
         if (originalActive) {
             toggle.setText("Deactivate user");
             DashboardUIHelper.styleActionToggleButton(
@@ -858,6 +984,7 @@ public class AdminDashboardController {
             );
         }
 
+        // Guard flag to avoid feedback loops when programmatically flipping selected state
         final boolean[] internalChange = {false};
 
         toggle.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
@@ -865,6 +992,7 @@ public class AdminDashboardController {
                 return;
             }
 
+            // Prevent deactivating current admin from this dialog
             if (row.getUserId().equals(currentUserId)) {
                 new Alert(
                         Alert.AlertType.WARNING,
@@ -877,13 +1005,17 @@ public class AdminDashboardController {
                 return;
             }
 
+            // Map toggle selection back to final active state depending on originalActive
             if (originalActive) {
+                // When originally active, selecting the checkbox means "keep active"
                 targetActive[0] = !isSelected;
             } else {
+                // When originally inactive, selecting the checkbox means "activate"
                 targetActive[0] = isSelected;
             }
         });
 
+        // Split full name into first and last name for editing
         String existingFullName = row.getFullName() != null ? row.getFullName() : "";
         String[] nameParts = existingFullName.split(" ", 2);
 
@@ -928,6 +1060,7 @@ public class AdminDashboardController {
         Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtnType);
         final boolean[] updated = {false};
 
+        // Validate and persist changes on Save
         saveButton.addEventFilter(ActionEvent.ACTION, event -> {
             String newFirst = firstNameField.getText().trim();
             String newLast = lastNameField.getText().trim();
@@ -979,6 +1112,7 @@ public class AdminDashboardController {
                 return;
             }
 
+            // Attempt to update users table with new values
             boolean success = updateUserInfo(
                     row.getUserId(),
                     newFirst,
@@ -1001,6 +1135,7 @@ public class AdminDashboardController {
 
         dialog.showAndWait();
 
+        // Reload users and toast success if update happened
         if (updated[0]) {
             loadUsers();
             new Alert(
@@ -1010,6 +1145,11 @@ public class AdminDashboardController {
         }
     }
 
+    /**
+     * Performs the actual UPDATE statement for user personal info and active status.
+     *
+     * @return true if exactly one row was updated, false otherwise
+     */
     private boolean updateUserInfo(
             String userId,
             String firstName,
@@ -1048,6 +1188,12 @@ public class AdminDashboardController {
         }
     }
 
+    /**
+     * Shows a read-only dialog displaying all base user information and,
+     * depending on the user type, any role-specific details (tenant, staff, manager).
+     *
+     * @param row UserRow representing the selected user
+     */
     private void showUserDetailsDialog(UserRow row) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("User Details");
@@ -1062,6 +1208,7 @@ public class AdminDashboardController {
 
         int r = 0;
 
+        // Base user info rows
         addUserDetailRow(grid, r++, "User ID:", row.getUserId());
         addUserDetailRow(grid, r++, "Username:", row.getUsername());
         addUserDetailRow(grid, r++, "Full Name:", row.getFullName());
@@ -1075,6 +1222,7 @@ public class AdminDashboardController {
         Connection conn = dbManager.getConnection();
         DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
+        // Load and append extra details based on associated role table
         if (conn != null) {
             try {
                 if ("TENANT".equalsIgnoreCase(userType)) {
@@ -1114,6 +1262,7 @@ public class AdminDashboardController {
                                 boolean available = rs.getBoolean("is_available");
 
                                 int activeWorkload = 0;
+                                // Compute active workload for staff member based on non-completed/cancelled requests
                                 if (staffId != null && !staffId.isBlank()) {
                                     List<MaintenanceRequest> staffRequests =
                                             requestDAO.getRequestsByStaff(staffId);
@@ -1165,6 +1314,14 @@ public class AdminDashboardController {
         dialog.showAndWait();
     }
 
+    /**
+     * Utility function to add a single label/value row to a GridPane.
+     *
+     * @param grid  target grid
+     * @param row   row index
+     * @param label descriptive label text
+     * @param value value to display (null-safe)
+     */
     private void addUserDetailRow(GridPane grid, int row, String label, String value) {
         Label l = new Label(label);
         l.setFont(Font.font("Arial", FontWeight.BOLD, 12));
@@ -1177,6 +1334,13 @@ public class AdminDashboardController {
         grid.add(v, 1, row);
     }
 
+    /**
+     * Adds a section title label (e.g., "Tenant Details") that spans both grid columns.
+     *
+     * @param grid target grid
+     * @param row  row index
+     * @param text section title
+     */
     private void addSectionLabel(GridPane grid, int row, String text) {
         Label section = new Label(text);
         section.setFont(Font.font("Arial", FontWeight.BOLD, 13));
@@ -1185,6 +1349,10 @@ public class AdminDashboardController {
         grid.add(section, 0, row);
     }
 
+    /**
+     * Simple immutable view-model representing a user row for display in the table.
+     * Avoids exposing the full domain models to the UI table directly.
+     */
     public static class UserRow {
         private final String userId;
         private final String username;
@@ -1241,6 +1409,9 @@ public class AdminDashboardController {
             return active;
         }
 
+        /**
+         * Text representation of active status for display in table ("Yes"/"No").
+         */
         public String getActiveText() {
             return active ? "Yes" : "No";
         }

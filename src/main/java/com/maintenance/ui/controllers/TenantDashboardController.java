@@ -25,15 +25,34 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * Controller for the tenant dashboard.
+ * Handles:
+ *  - Layout and rendering of the tenant view (top bar, sidebar, center content)
+ *  - Loading, filtering, and archiving of maintenance requests created by the tenant
+ *  - Submitting new requests and attaching photos
+ */
 public class TenantDashboardController {
+    // Factory for stage navigation (login, dashboards)
     private final ViewFactory viewFactory;
+    // Central authentication service (current tenant, logout)
     private final AuthenticationService authService;
+    // DAO for reading and updating maintenance requests
     private final MaintenanceRequestDAO requestDAO;
+    // DAO for storing and linking photos to requests
     private final PhotoDAO photoDAO;
+    // Main table of tenant requests
     private TableView<MaintenanceRequest> requestTable;
+    // Row of stats cards
     private HBox statsBox;
+    // Filter drop-down for narrowing request list
     private final ComboBox<String> filterBox = new ComboBox<>();
 
+    /**
+     * Creates a TenantDashboardController using shared services.
+     *
+     * @param viewFactory shared view factory instance for windows
+     */
     public TenantDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
         this.authService = AuthenticationService.getInstance();
@@ -41,7 +60,13 @@ public class TenantDashboardController {
         this.photoDAO = new PhotoDAO();
     }
 
+    /**
+     * Builds the tenant dashboard UI and anchors it into the given root pane.
+     *
+     * @param root AnchorPane that will host the dashboard layout
+     */
     public void createDashboardUI(AnchorPane root) {
+        // Attach global app styles so tenant dashboard shares common visual system
         DashboardUIHelper.applyRootStyles(root, getClass());
 
         BorderPane mainLayout = new BorderPane();
@@ -57,6 +82,7 @@ public class TenantDashboardController {
         VBox.setVgrow(centerContent, Priority.ALWAYS);
         mainLayout.setCenter(centerContent);
 
+        // Fill entire root
         AnchorPane.setTopAnchor(mainLayout, 0.0);
         AnchorPane.setBottomAnchor(mainLayout, 0.0);
         AnchorPane.setLeftAnchor(mainLayout, 0.0);
@@ -65,6 +91,11 @@ public class TenantDashboardController {
         root.getChildren().add(mainLayout);
     }
 
+    /**
+     * Creates the top bar with app title, tenant info, and logout button.
+     *
+     * @return configured HBox
+     */
     private HBox createTopBar() {
         HBox topBar = new HBox(20);
         topBar.setPadding(new Insets(15, 30, 15, 30));
@@ -95,6 +126,12 @@ public class TenantDashboardController {
         return topBar;
     }
 
+    /**
+     * Creates the sidebar for the tenant dashboard.
+     * Currently only a single Dashboard menu entry.
+     *
+     * @return VBox sidebar
+     */
     private VBox createSidebar() {
         VBox sidebar = new VBox(15);
         sidebar.setPadding(new Insets(20));
@@ -111,6 +148,14 @@ public class TenantDashboardController {
         return sidebar;
     }
 
+    /**
+     * Creates the center content, including:
+     *  - Welcome section
+     *  - Stats card row
+     *  - Requests table and controls
+     *
+     * @return VBox home content
+     */
     private VBox createCenterContent() {
         VBox content = new VBox(20);
         content.setPadding(new Insets(30));
@@ -127,6 +172,12 @@ public class TenantDashboardController {
         return content;
     }
 
+    /**
+     * Creates the welcome section at the top of the tenant dashboard.
+     * Shows tenant first name and the current date.
+     *
+     * @return VBox welcome section
+     */
     private VBox createWelcomeSection() {
         VBox welcomeBox = new VBox(5);
 
@@ -144,6 +195,16 @@ public class TenantDashboardController {
         return welcomeBox;
     }
 
+    /**
+     * Rebuilds the stats cards row using only non-archived requests.
+     * Cards reflect:
+     *  - Total Requests
+     *  - Pending Start (submitted or assigned)
+     *  - In Progress
+     *  - Completed
+     *  - Cancelled
+     * Clicking a card updates the table filter.
+     */
     private void refreshStats() {
         if (statsBox == null) {
             return;
@@ -210,6 +271,13 @@ public class TenantDashboardController {
         );
     }
 
+    /**
+     * Creates the main requests section containing:
+     *  - Header with filter, refresh, and new request button
+     *  - Table of maintenance requests
+     *
+     * @return VBox section
+     */
     private VBox createRequestsSection() {
         VBox section = new VBox(15);
         section.setFillWidth(true);
@@ -223,6 +291,7 @@ public class TenantDashboardController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        // Tenant filters including Archived
         filterBox.getItems().addAll(
                 "All Requests",
                 "Pending Start",
@@ -273,10 +342,12 @@ public class TenantDashboardController {
         descCol.setPrefWidth(240);
         descCol.setStyle("-fx-wrap-text: true;");
 
+        // Reuse shared helper columns
         TableColumn<MaintenanceRequest, ?> priorityCol = DashboardUIHelper.createPriorityColumn();
         TableColumn<MaintenanceRequest, ?> statusCol = DashboardUIHelper.createStatusColumn();
         TableColumn<MaintenanceRequest, ?> dateCol = DashboardUIHelper.createSubmittedDateColumn();
 
+        // "Actions" column for edit, archive, unarchive, view
         TableColumn<MaintenanceRequest, Void> actionCol = getMaintenanceRequestVoidTableColumn();
 
         requestTable.getColumns().setAll(java.util.List.of(
@@ -294,6 +365,7 @@ public class TenantDashboardController {
         emptyLabel.setTextFill(Color.GRAY);
         requestTable.setPlaceholder(emptyLabel);
 
+        // Initial load
         loadRequests();
 
         dateCol.setSortType(TableColumn.SortType.DESCENDING);
@@ -305,10 +377,24 @@ public class TenantDashboardController {
         return section;
     }
 
+    /**
+     * Sets filter from a stats card click, which triggers filtering via listener.
+     *
+     * @param filter filter label
+     */
     private void setFilterFromCard(String filter) {
         filterBox.setValue(filter);
     }
 
+    /**
+     * Builds the "Actions" column for tenant requests.
+     * Logic:
+     *  - If tenantArchived: show Unarchive + Edit + View
+     *  - Else if Completed or Cancelled: show Archive + Edit + View
+     *  - Else: show Edit + View
+     *
+     * @return configured TableColumn with dynamic buttons
+     */
     private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
         actionCol.setPrefWidth(250);
@@ -329,6 +415,7 @@ public class TenantDashboardController {
                 unarchiveBtn.setStyle(btnStyle);
                 viewBtn.setStyle(btnStyle);
 
+                // Opens edit dialog for existing request
                 editBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     DashboardUIHelper.showEditRequestDialog(
@@ -337,14 +424,20 @@ public class TenantDashboardController {
                             TenantDashboardController.this::loadRequests
                     );
                 });
+
+                // Archives completed or cancelled request for tenant
                 archiveBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     archiveAsTenant(request);
                 });
+
+                // Brings archived request back into active list
                 unarchiveBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     unarchiveAsTenant(request);
                 });
+
+                // Opens read-only details dialog
                 viewBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     DashboardUIHelper.showRequestDetailsDialog(request);
@@ -370,13 +463,14 @@ public class TenantDashboardController {
                 buttonBox.getChildren().clear();
 
                 if (request.isTenantArchived()) {
-                    // Archived view: show Unarchive instead of Archive
+                    // Archived view: show Unarchive first
                     buttonBox.getChildren().add(unarchiveBtn);
                 } else if (isCompleted(request) || request.getStatus() == RequestStatus.CANCELLED) {
-                    // Completed and not archived: allow Archive
+                    // Completed or cancelled and not archived: show Archive
                     buttonBox.getChildren().add(archiveBtn);
                 }
 
+                // Edit and View are always available for now
                 buttonBox.getChildren().addAll(editBtn, viewBtn);
                 setGraphic(buttonBox);
             }
@@ -384,6 +478,11 @@ public class TenantDashboardController {
         return actionCol;
     }
 
+    /**
+     * Unarchives a request from the tenant perspective, making it visible in the main list again.
+     *
+     * @param request request to unarchive
+     */
     private void unarchiveAsTenant(MaintenanceRequest request) {
         if (request == null) {
             return;
@@ -419,6 +518,12 @@ public class TenantDashboardController {
         });
     }
 
+    /**
+     * Loads all maintenance requests for the current tenant and:
+     *  - Filters out tenant-archived requests for default view
+     *  - Refreshes stats
+     *  - Resets filter to "All Requests"
+     */
     private void loadRequests() {
         Tenant tenant = (Tenant) authService.getCurrentUser();
         List<MaintenanceRequest> allRequests = requestDAO.getRequestsByTenant(tenant.getUserId());
@@ -433,6 +538,13 @@ public class TenantDashboardController {
         filterBox.setValue("All Requests");
     }
 
+    /**
+     * Filters the request table based on current tenant and selected filter label.
+     * If "Archived", shows tenant-archived requests only.
+     * Otherwise, starts from non-archived requests and narrows by status.
+     *
+     * @param filter label from filterBox
+     */
     private void filterRequests(String filter) {
         Tenant tenant = (Tenant) authService.getCurrentUser();
         List<MaintenanceRequest> all = requestDAO.getRequestsByTenant(tenant.getUserId());
@@ -469,6 +581,12 @@ public class TenantDashboardController {
         requestTable.sort();
     }
 
+    /**
+     * Archives a request from the tenant perspective.
+     * Only completed or cancelled requests can be archived.
+     *
+     * @param request request to archive
+     */
     private void archiveAsTenant(MaintenanceRequest request) {
         if (request == null) {
             return;
@@ -508,6 +626,14 @@ public class TenantDashboardController {
         });
     }
 
+    /**
+     * Shows the dialog for submitting a new maintenance request.
+     * Tenant can:
+     *  - Pick a category
+     *  - Enter description
+     *  - Optionally attach a photo (image file)
+     * After successful save, request is persisted and photo record is stored if provided.
+     */
     private void showNewRequestDialog() {
         Dialog<MaintenanceRequest> dialog = new Dialog<>();
         dialog.setTitle("Submit New Maintenance Request");
@@ -529,6 +655,7 @@ public class TenantDashboardController {
         descArea.setPromptText("Describe the issue...");
         descArea.setPrefRowCount(4);
 
+        // Track selected photo file
         final File[] selectedPhotoFile = {null};
 
         FileChooser fileChooser = new FileChooser();
@@ -566,6 +693,7 @@ public class TenantDashboardController {
 
         dialog.getDialogPane().setContent(grid);
 
+        // Build new request on submit if validation passes and DAO save succeeds
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == submitButtonType) {
                 if (categoryBox.getValue() != null && !descArea.getText().isEmpty()) {
@@ -586,6 +714,7 @@ public class TenantDashboardController {
         });
 
         dialog.showAndWait().ifPresent(request -> {
+            // Persist photo metadata if attached and request ID exists
             if (selectedPhotoFile[0] != null && request.getRequestId() != null) {
                 File file = selectedPhotoFile[0];
                 String uri = file.toURI().toString();
@@ -604,20 +733,32 @@ public class TenantDashboardController {
         });
     }
 
+    /**
+     * Helper: request is considered "not started" if it is SUBMITTED or ASSIGNED.
+     */
     private boolean isNotStarted(MaintenanceRequest r) {
         return r.getStatus() == RequestStatus.SUBMITTED
                 || r.getStatus() == RequestStatus.ASSIGNED;
     }
 
+    /**
+     * Helper: request is in progress if status is IN_PROGRESS or REOPENED.
+     */
     private boolean isInProgress(MaintenanceRequest r) {
         return r.getStatus() == RequestStatus.IN_PROGRESS
                 || r.getStatus() == RequestStatus.REOPENED;
     }
 
+    /**
+     * Helper: request is completed if status is COMPLETED.
+     */
     private boolean isCompleted(MaintenanceRequest r) {
         return r.getStatus() == RequestStatus.COMPLETED;
     }
 
+    /**
+     * Helper: request is cancelled if status is CANCELLED.
+     */
     private boolean isCancelled(MaintenanceRequest r) {
         return r.getStatus() == RequestStatus.CANCELLED;
     }

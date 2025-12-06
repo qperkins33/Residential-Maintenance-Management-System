@@ -28,13 +28,22 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Shared UI helper for all dashboards.
+ * Handles common styling, stat cards, table columns, and request details/edit dialogs.
+ */
 public final class DashboardUIHelper {
 
+    // Shared DAOs used by dialogs that need tenant/staff or photo info
     private static final PhotoDAO PHOTO_DAO = new PhotoDAO();
     private static final UserDAO USER_DAO = new UserDAO();
 
+    // Utility class, no instances
     private DashboardUIHelper() {}
 
+    /**
+     * Attach the global stylesheet and base root style class to an AnchorPane.
+     */
     public static void applyRootStyles(AnchorPane root, Class<?> clazz) {
         root.getStylesheets().add(
                 Objects.requireNonNull(clazz.getResource("/css/styles.css")).toExternalForm()
@@ -42,12 +51,16 @@ public final class DashboardUIHelper {
         root.getStyleClass().add("app-root");
     }
 
+    /**
+     * Create a sidebar button with hover behavior and optional "active" styling.
+     */
     public static Button createSidebarButton(String text, boolean active) {
         Button btn = new Button(text);
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setAlignment(Pos.CENTER_LEFT);
         btn.setFont(Font.font("Arial", 14));
 
+        // Base style depends on whether this item is considered active
         if (active) {
             btn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
                     "-fx-padding: 12 15; -fx-background-radius: 5;");
@@ -56,6 +69,7 @@ public final class DashboardUIHelper {
                     "-fx-padding: 12 15; -fx-background-radius: 5;");
         }
 
+        // Simple hover effect for inactive buttons
         btn.setOnMouseEntered(e -> {
             if (!active) {
                 btn.setStyle("-fx-background-color: #34495e; -fx-text-fill: white; " +
@@ -72,6 +86,9 @@ public final class DashboardUIHelper {
         return btn;
     }
 
+    /**
+     * Create a stat card used at the top of dashboards (Total, In Progress, etc).
+     */
     public static VBox createStatCard(String title, String value, String color, Image iconImage) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20));
@@ -80,6 +97,7 @@ public final class DashboardUIHelper {
         card.setPrefWidth(220);
         card.setAlignment(Pos.TOP_LEFT);
 
+        // Header row contains icon and title
         HBox headerBox = new HBox(10);
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
@@ -94,12 +112,14 @@ public final class DashboardUIHelper {
 
         headerBox.getChildren().addAll(iconView, titleLabel);
 
+        // Big number value
         Label valueLabel = new Label(value);
         valueLabel.setFont(Font.font("Arial", FontWeight.BOLD, 36));
         valueLabel.setTextFill(Color.web(color));
 
         card.getChildren().addAll(headerBox, valueLabel);
 
+        // Hover effect to make the card feel clickable
         card.setOnMouseEntered(e ->
                 card.setStyle("-fx-background-color: white; -fx-background-radius: 10; " +
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 15, 0, 0, 5); -fx-cursor: hand;"));
@@ -110,6 +130,9 @@ public final class DashboardUIHelper {
         return card;
     }
 
+    /**
+     * Load a stat icon from the shared images folder.
+     */
     public static Image loadStatIcon(String imageFileName) {
         var url = DashboardUIHelper.class.getResource("/images/" + imageFileName);
         if (url == null) {
@@ -118,6 +141,9 @@ public final class DashboardUIHelper {
         return new Image(url.toExternalForm());
     }
 
+    /**
+     * Reusable "Priority" table column with CSS based pills per priority level.
+     */
     public static TableColumn<MaintenanceRequest, PriorityLevel> createPriorityColumn() {
         TableColumn<MaintenanceRequest, PriorityLevel> priorityCol = new TableColumn<>("Priority");
         priorityCol.setCellValueFactory(new PropertyValueFactory<>("priority"));
@@ -127,13 +153,18 @@ public final class DashboardUIHelper {
             @Override
             protected void updateItem(PriorityLevel item, boolean empty) {
                 super.updateItem(item, empty);
+                // Always clear previous state
                 setText(null);
                 setStyle("");
                 getStyleClass().removeAll("priority-urgent", "priority-high", "priority-medium", "priority-else");
+
                 if (empty || item == null) {
                     return;
                 }
+
                 setText(item.getDisplayName());
+
+                // Map enum to CSS class for colored pill
                 if (item == PriorityLevel.EMERGENCY || item == PriorityLevel.URGENT) {
                     getStyleClass().add("priority-urgent");
                 } else if (item == PriorityLevel.HIGH) {
@@ -148,12 +179,16 @@ public final class DashboardUIHelper {
         return priorityCol;
     }
 
+    /**
+     * Reusable "Status" table column with CSS based pills per status value.
+     */
     public static TableColumn<MaintenanceRequest, RequestStatus> createStatusColumn() {
         TableColumn<MaintenanceRequest, RequestStatus> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
         statusCol.setPrefWidth(120);
         statusCol.setStyle("-fx-alignment: CENTER;");
         statusCol.setCellFactory(column -> new TableCell<>() {
+            // Known status CSS classes so we can clear them cleanly
             private final List<String> statusClasses = List.of(
                     "status-submitted",
                     "status-completed",
@@ -170,10 +205,14 @@ public final class DashboardUIHelper {
                 setText(null);
                 setStyle("");
                 getStyleClass().removeAll(statusClasses);
+
                 if (empty || item == null) {
                     return;
                 }
+
                 setText(item.getDisplayName());
+
+                // Map enum to CSS class for status pill
                 switch (item) {
                     case COMPLETED -> getStyleClass().add("status-completed");
                     case IN_PROGRESS -> getStyleClass().add("status-in-progress");
@@ -188,6 +227,9 @@ public final class DashboardUIHelper {
         return statusCol;
     }
 
+    /**
+     * Reusable "Submitted" date column rendered as a small, gray pill.
+     */
     public static TableColumn<MaintenanceRequest, String> createSubmittedDateColumn() {
         TableColumn<MaintenanceRequest, String> dateCol = new TableColumn<>("Submitted");
         dateCol.setCellValueFactory(cellData -> {
@@ -213,9 +255,11 @@ public final class DashboardUIHelper {
                 super.updateItem(item, empty);
                 setText(null);
                 setGraphic(null);
+
                 if (empty || item == null) {
                     return;
                 }
+
                 pill.setText(item);
                 setGraphic(pill);
             }
@@ -223,6 +267,9 @@ public final class DashboardUIHelper {
         return dateCol;
     }
 
+    /**
+     * Utility for adding a 2 column label/value row to a GridPane.
+     */
     public static void addDetailRow(GridPane grid, int row, String label, String value) {
         Label lblLabel = new Label(label);
         lblLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
@@ -242,9 +289,13 @@ public final class DashboardUIHelper {
         grid.add(valueLabel, 1, row);
     }
 
+    /**
+     * Top level helper for showing request details, including current photo if present.
+     */
     public static void showRequestDetailsDialog(MaintenanceRequest request) {
         String photoUri = null;
         if (request != null && request.getRequestId() != null) {
+            // Pull the most recent photo for this request if one exists
             photoUri = PHOTO_DAO.getLatestPhotoPathForRequest(request.getRequestId());
         }
         if (request != null) {
@@ -252,6 +303,9 @@ public final class DashboardUIHelper {
         }
     }
 
+    /**
+     * Internal method that builds the actual details dialog, including tenant and staff info.
+     */
     private static void showRequestDetailsDialog(MaintenanceRequest request, String photoUri) {
         String tenantName = null;
         String tenantPhone = null;
@@ -260,6 +314,7 @@ public final class DashboardUIHelper {
         String staffEmail = null;
         String staffName = null;
 
+        // Resolve tenant details if available
         if (request.getTenantId() != null && !request.getTenantId().isBlank()) {
             Tenant tenant = USER_DAO.getTenantById(request.getTenantId());
             if (tenant != null) {
@@ -269,6 +324,7 @@ public final class DashboardUIHelper {
             }
         }
 
+        // Resolve staff details if available
         if (request.getAssignedStaffId() != null && !request.getAssignedStaffId().isBlank()) {
             MaintenanceStaff staff = USER_DAO.getStaffByStaffId(request.getAssignedStaffId());
             if (staff != null) {
@@ -288,6 +344,7 @@ public final class DashboardUIHelper {
         pane.setMinWidth(700);
         pane.setPrefWidth(700);
 
+        // Two column layout for labels and values
         GridPane grid = new GridPane();
         grid.setHgap(15);
         grid.setVgap(12);
@@ -305,9 +362,11 @@ public final class DashboardUIHelper {
 
         int row = 0;
 
+        // Basic request metadata
         addDetailRow(grid, row++, "Request ID:", request.getRequestId());
         addDetailRow(grid, row++, "Apartment:", request.getApartmentNumber());
 
+        // Tenant info if known
         if (tenantName != null && !tenantName.isBlank()) {
             addDetailRow(grid, row++, "Tenant:", tenantName);
         }
@@ -318,6 +377,7 @@ public final class DashboardUIHelper {
             addDetailRow(grid, row++, "Tenant Email:", tenantEmail);
         }
 
+        // Staff info if assigned
         if (staffName != null && !staffName.isBlank()) {
             addDetailRow(grid, row++, "Assigned Staff:", staffName);
         }
@@ -328,10 +388,12 @@ public final class DashboardUIHelper {
             addDetailRow(grid, row++, "Assigned Staff Email:", staffEmail);
         }
 
+        // Category, priority, status
         addDetailRow(grid, row++, "Category:", request.getCategory().getDisplayName());
         addDetailRow(grid, row++, "Priority:", request.getPriority().getDisplayName());
         addDetailRow(grid, row++, "Status:", request.getStatus().getDisplayName());
 
+        // Dates if present
         if (request.getSubmissionDate() != null) {
             addDetailRow(
                     grid,
@@ -350,6 +412,7 @@ public final class DashboardUIHelper {
             );
         }
 
+        // Description block
         Label descLabel = new Label("Description:");
         descLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
 
@@ -363,6 +426,7 @@ public final class DashboardUIHelper {
         grid.add(descLabel, 0, row);
         grid.add(descArea, 1, row++);
 
+        // Staff update block
         Label updateLabel = new Label("Staff Update:");
         updateLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
 
@@ -384,6 +448,7 @@ public final class DashboardUIHelper {
         grid.add(updateLabel, 0, row);
         grid.add(updateArea, 1, row++);
 
+        // Resolution block only for closed requests
         if (request.getResolutionNotes() != null && !request.getResolutionNotes().isEmpty()) {
             Label resLabel = new Label("Resolution:");
             resLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
@@ -399,6 +464,7 @@ public final class DashboardUIHelper {
             grid.add(resArea, 1, row++);
         }
 
+        // Optional photo preview if the request has one
         if (photoUri != null && !photoUri.isBlank()) {
             Label photoLabel = new Label("Photo:");
             photoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
@@ -420,6 +486,7 @@ public final class DashboardUIHelper {
             }
         }
 
+        // Wrap details in a scroll pane to handle long content
         ScrollPane scrollPane = new ScrollPane(grid);
         scrollPane.setFitToWidth(true);
         scrollPane.setPrefSize(660, 500);
@@ -430,6 +497,11 @@ public final class DashboardUIHelper {
         dialog.showAndWait();
     }
 
+    /**
+     * Shared tenant edit dialog used on the tenant dashboard.
+     * Supports editing category, description, priority, and limited status transitions
+     * (reopen completed or cancelled, or cancel an active request).
+     */
     public static void showEditRequestDialog(MaintenanceRequest request,
                                              MaintenanceRequestDAO requestDAO,
                                              Runnable afterSave) {
@@ -445,6 +517,7 @@ public final class DashboardUIHelper {
         grid.setVgap(10);
         grid.setPadding(new Insets(20));
 
+        // Editable fields for category, description, priority
         ComboBox<CategoryType> categoryBox = new ComboBox<>();
         categoryBox.getItems().addAll(CategoryType.values());
         categoryBox.setValue(request.getCategory());
@@ -456,13 +529,14 @@ public final class DashboardUIHelper {
         priorityBox.getItems().addAll(PriorityLevel.values());
         priorityBox.setValue(request.getPriority());
 
+        // Status options row (reopen, cancel, or read only)
         HBox statusOptions = new HBox(10);
         statusOptions.setAlignment(Pos.CENTER_LEFT);
 
         RequestStatus originalStatus = request.getStatus();
         final RequestStatus[] selectedStatus = { originalStatus };
 
-        // COMPLETED / CANCELLED => allow reopen
+        // If the request is closed, allow tenant to reopen
         if (originalStatus == RequestStatus.COMPLETED || originalStatus == RequestStatus.CANCELLED) {
             CheckBox reopenCheck = new CheckBox("Reopen request");
             styleActionToggleButton(reopenCheck, "#4caf50", "#43a047", "#388e3c");
@@ -475,7 +549,7 @@ public final class DashboardUIHelper {
             });
             statusOptions.getChildren().add(reopenCheck);
 
-            // Any other active state (not SUBMITTED/ASSIGNED) => allow cancel
+            // For active but not "new" statuses, allow tenant to cancel
         } else if (originalStatus != RequestStatus.SUBMITTED && originalStatus != RequestStatus.ASSIGNED) {
             CheckBox cancelCheck = new CheckBox("Cancel request");
             styleActionToggleButton(cancelCheck, "#e53935", "#d32f2f", "#c62828");
@@ -488,6 +562,7 @@ public final class DashboardUIHelper {
             });
             statusOptions.getChildren().add(cancelCheck);
         } else {
+            // Submitted or Assigned are effectively read only status wise from here
             String statusText = originalStatus.name().replace('_', ' ');
             Label statusLabel = new Label(statusText);
             statusLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
@@ -495,6 +570,7 @@ public final class DashboardUIHelper {
             selectedStatus[0] = originalStatus;
         }
 
+        // Build form layout
         grid.add(new Label("Category:"), 0, 0);
         grid.add(categoryBox, 1, 0);
         grid.add(new Label("Description:"), 0, 1);
@@ -508,6 +584,8 @@ public final class DashboardUIHelper {
 
         Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtnType);
         boolean[] updated = {false};
+
+        // Validate and persist on Save
         saveButton.addEventFilter(ActionEvent.ACTION, event -> {
             if (categoryBox.getValue() == null ||
                     priorityBox.getValue() == null ||
@@ -520,13 +598,16 @@ public final class DashboardUIHelper {
 
             RequestStatus newStatus = selectedStatus[0];
 
+            // Update edited fields
             request.setCategory(categoryBox.getValue());
             request.setDescription(descArea.getText().trim());
             request.setPriority(priorityBox.getValue());
             request.setStatus(newStatus);
             request.setLastUpdated(LocalDateTime.now());
 
-            // Only when a CLOSED request is REOPENED do we unarchive it
+            // Only when a closed request is explicitly reopened do we clear archive flags.
+            // This is how tenant reopens a completed or cancelled request and pulls it
+            // back into both tenant and staff dashboards.
             if ((originalStatus == RequestStatus.COMPLETED || originalStatus == RequestStatus.CANCELLED)
                     && newStatus == RequestStatus.REOPENED) {
                 request.setTenantArchived(false);
@@ -543,6 +624,7 @@ public final class DashboardUIHelper {
 
         dialog.showAndWait();
 
+        // Only notify and call afterSave if the update actually succeeded
         if (updated[0]) {
             if (afterSave != null) {
                 afterSave.run();
@@ -551,6 +633,9 @@ public final class DashboardUIHelper {
         }
     }
 
+    /**
+     * Shared styling helper for "toggle like" labeled controls (CheckBox, etc) that act as actions.
+     */
     public static void styleActionToggleButton(Labeled b, String base, String hover, String pressed) {
         String common = "; -fx-text-fill: white; -fx-padding: 6 12; -fx-background-radius: 4;";
         b.setStyle("-fx-background-color: " + base + common);

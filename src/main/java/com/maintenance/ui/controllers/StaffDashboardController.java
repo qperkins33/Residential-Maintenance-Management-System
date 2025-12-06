@@ -26,36 +26,66 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Controller for the maintenance staff dashboard.
+ * Handles:
+ *  - Layout and rendering of the staff view (top bar, sidebar, center content)
+ *  - Loading and filtering of requests assigned to the logged-in staff member
+ *  - Actions on requests (start, complete, update, archive/unarchive)
+ *  - Email notifications sent to tenants when staff take actions
+ */
 public class StaffDashboardController {
+    // Factory for creating and switching application windows
     private final ViewFactory viewFactory;
+    // Central authentication service (current user, login, logout)
     private final AuthenticationService authService;
+    // DAO for reading and updating maintenance requests
     private final MaintenanceRequestDAO requestDAO;
+    // Table showing the staff member's requests
     private TableView<MaintenanceRequest> requestTable;
+    // Label showing current workload vs capacity in sidebar
     private Label workloadLabel;
+    // Container for dashboard stat cards
     private HBox statsBox;
+    // Filter for narrowing visible tasks in the table
     private final ComboBox<String> filterBox = new ComboBox<>();
 
+    /**
+     * Creates a StaffDashboardController using shared services.
+     *
+     * @param viewFactory shared ViewFactory instance for stage management
+     */
     public StaffDashboardController(ViewFactory viewFactory) {
         this.viewFactory = viewFactory;
         this.authService = AuthenticationService.getInstance();
         this.requestDAO = new MaintenanceRequestDAO();
     }
 
+    /**
+     * Builds the staff dashboard UI and anchors it into the given root.
+     *
+     * @param root AnchorPane which will host the dashboard layout
+     */
     public void createDashboardUI(AnchorPane root) {
+        // Attach global styles so staff dashboard shares common look and feel
         DashboardUIHelper.applyRootStyles(root, getClass());
 
         BorderPane mainLayout = new BorderPane();
         mainLayout.setPadding(new Insets(0));
 
+        // Top bar: title, staff name, logout
         HBox topBar = createTopBar();
         mainLayout.setTop(topBar);
 
+        // Left sidebar: navigation and workload widget
         VBox sidebar = createSidebar();
         mainLayout.setLeft(sidebar);
 
+        // Center content: welcome text, stats, request table
         VBox centerContent = createCenterContent();
         mainLayout.setCenter(centerContent);
 
+        // Make the dashboard fill the entire root pane
         AnchorPane.setTopAnchor(mainLayout, 0.0);
         AnchorPane.setBottomAnchor(mainLayout, 0.0);
         AnchorPane.setLeftAnchor(mainLayout, 0.0);
@@ -64,6 +94,11 @@ public class StaffDashboardController {
         root.getChildren().add(mainLayout);
     }
 
+    /**
+     * Creates the top bar for the staff dashboard including title, user label, and logout button.
+     *
+     * @return configured HBox top bar
+     */
     private HBox createTopBar() {
         HBox topBar = new HBox(20);
         topBar.setPadding(new Insets(15, 30, 15, 30));
@@ -76,6 +111,7 @@ public class StaffDashboardController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        // Logged-in staff user
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
         Label userLabel = new Label("👤 " + staff.getFullName() + " (Maintenance Staff)");
         userLabel.setFont(Font.font("Arial", 14));
@@ -93,6 +129,11 @@ public class StaffDashboardController {
         return topBar;
     }
 
+    /**
+     * Builds the left sidebar containing navigation and workload status box.
+     *
+     * @return VBox representing the sidebar
+     */
     private VBox createSidebar() {
         VBox sidebar = new VBox(15);
         sidebar.setPadding(new Insets(20));
@@ -103,17 +144,24 @@ public class StaffDashboardController {
         menuLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         menuLabel.setTextFill(Color.web("#95a5a6"));
 
+        // Only one nav item for now; marked as active
         Button dashboardBtn = DashboardUIHelper.createSidebarButton("📊 Dashboard", true);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
+        // Workload / active request status widget
         VBox availabilityBox = createActiveRequestStatus();
 
         sidebar.getChildren().addAll(menuLabel, dashboardBtn, spacer, availabilityBox);
         return sidebar;
     }
 
+    /**
+     * Creates the small card in the sidebar that shows the staff member's active workload.
+     *
+     * @return VBox status box
+     */
     private VBox createActiveRequestStatus() {
         VBox box = new VBox(10);
         box.setPadding(new Insets(15));
@@ -127,12 +175,18 @@ public class StaffDashboardController {
         workloadLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         workloadLabel.setTextFill(Color.web("#bdc3c7"));
 
+        // Initial workload value
         refreshWorkload();
 
         box.getChildren().addAll(statusLabel, workloadLabel);
         return box;
     }
 
+    /**
+     * Creates the main center content: welcome text, stats, and requests table.
+     *
+     * @return VBox containing all central components
+     */
     private VBox createCenterContent() {
         VBox content = new VBox(20);
         content.setPadding(new Insets(30));
@@ -145,10 +199,16 @@ public class StaffDashboardController {
 
         content.getChildren().addAll(welcomeBox, statsBox, requestsSection);
 
+        // Initial stats calculation
         refreshStats();
         return content;
     }
 
+    /**
+     * Creates the welcome section for the logged-in staff and displays today's date.
+     *
+     * @return VBox containing welcome label and date
+     */
     private VBox createWelcomeSection() {
         VBox welcomeBox = new VBox(5);
 
@@ -166,6 +226,10 @@ public class StaffDashboardController {
         return welcomeBox;
     }
 
+    /**
+     * Rebuilds the stat cards row (total, urgent, in progress, assigned, completed, cancelled)
+     * based on the staff member's non-archived requests.
+     */
     private void refreshStats() {
         if (statsBox == null) return;
 
@@ -242,6 +306,11 @@ public class StaffDashboardController {
         );
     }
 
+    /**
+     * Builds the "My Assigned Requests" section including filter controls and the main table.
+     *
+     * @return VBox containing header and table
+     */
     private VBox createRequestsSection() {
         VBox section = new VBox(15);
         section.setFillWidth(true);
@@ -255,6 +324,7 @@ public class StaffDashboardController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        // Filter options for staff view
         filterBox.getItems().addAll(
                 "All Tasks",
                 "Assigned",
@@ -268,6 +338,7 @@ public class StaffDashboardController {
         filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
 //        filterBox.setOnAction(e -> filterRequests(filterBox.getValue()));
 
+        // Use listener instead of onAction to react to changes
         filterBox.valueProperty().addListener((obs, oldFilter, newFilter) -> {
             if (newFilter != null) {
                 filterRequests(newFilter);
@@ -276,10 +347,12 @@ public class StaffDashboardController {
 
         Button refreshBtn = new Button("🔄 Refresh");
         refreshBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        // Reload from DB and reset filter
         refreshBtn.setOnAction(e -> loadRequests());
 
         headerBox.getChildren().addAll(sectionTitle, spacer, filterBox, refreshBtn);
 
+        // Build main requests table
         requestTable = new TableView<>();
         requestTable.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
         requestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
@@ -305,10 +378,12 @@ public class StaffDashboardController {
         descCol.setPrefWidth(240);
         descCol.setStyle("-fx-wrap-text: true;");
 
+        // Reuse helper columns for priority, status, and submitted date
         TableColumn<MaintenanceRequest, ?> priorityCol = DashboardUIHelper.createPriorityColumn();
         TableColumn<MaintenanceRequest, ?> statusCol = DashboardUIHelper.createStatusColumn();
         TableColumn<MaintenanceRequest, ?> dateCol = DashboardUIHelper.createSubmittedDateColumn();
 
+        // Action column with update/start/complete/archive/unarchive options
         TableColumn<MaintenanceRequest, Void> actionCol = getMaintenanceRequestVoidTableColumn();
 
         requestTable.getColumns().setAll(java.util.List.of(
@@ -322,8 +397,10 @@ public class StaffDashboardController {
                 actionCol
         ));
 
+        // Initial load
         loadRequests();
 
+        // Default sort by newest submitted date
         dateCol.setSortType(TableColumn.SortType.DESCENDING);
         requestTable.getSortOrder().setAll(dateCol);
         requestTable.sort();
@@ -342,10 +419,26 @@ public class StaffDashboardController {
         return section;
     }
 
+    /**
+     * Sets filter in the combo box from a stat card click.
+     * Triggers filterRequests via the value listener.
+     *
+     * @param filter filter label to select
+     */
     private void setFilterFromCard(String filter) {
         filterBox.setValue(filter);
     }
 
+    /**
+     * Builds the action column for each row with context-dependent controls:
+     *  - ASSIGNED: [Start] [View]
+     *  - IN_PROGRESS/REOPENED: [Complete] [Update] [View]
+     *  - COMPLETED: [Archive] [Post Update] [View]
+     *  - CANCELLED: [Archive] [Update] [View]
+     *  - STAFF ARCHIVED: [Unarchive] plus update or post-update and view
+     *
+     * @return TableColumn with configured cell factory
+     */
     private TableColumn<MaintenanceRequest, Void> getMaintenanceRequestVoidTableColumn() {
         TableColumn<MaintenanceRequest, Void> actionCol = new TableColumn<>("Actions");
         actionCol.setPrefWidth(280);
@@ -372,6 +465,7 @@ public class StaffDashboardController {
                 unarchiveBtn.setStyle(btnStyle);
                 viewBtn.setStyle(btnStyle);
 
+                // Open staff update dialog (pre or post completion)
                 updateBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     showStaffUpdateDialog(request);
@@ -382,26 +476,31 @@ public class StaffDashboardController {
                     showStaffUpdateDialog(request);
                 });
 
+                // Move request to "In Progress"
                 startBtn.setOnAction((ActionEvent event) -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     startWork(request);
                 });
 
+                // Complete the request and capture resolution details
                 completeBtn.setOnAction((ActionEvent event) -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     showCompleteDialog(request);
                 });
 
+                // Archive for this staff member
                 archiveBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     archiveAsStaff(request);
                 });
 
+                // Unarchive back to active list
                 unarchiveBtn.setOnAction(e -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     unarchiveAsStaff(request);
                 });
 
+                // View read-only details dialog
                 viewBtn.setOnAction((ActionEvent event) -> {
                     MaintenanceRequest request = getTableView().getItems().get(getIndex());
                     DashboardUIHelper.showRequestDetailsDialog(request);
@@ -426,7 +525,7 @@ public class StaffDashboardController {
 
                 buttonBox.getChildren().clear();
 
-                // If staff archived this, prefer Unarchive + standard actions
+                // If staff archived this, show Unarchive + appropriate update button + view
                 if (request.isStaffArchived()) {
                     // Realistically only COMPLETED tasks get archived, but this is safe
                     buttonBox.getChildren().add(unarchiveBtn);
@@ -440,7 +539,7 @@ public class StaffDashboardController {
                     return;
                 }
 
-                // Normal non-archived behavior
+                // Normal non-archived behavior based on status
                 if (request.getStatus() == RequestStatus.ASSIGNED) {
                     buttonBox.getChildren().addAll(startBtn, viewBtn);
                 } else if (isInProgress(request)) {
@@ -459,6 +558,11 @@ public class StaffDashboardController {
         return actionCol;
     }
 
+    /**
+     * Unarchives a request for the current staff member, returning it to the active list.
+     *
+     * @param request request to unarchive
+     */
     private void unarchiveAsStaff(MaintenanceRequest request) {
         if (request == null) {
             return;
@@ -489,6 +593,12 @@ public class StaffDashboardController {
         });
     }
 
+    /**
+     * Shows dialog to add or edit staff update notes for a request.
+     * Also sends an email to the tenant with the new update.
+     *
+     * @param request request to update
+     */
     private void showStaffUpdateDialog(MaintenanceRequest request) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Staff Update");
@@ -502,11 +612,13 @@ public class StaffDashboardController {
         grid.setVgap(10);
         grid.setPadding(new Insets(20));
 
+        // Read-only original description for context
         TextArea descArea = new TextArea(request.getDescription());
         descArea.setEditable(false);
         descArea.setWrapText(true);
         descArea.setPrefRowCount(4);
 
+        // Editable staff update text
         TextArea updateArea = new TextArea();
         updateArea.setWrapText(true);
         updateArea.setPrefRowCount(4);
@@ -534,6 +646,7 @@ public class StaffDashboardController {
                 return;
             }
 
+            // Persist staff notes and ensure tenant sees it again (reset tenant archive flag)
             request.setStaffUpdateNotes(text);
             request.setTenantArchived(false);
             request.setLastUpdated(LocalDateTime.now());
@@ -553,6 +666,7 @@ public class StaffDashboardController {
                         .findTenantNameByRequestId(request.getRequestId())
                         .orElse("");
 
+                // Send tenant email in background to avoid blocking UI thread
                 requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                         CompletableFuture.runAsync(() -> {
                             String namePart = tenantName.isBlank() ? "" : " " + tenantName;
@@ -583,6 +697,12 @@ public class StaffDashboardController {
         dialog.showAndWait();
     }
 
+    /**
+     * Loads all requests for the logged-in staff member and applies:
+     *  - Staff-archive filter (only non-archived)
+     *  - Stats and workload refresh
+     *  - Default "All Tasks" filter selection reset
+     */
     private void loadRequests() {
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
         List<MaintenanceRequest> all = requestDAO.getRequestsByStaff(staff.getStaffId());
@@ -597,20 +717,29 @@ public class StaffDashboardController {
         filterBox.setValue("All Tasks");
     }
 
+    /**
+     * Applies the selected status filter for the current staff member.
+     * Filters against all assigned requests, then narrows down based on the chosen label.
+     *
+     * @param filter label from the filter combo box
+     */
     private void filterRequests(String filter) {
         MaintenanceStaff staff = (MaintenanceStaff) authService.getCurrentUser();
         List<MaintenanceRequest> all = requestDAO.getRequestsByStaff(staff.getStaffId());
         List<MaintenanceRequest> filtered;
 
         if ("Archived".equals(filter)) {
+            // Show only staff-archived items
             filtered = all.stream()
                     .filter(MaintenanceRequest::isStaffArchived)
                     .toList();
         } else {
+            // Start from non-archived
             filtered = all.stream()
                     .filter(r -> !r.isStaffArchived())
                     .toList();
 
+            // Narrow based on filter label
             switch (filter) {
                 case "Assigned" -> filtered = filtered.stream()
                         .filter(r -> r.getStatus() == RequestStatus.ASSIGNED)
@@ -639,6 +768,10 @@ public class StaffDashboardController {
         requestTable.sort();
     }
 
+    /**
+     * Updates the workload label in the sidebar with active request count and capacity.
+     * Active means not completed and not cancelled.
+     */
     private void refreshWorkload() {
         if (workloadLabel == null) return;
 
@@ -653,6 +786,12 @@ public class StaffDashboardController {
         workloadLabel.setText("Workload: " + activeWorkload + "/" + staff.getMaxCapacity());
     }
 
+    /**
+     * Archives a request from the staff member's point of view, leaving it accessible in "Archived" filter.
+     * Only completed or cancelled requests can be archived.
+     *
+     * @param request request to archive
+     */
     private void archiveAsStaff(MaintenanceRequest request) {
         if (request == null) {
             return;
@@ -692,6 +831,11 @@ public class StaffDashboardController {
         });
     }
 
+    /**
+     * Moves a request into "In Progress" status after confirmation and sends a status email to the tenant.
+     *
+     * @param request request to transition
+     */
     private void startWork(MaintenanceRequest request) {
         RequestStatus previousStatus = request.getStatus();
 
@@ -717,6 +861,7 @@ public class StaffDashboardController {
                             .findTenantNameByRequestId(request.getRequestId())
                             .orElse("");
 
+                    // Email tenant about status change (non-blocking)
                     requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                             CompletableFuture.runAsync(() -> {
                                 String namePart = tenantName.isBlank() ? "" : " " + tenantName;
@@ -751,6 +896,13 @@ public class StaffDashboardController {
         });
     }
 
+    /**
+     * Shows a dialog for the staff member to complete a request, capturing
+     * resolution notes, hours spent, and optional cost.
+     * On success, marks request completed and emails tenant.
+     *
+     * @param request request to complete
+     */
     private void showCompleteDialog(MaintenanceRequest request) {
         RequestStatus previousStatus = request.getStatus();
 
@@ -788,6 +940,7 @@ public class StaffDashboardController {
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().setStyle("-fx-background-color: white;");
 
+        // Validate fields and return resolution text only when all checks pass
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == completeButtonType) {
                 String resolutionText = resolutionArea.getText().trim();
@@ -837,8 +990,10 @@ public class StaffDashboardController {
                     cost = Double.parseDouble(costText);
                 }
             } catch (NumberFormatException ignored) {
+                // Ignore parsing issues here; we already validated above
             }
 
+            // Persist cost and close request with resolution notes
             request.setActualCost(cost);
             request.close(resolution);
 
@@ -855,6 +1010,7 @@ public class StaffDashboardController {
                         .findTenantNameByRequestId(request.getRequestId())
                         .orElse("");
 
+                // Email tenant about completion
                 requestDAO.findTenantEmailByRequestId(request.getRequestId()).ifPresent(to ->
                         CompletableFuture.runAsync(() -> {
                             String namePart = tenantName.isBlank() ? "" : " " + tenantName;
@@ -888,6 +1044,15 @@ public class StaffDashboardController {
         });
     }
 
+    /**
+     * Attempts to resolve the best display name for the technician assigned to a request:
+     *  - First uses the current logged-in MaintenanceStaff if available
+     *  - Then falls back to a new UserDAO lookup by assignedStaffId
+     *  - Finally falls back to "Maintenance Staff" if nothing else is available
+     *
+     * @param r request for which to resolve technician name
+     * @return technician full name or a generic label
+     */
     private String resolveTechnicianName(MaintenanceRequest r) {
         var u = authService.getCurrentUser();
         if (u instanceof MaintenanceStaff ms && ms.getFullName() != null && !ms.getFullName().isBlank()) {
@@ -904,10 +1069,21 @@ public class StaffDashboardController {
         return "Maintenance Staff";
     }
 
+    /**
+     * Utility to convert null apartment or other text to a dash when printing.
+     *
+     * @param s input string
+     * @return s, or "-" if s is null
+     */
     private static String nullToDash(String s) {
         return s == null ? "-" : s;
     }
 
+    /**
+     * Shows a generic error dialog with the given message.
+     *
+     * @param message error text
+     */
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
@@ -916,18 +1092,42 @@ public class StaffDashboardController {
         alert.showAndWait();
     }
 
+    /**
+     * Returns true if the request has not been started yet (submitted or assigned).
+     *
+     * @param r request to check
+     * @return true if status is SUBMITTED or ASSIGNED
+     */
     private boolean isNotStarted(MaintenanceRequest r) {
         return r.getStatus() == RequestStatus.SUBMITTED || r.getStatus() == RequestStatus.ASSIGNED;
     }
 
+    /**
+     * Returns true if the request is currently in progress or reopened.
+     *
+     * @param r request to check
+     * @return true if status is IN_PROGRESS or REOPENED
+     */
     private boolean isInProgress(MaintenanceRequest r) {
         return r.getStatus() == RequestStatus.IN_PROGRESS || r.getStatus() == RequestStatus.REOPENED;
     }
 
+    /**
+     * Returns true if the request is completed.
+     *
+     * @param r request to check
+     * @return true if status is COMPLETED
+     */
     private boolean isCompleted(MaintenanceRequest r) {
         return r.getStatus() == RequestStatus.COMPLETED;
     }
 
+    /**
+     * Returns true if the request has been cancelled.
+     *
+     * @param r request to check
+     * @return true if status is CANCELLED
+     */
     private boolean isCancelled(MaintenanceRequest r) {
         return r.getStatus() == RequestStatus.CANCELLED;
     }
