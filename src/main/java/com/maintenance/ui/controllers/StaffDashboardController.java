@@ -858,7 +858,7 @@ public class StaffDashboardController {
                             String namePart = tenantName.isBlank() ? "" : " " + tenantName;
                             String subject = "Maintenance request status: " + previousStatusText + " -> Completed";
                             String body =
-                                    "Hello " + namePart + ",\n\n" +
+                                    "Hello" + namePart + ",\n\n" +
                                             "Your maintenance request is now completed.\n\n" +
                                             "Request ID: " + request.getRequestId() + "\n" +
                                             "Status: Completed\n" +
