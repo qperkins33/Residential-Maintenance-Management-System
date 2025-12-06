@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="RMM JavaFX" type="Application" factoryName="Application">
+  <configuration default="false" name="RMMS JavaFX Run" type="Application" factoryName="Application">
     <envs>
       <env name="SMTP_HOST" value="smtp.gmail.com"/>
       <env name="SMTP_PORT" value="587"/>
