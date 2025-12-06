@@ -569,7 +569,7 @@ public class StaffDashboardController {
                                             updateText + "\n\n" +
                                             "Reply to the following email if you have questions:\n" +
                                             staffEmail + "\n\n" +
-                                            "Residential Maintenance";
+                                            "Thank you,\nResidential Maintenance";
                             Email.send(to, subject, body);
                         })
                 );
@@ -723,15 +723,17 @@ public class StaffDashboardController {
                                 String subject = "Maintenance request status: " + previousStatusText + " -> In Progress";
                                 String body =
                                         "Hello" + namePart + ",\n\n" +
-                                                "Your maintenance request was updated.\n\n" +
+                                                "Your maintenance request status has been updated.\n\n" +
                                                 "Request ID: " + request.getRequestId() + "\n" +
                                                 "Status: In Progress\n" +
                                                 "Apartment: " + nullToDash(request.getApartmentNumber()) + "\n" +
                                                 "Technician: " + staff + "\n\n" +
                                                 "Description: " + request.getDescription() + "\n\n" +
+                                                "Old Status: 'Assigned'\n" +
+                                                "New Status: 'In Progress'\n\n" +
                                                 "Reply to the following email if you have questions:\n" +
                                                 staffEmail + "\n\n" +
-                                                "Residential Maintenance";
+                                                "Thank you,\nResidential Maintenance";
                                 Email.send(to, subject, body);
                             })
                     );
@@ -858,7 +860,7 @@ public class StaffDashboardController {
                             String namePart = tenantName.isBlank() ? "" : " " + tenantName;
                             String subject = "Maintenance request status: " + previousStatusText + " -> Completed";
                             String body =
-                                    "Hello " + namePart + ",\n\n" +
+                                    "Hello" + namePart + ",\n\n" +
                                             "Your maintenance request is now completed.\n\n" +
                                             "Request ID: " + request.getRequestId() + "\n" +
                                             "Status: Completed\n" +
@@ -869,7 +871,7 @@ public class StaffDashboardController {
                                             "Cost: $" + formattedCost + "\n\n" +
                                             "Reply to the following email if you have questions:\n" +
                                             staffEmail + "\n\n" +
-                                            "Residential Maintenance";
+                                            "Thank you,\nResidential Maintenance";
                             Email.send(to, subject, body);
                         })
                 );
