@@ -1,16 +1,17 @@
 # JavaFX Run Configuration
 
-The project now includes a stored IntelliJ run configuration named **RMM JavaFX**.  
+- The project now includes a stored IntelliJ run configuration named **RMMS JavaFX Run**.  
 Selecting this configuration (top-right “Run” dropdown) and pressing **Run ▶️** launches the application correctly.
+  - Add the following to **Environmental variables** in order to configure email functionality (link to your personal Google Account App Password): SMTP_HOST=smtp.gmail.com;SMTP_PORT=587;SMTP_USERNAME=**____**@gmail.com;SMTP_PASSWORD=**0000 0000 0000 0000**;SMTP_FROM=**First Last** \<**____**@gmail.com\>
+  - This configuration sets the required JavaFX module path and runs with Java 21, fixing the previous “JavaFX runtime components are missing” error.
 
-Add the following to **Environmental variables** in order to configure email functionality (link to your personal Google Account App Password): SMTP_HOST=smtp.gmail.com;SMTP_PORT=587;SMTP_USERNAME=**____**@gmail.com;SMTP_PASSWORD=**0000 0000 0000 0000**;SMTP_FROM=**First Last** \<**____**@gmail.com\>
-
-This configuration sets the required JavaFX module path and runs with Java 21, fixing the previous “JavaFX runtime components are missing” error.
+- Login to demo account and create additional accounts within admin1
+  - Username: admin1
+  - Password: pass123
 
 <img width="1440" height="899" alt="1 2 51 42 PM" src="https://github.com/user-attachments/assets/35d57375-9a1e-4697-9ab8-2ae1c053ce3f" />
 <img width="1440" height="900" alt="Screenshot 2025-12-02 at 2 09 34 PM" src="https://github.com/user-attachments/assets/cf8fddc9-d840-4c24-b5e7-c4102a97080a" />
-<img width="1440" height="900" alt="Screenshot 2025-12-02 at 2 08 00 PM" src="https://github.com/user-attachments/assets/ccc1312d-f940-486b-ba0a-586c8ba16c95" />
-<img width="1435" height="893" alt="2 2 51 42 PM" src="https://github.com/user-attachments/assets/cdcc11e2-3a17-4910-b940-52ae9e6ac2dc" />
+<img width="1440" height="900" alt="Screenshot 2025-12-06 at 3 17 50 PM" src="https://github.com/user-attachments/assets/317a47ac-01b8-4836-8acd-ed5e363011bb" />
 
 # UI
 ## Login
