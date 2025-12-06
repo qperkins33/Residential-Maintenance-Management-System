@@ -462,6 +462,7 @@ public final class DashboardUIHelper {
         RequestStatus originalStatus = request.getStatus();
         final RequestStatus[] selectedStatus = { originalStatus };
 
+        // COMPLETED / CANCELLED => allow reopen
         if (originalStatus == RequestStatus.COMPLETED || originalStatus == RequestStatus.CANCELLED) {
             CheckBox reopenCheck = new CheckBox("Reopen request");
             styleActionToggleButton(reopenCheck, "#4caf50", "#43a047", "#388e3c");
@@ -473,6 +474,8 @@ public final class DashboardUIHelper {
                 }
             });
             statusOptions.getChildren().add(reopenCheck);
+
+            // Any other active state (not SUBMITTED/ASSIGNED) => allow cancel
         } else if (originalStatus != RequestStatus.SUBMITTED && originalStatus != RequestStatus.ASSIGNED) {
             CheckBox cancelCheck = new CheckBox("Cancel request");
             styleActionToggleButton(cancelCheck, "#e53935", "#d32f2f", "#c62828");
@@ -523,15 +526,12 @@ public final class DashboardUIHelper {
             request.setStatus(newStatus);
             request.setLastUpdated(LocalDateTime.now());
 
-            request.setTenantArchived(false);
-            request.setStaffArchived(false);
-
-            // If tenant reopens a closed request, clear both archive flags
-//            if ((originalStatus == RequestStatus.COMPLETED || originalStatus == RequestStatus.CANCELLED)
-//                    && newStatus == RequestStatus.REOPENED) {
-//                request.setTenantArchived(false);
-//                request.setStaffArchived(false);
-//            }
+            // Only when a CLOSED request is REOPENED do we unarchive it
+            if ((originalStatus == RequestStatus.COMPLETED || originalStatus == RequestStatus.CANCELLED)
+                    && newStatus == RequestStatus.REOPENED) {
+                request.setTenantArchived(false);
+                request.setStaffArchived(false);
+            }
 
             if (!requestDAO.updateRequest(request)) {
                 new Alert(Alert.AlertType.ERROR, "Unable to update request. Please try again.").showAndWait();
