@@ -237,23 +237,23 @@ public class AdminDashboardController {
         // Column definitions bound to UserRow properties
         TableColumn<UserRow, String> idCol = new TableColumn<>("User ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("userId"));
-        idCol.setPrefWidth(120);
+        idCol.setPrefWidth(130);
 
         TableColumn<UserRow, String> usernameCol = new TableColumn<>("Username");
         usernameCol.setCellValueFactory(new PropertyValueFactory<>("username"));
-        usernameCol.setPrefWidth(120);
+        usernameCol.setPrefWidth(130);
 
         TableColumn<UserRow, String> nameCol = new TableColumn<>("Name");
         nameCol.setCellValueFactory(new PropertyValueFactory<>("fullName"));
-        nameCol.setPrefWidth(160);
+        nameCol.setPrefWidth(200);
 
         TableColumn<UserRow, String> emailCol = new TableColumn<>("Email");
         emailCol.setCellValueFactory(new PropertyValueFactory<>("email"));
-        emailCol.setPrefWidth(180);
+        emailCol.setPrefWidth(300);
 
         TableColumn<UserRow, String> phoneCol = new TableColumn<>("Phone");
         phoneCol.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
-        phoneCol.setPrefWidth(120);
+        phoneCol.setPrefWidth(150);
 
         TableColumn<UserRow, String> typeCol = new TableColumn<>("Type");
         typeCol.setCellValueFactory(new PropertyValueFactory<>("userType"));
@@ -505,7 +505,7 @@ public class AdminDashboardController {
                 "Active Users",
                 String.valueOf(totalActive),
                 "#667eea",
-                DashboardUIHelper.loadStatIcon("users.png")
+                DashboardUIHelper.loadStatIcon("active-users.png")
         );
         VBox tenantCard = DashboardUIHelper.createStatCard(
                 "Tenants",
