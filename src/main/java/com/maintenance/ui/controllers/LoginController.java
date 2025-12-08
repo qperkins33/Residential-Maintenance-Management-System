@@ -295,13 +295,25 @@ public class LoginController {
         userBox.setMaxWidth(Double.MAX_VALUE);
         passBox.setMaxWidth(Double.MAX_VALUE);
 
+        // Spacer to push sign-in info label to the bottom (mirrors left branding spacer)
+        Region loginSpacer = new Region();
+        VBox.setVgrow(loginSpacer, Priority.ALWAYS);
+
+        // Small sign-in related info at the bottom of the card
+        Label signInInfoLabel = new Label("For security, always sign out and close the app when you are finished.");
+        signInInfoLabel.setFont(Font.font("Arial", 11));
+        signInInfoLabel.setTextFill(Color.web("#6b7280"));
+        signInInfoLabel.setWrapText(true);
+
         // Assemble right login card contents
         mainContainer.getChildren().addAll(
                 headerRow,
                 userBox,
                 passBox,
                 errorLabel,
-                loginButton
+                loginButton,
+                loginSpacer,
+                signInInfoLabel
         );
 
         // Add left branding and right login card to shell
