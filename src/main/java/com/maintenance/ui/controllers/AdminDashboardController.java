@@ -213,6 +213,11 @@ public class AdminDashboardController {
             }
         });
 
+        Button refreshBtn = new Button("🔄 Refresh");
+        refreshBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                "-fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        refreshBtn.setOnAction(e -> loadUsers());
+
         Button newUserBtn = new Button("+ New User");
         newUserBtn.setStyle(
                 "-fx-background-color: #667eea; -fx-text-fill: white; " +
@@ -220,7 +225,7 @@ public class AdminDashboardController {
         );
         newUserBtn.setOnAction(e -> showCreateUserDialog());
 
-        headerBox.getChildren().addAll(sectionTitle, spacer, filterBox, newUserBtn);
+        headerBox.getChildren().addAll(sectionTitle, spacer, filterBox, refreshBtn, newUserBtn);
 
         // User table setup
         userTable = new TableView<>();
