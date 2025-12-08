@@ -395,17 +395,39 @@ public class AdminDashboardController {
     private void refreshStats(List<UserRow> users) {
         statsBox.getChildren().clear();
 
-        int total = users.size();
-        long tenants = users.stream().filter(u -> "TENANT".equalsIgnoreCase(u.getUserType())).count();
-        long staff = users.stream().filter(u -> "STAFF".equalsIgnoreCase(u.getUserType())).count();
-        long managers = users.stream().filter(u -> "MANAGER".equalsIgnoreCase(u.getUserType())).count();
-        long admins = users.stream().filter(u -> "ADMIN".equalsIgnoreCase(u.getUserType())).count();
-        long inactive = users.stream().filter(u -> !u.isActive()).count();
+        int totalActive = (int) users.stream()
+                .filter(UserRow::isActive)
+                .count();
+
+        long tenants = users.stream()
+                .filter(UserRow::isActive)
+                .filter(u -> "TENANT".equalsIgnoreCase(u.getUserType()))
+                .count();
+
+        long staff = users.stream()
+                .filter(UserRow::isActive)
+                .filter(u -> "STAFF".equalsIgnoreCase(u.getUserType()))
+                .count();
+
+        long managers = users.stream()
+                .filter(UserRow::isActive)
+                .filter(u -> "MANAGER".equalsIgnoreCase(u.getUserType()))
+                .count();
+
+        long admins = users.stream()
+                .filter(UserRow::isActive)
+                .filter(u -> "ADMIN".equalsIgnoreCase(u.getUserType()))
+                .count();
+
+        // Inactive count (still useful as its own card)
+        long inactive = users.stream()
+                .filter(u -> !u.isActive())
+                .count();
 
         // Individual stat cards with specific color codes and icons
         VBox totalCard = DashboardUIHelper.createStatCard(
-                "Total Users",
-                String.valueOf(total),
+                "Total Active Users",
+                String.valueOf(totalActive),
                 "#667eea",
                 DashboardUIHelper.loadStatIcon("users.png")
         );
