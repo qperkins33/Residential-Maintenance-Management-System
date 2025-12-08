@@ -33,7 +33,7 @@ import java.util.List;
  *  - Create new users by type (Tenant, Staff, Manager, Admin)
  *  - Edit basic user info and active status
  *  - View detailed user-specific information (tenant/staff/manager)
- *  - See high-level stats about user distribution
+ *  - See high-level stats about user distribution (ACTIVE users only for stat cards)
  */
 public class AdminDashboardController {
 
@@ -59,9 +59,14 @@ public class AdminDashboardController {
      */
     private TableView<UserRow> userTable;
     /**
-     * Horizontal container showing stat cards (total users, tenants, staff, etc.).
+     * Horizontal container showing stat cards (active users, tenants, staff, etc.).
      */
     private HBox statsBox;
+
+    /**
+     * Filter combo for user view (All, Active, Tenants, etc.).
+     */
+    private final ComboBox<String> filterBox = new ComboBox<>();
 
     /**
      * Constructs the Admin dashboard controller with its dependencies.
@@ -179,7 +184,7 @@ public class AdminDashboardController {
         VBox section = new VBox(15);
         section.setFillWidth(true);
 
-        // Header row with title and "New User" button
+        // Header row with title, filter, and "New User" button
         HBox headerBox = new HBox(20);
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
@@ -189,6 +194,30 @@ public class AdminDashboardController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        // Filters including Active / role-specific / Inactive
+        filterBox.getItems().addAll(
+                "All Users",
+                "Active Users",
+                "Tenants",
+                "Staff",
+                "Managers",
+                "Admins",
+                "Inactive"
+        );
+        filterBox.setValue("All Users");
+        filterBox.setStyle("-fx-background-radius: 5; -fx-padding: 5 10;");
+
+        filterBox.valueProperty().addListener((obs, oldFilter, newFilter) -> {
+            if (newFilter != null) {
+                filterUsers(newFilter);
+            }
+        });
+
+        Button refreshBtn = new Button("🔄 Refresh");
+        refreshBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
+                "-fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        refreshBtn.setOnAction(e -> loadUsers());
+
         Button newUserBtn = new Button("+ New User");
         newUserBtn.setStyle(
                 "-fx-background-color: #667eea; -fx-text-fill: white; " +
@@ -196,7 +225,7 @@ public class AdminDashboardController {
         );
         newUserBtn.setOnAction(e -> showCreateUserDialog());
 
-        headerBox.getChildren().addAll(sectionTitle, spacer, newUserBtn);
+        headerBox.getChildren().addAll(sectionTitle, spacer, filterBox, refreshBtn, newUserBtn);
 
         // User table setup
         userTable = new TableView<>();
@@ -318,11 +347,58 @@ public class AdminDashboardController {
 
     /**
      * Loads all users from the database into the table and refreshes the stat cards.
+     * Stats are based on ACTIVE users only (like tenant dashboard uses non-archived requests).
      */
     private void loadUsers() {
         List<UserRow> users = fetchAllUsers();
         userTable.setItems(FXCollections.observableArrayList(users));
+        filterBox.setValue("All Users");
         refreshStats(users);
+    }
+
+    /**
+     * Applies the selected filter to the user table, similar to tenant request filters.
+     * Only the table is filtered; stat cards still represent the full active population.
+     */
+    private void filterUsers(String filter) {
+        // Re-fetch to keep in sync with any recent changes (same pattern as request filters)
+        List<UserRow> all = fetchAllUsers();
+        List<UserRow> filtered = all;
+
+        switch (filter) {
+            case "All Users" -> filtered = all;
+            case "Active Users" -> filtered = all.stream()
+                    .filter(this::isActive)
+                    .toList();
+            case "Tenants" -> filtered = all.stream()
+                    .filter(this::isTenant)
+                    .toList();
+            case "Staff" -> filtered = all.stream()
+                    .filter(this::isStaff)
+                    .toList();
+            case "Managers" -> filtered = all.stream()
+                    .filter(this::isManager)
+                    .toList();
+            case "Admins" -> filtered = all.stream()
+                    .filter(this::isAdmin)
+                    .toList();
+            case "Inactive" -> filtered = all.stream()
+                    .filter(this::isInactive)
+                    .toList();
+            default -> {
+            }
+        }
+
+        userTable.setItems(FXCollections.observableArrayList(filtered));
+        // Stats stay global (active-only), not per-filter, like the tenant request dashboard
+        refreshStats(all);
+    }
+
+    /**
+     * Used by stat cards to drive the filter combo box.
+     */
+    private void setFilterFromCard(String filter) {
+        filterBox.setValue(filter);
     }
 
     /**
@@ -388,7 +464,7 @@ public class AdminDashboardController {
 
     /**
      * Generates and adds stat cards based on the provided users list.
-     * Shows counts for total, tenants, staff, managers, admins, and inactive.
+     * Stats count ACTIVE users only per type (mirrors "non-archived only" stats for requests).
      *
      * @param users list of users represented as UserRow objects
      */
@@ -426,7 +502,7 @@ public class AdminDashboardController {
 
         // Individual stat cards with specific color codes and icons
         VBox totalCard = DashboardUIHelper.createStatCard(
-                "Total Active Users",
+                "Active Users",
                 String.valueOf(totalActive),
                 "#667eea",
                 DashboardUIHelper.loadStatIcon("users.png")
@@ -461,6 +537,14 @@ public class AdminDashboardController {
                 "#f44336",
                 DashboardUIHelper.loadStatIcon("inactive.png")
         );
+
+        // Make cards clickable to change filter, same pattern as request dashboard
+        totalCard.setOnMouseClicked(e -> setFilterFromCard("Active Users"));
+        tenantCard.setOnMouseClicked(e -> setFilterFromCard("Tenants"));
+        staffCard.setOnMouseClicked(e -> setFilterFromCard("Staff"));
+        managerCard.setOnMouseClicked(e -> setFilterFromCard("Managers"));
+        adminCard.setOnMouseClicked(e -> setFilterFromCard("Admins"));
+        inactiveCard.setOnMouseClicked(e -> setFilterFromCard("Inactive"));
 
         statsBox.getChildren().addAll(
                 totalCard, tenantCard, staffCard, managerCard, adminCard, inactiveCard
@@ -1029,7 +1113,7 @@ public class AdminDashboardController {
 
             // Map toggle selection back to final active state depending on originalActive
             if (originalActive) {
-                // When originally active, selecting the checkbox means "keep active"
+                // When originally active, selecting the checkbox means "deactivate"
                 targetActive[0] = !isSelected;
             } else {
                 // When originally inactive, selecting the checkbox means "activate"
@@ -1369,6 +1453,32 @@ public class AdminDashboardController {
         section.setUnderline(true);
         GridPane.setColumnSpan(section, 2);
         grid.add(section, 0, row);
+    }
+
+    // ---------- Filter helpers (same pattern as request filters) ----------
+
+    private boolean isActive(UserRow u) {
+        return u != null && u.isActive();
+    }
+
+    private boolean isInactive(UserRow u) {
+        return u != null && !u.isActive();
+    }
+
+    private boolean isTenant(UserRow u) {
+        return u != null && "TENANT".equalsIgnoreCase(u.getUserType());
+    }
+
+    private boolean isStaff(UserRow u) {
+        return u != null && "STAFF".equalsIgnoreCase(u.getUserType());
+    }
+
+    private boolean isManager(UserRow u) {
+        return u != null && "MANAGER".equalsIgnoreCase(u.getUserType());
+    }
+
+    private boolean isAdmin(UserRow u) {
+        return u != null && "ADMIN".equalsIgnoreCase(u.getUserType());
     }
 
     /**
