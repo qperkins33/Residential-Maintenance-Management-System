@@ -8,6 +8,7 @@ import com.maintenance.models.MaintenanceRequest;
 import com.maintenance.models.Tenant;
 import com.maintenance.service.AuthenticationService;
 import com.maintenance.ui.views.ViewFactory;
+import com.maintenance.util.IDGenerator;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -665,15 +666,19 @@ public class TenantDashboardController {
         );
 
         Button attachPhotoBtn = new Button("Attach Photo");
-        attachPhotoBtn.setStyle("-fx-background-color: #667eea; -fx-text-fill: white; " +
-                "-fx-padding: 6 12; -fx-background-radius: 3; -fx-cursor: hand;");
+        attachPhotoBtn.setStyle(
+                "-fx-background-color: #667eea; -fx-text-fill: white; " +
+                        "-fx-padding: 6 12; -fx-background-radius: 3; -fx-cursor: hand;"
+        );
 
         Label photoNameLabel = new Label("No file selected");
         photoNameLabel.setFont(Font.font("Arial", 12));
         photoNameLabel.setTextFill(Color.GRAY);
 
+        // Use the dialog window as owner instead of null
         attachPhotoBtn.setOnAction(e -> {
-            File file = fileChooser.showOpenDialog(null);
+            Stage owner = (Stage) dialog.getDialogPane().getScene().getWindow();
+            File file = fileChooser.showOpenDialog(owner);
             if (file != null) {
                 selectedPhotoFile[0] = file;
                 photoNameLabel.setText(file.getName());
@@ -696,18 +701,38 @@ public class TenantDashboardController {
         // Build new request on submit if validation passes and DAO save succeeds
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == submitButtonType) {
-                if (categoryBox.getValue() != null && !descArea.getText().isEmpty()) {
-                    Tenant tenant = (Tenant) authService.getCurrentUser();
-                    MaintenanceRequest request = new MaintenanceRequest();
-                    request.setTenantId(tenant.getUserId());
-                    request.setApartmentNumber(tenant.getApartmentNumber());
-                    request.setCategory(categoryBox.getValue());
-                    request.setDescription(descArea.getText());
-                    request.setPriority(request.calculatePriority());
+                if (categoryBox.getValue() == null || descArea.getText().isBlank()) {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Missing Information");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Category and description are required.");
+                    alert.showAndWait();
+                    return null;
+                }
 
-                    if (requestDAO.saveRequest(request)) {
-                        return request;
-                    }
+                Tenant tenant = (Tenant) authService.getCurrentUser();
+                MaintenanceRequest request = new MaintenanceRequest();
+
+                // Generate the request ID here so it is non-null for photo saving
+                String requestId = IDGenerator.generateRequestId();
+                request.setRequestId(requestId);
+
+                request.setTenantId(tenant.getUserId());
+                request.setApartmentNumber(tenant.getApartmentNumber());
+                request.setCategory(categoryBox.getValue());
+                request.setDescription(descArea.getText().trim());
+                request.setPriority(request.calculatePriority());
+                request.setSubmissionDate(LocalDateTime.now());
+                request.setStatus(RequestStatus.SUBMITTED);
+
+                if (requestDAO.saveRequest(request)) {
+                    return request;
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Save Failed");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Unable to save your request. Please try again.");
+                    alert.showAndWait();
                 }
             }
             return null;
@@ -717,17 +742,21 @@ public class TenantDashboardController {
             // Persist photo metadata if attached and request ID exists
             if (selectedPhotoFile[0] != null && request.getRequestId() != null) {
                 File file = selectedPhotoFile[0];
+
+                // Store a file: URI so JavaFX Image can load it directly later
                 String uri = file.toURI().toString();
                 long size = file.length();
                 String fileName = file.getName();
+
                 photoDAO.savePhotoForRequest(request.getRequestId(), fileName, uri, size);
             }
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Success");
             alert.setHeaderText("Request Submitted");
-            alert.setContentText("Your request #" + request.getRequestId() +
-                    " has been submitted successfully!");
+            alert.setContentText(
+                    "Your request #" + request.getRequestId() + " has been submitted successfully!"
+            );
             alert.showAndWait();
             loadRequests();
         });
